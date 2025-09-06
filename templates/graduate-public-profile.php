@@ -24,12 +24,18 @@ $city       = function_exists( 'get_field' ) ? (string) get_field( 'gn_city', 'u
 $country    = function_exists( 'get_field' ) ? (string) get_field( 'gn_country', 'user_' . $pspa_user->ID ) : get_user_meta( $pspa_user->ID, 'gn_country', true );
 $picture    = function_exists( 'get_field' ) ? get_field( 'gn_profile_picture', 'user_' . $pspa_user->ID ) : get_user_meta( $pspa_user->ID, 'gn_profile_picture', true );
 $show_pic   = function_exists( 'get_field' ) ? get_field( 'gn_show_profile_picture', 'user_' . $pspa_user->ID ) : get_user_meta( $pspa_user->ID, 'gn_show_profile_picture', true );
+$visibility = function_exists( 'get_field' ) ? get_field( 'gn_visibility_mode', 'user_' . $pspa_user->ID ) : get_user_meta( $pspa_user->ID, 'gn_visibility_mode', true );
+$show_job   = function_exists( 'get_field' ) ? get_field( 'gn_show_job_title', 'user_' . $pspa_user->ID ) : get_user_meta( $pspa_user->ID, 'gn_show_job_title', true );
+$show_comp  = function_exists( 'get_field' ) ? get_field( 'gn_show_position_company', 'user_' . $pspa_user->ID ) : get_user_meta( $pspa_user->ID, 'gn_show_position_company', true );
+$show_prof  = function_exists( 'get_field' ) ? get_field( 'gn_show_profession', 'user_' . $pspa_user->ID ) : get_user_meta( $pspa_user->ID, 'gn_show_profession', true );
+$show_city  = function_exists( 'get_field' ) ? get_field( 'gn_show_city', 'user_' . $pspa_user->ID ) : get_user_meta( $pspa_user->ID, 'gn_show_city', true );
+$show_country = function_exists( 'get_field' ) ? get_field( 'gn_show_country', 'user_' . $pspa_user->ID ) : get_user_meta( $pspa_user->ID, 'gn_show_country', true );
 ?>
 <div class="pspa-graduate-profile pspa-dashboard">
     <div class="pspa-graduate-header">
         <div class="pspa-graduate-avatar">
             <?php
-            if ( $picture && ( null === $show_pic || $show_pic ) ) {
+            if ( $picture && 'hide_all' !== $visibility && ( 'show_all' === $visibility || null === $show_pic || $show_pic ) ) {
                 echo wp_get_attachment_image( $picture, 'thumbnail' );
             } else {
                 echo get_avatar( $pspa_user->ID, 128 );
@@ -37,20 +43,28 @@ $show_pic   = function_exists( 'get_field' ) ? get_field( 'gn_show_profile_pictu
             ?>
         </div>
         <h1 class="pspa-graduate-name"><?php echo esc_html( $pspa_user->display_name ); ?></h1>
-        <?php if ( $job || $company ) : ?>
-            <p class="pspa-graduate-title"><?php echo esc_html( trim( $job . ( $company ? ' - ' . $company : '' ) ) ); ?></p>
+        <?php
+        $job_display     = ( $job && 'hide_all' !== $visibility && ( 'show_all' === $visibility || null === $show_job || $show_job ) ) ? $job : '';
+        $company_display = ( $company && 'hide_all' !== $visibility && ( 'show_all' === $visibility || null === $show_comp || $show_comp ) ) ? $company : '';
+        if ( $job_display || $company_display ) :
+        ?>
+            <p class="pspa-graduate-title"><?php echo esc_html( trim( $job_display . ( $company_display ? ' - ' . $company_display : '' ) ) ); ?></p>
         <?php endif; ?>
-        <?php if ( $profession ) : ?>
+        <?php if ( $profession && 'hide_all' !== $visibility && ( 'show_all' === $visibility || null === $show_prof || $show_prof ) ) : ?>
             <p class="pspa-graduate-profession"><?php echo esc_html( $profession ); ?></p>
         <?php endif; ?>
-        <?php if ( $city || $country ) : ?>
-            <p class="pspa-graduate-location"><?php echo esc_html( trim( $city . ( $country ? ', ' . $country : '' ) ) ); ?></p>
+        <?php
+        $city_display    = ( $city && 'hide_all' !== $visibility && ( 'show_all' === $visibility || null === $show_city || $show_city ) ) ? $city : '';
+        $country_display = ( $country && 'hide_all' !== $visibility && ( 'show_all' === $visibility || null === $show_country || $show_country ) ) ? $country : '';
+        if ( $city_display || $country_display ) :
+        ?>
+            <p class="pspa-graduate-location"><?php echo esc_html( trim( $city_display . ( $country_display ? ', ' . $country_display : '' ) ) ); ?></p>
         <?php endif; ?>
     </div>
-    <?php if ( function_exists( 'get_field_objects' ) ) : ?>
+    <?php if ( function_exists( 'acf_get_fields' ) && 'hide_all' !== $visibility ) : ?>
         <div class="pspa-graduate-details">
             <?php
-            $fields        = get_field_objects( 'user_' . $pspa_user->ID );
+            $fields        = acf_get_fields( 'group_gn_graduate_profile' );
             $header_fields = array(
                 'gn_job_title',
                 'gn_position_company',
@@ -70,11 +84,13 @@ $show_pic   = function_exists( 'get_field' ) ? get_field( 'gn_show_profile_pictu
                     if ( in_array( $field['name'], $header_fields, true ) ) {
                         continue;
                     }
-                    $show = get_field( 'gn_show_' . $field['name'], 'user_' . $pspa_user->ID );
-                    if ( null !== $show && ! $show ) {
-                        continue;
+                    if ( 'show_all' !== $visibility ) {
+                        $show = function_exists( 'get_field' ) ? get_field( 'gn_show_' . $field['name'], 'user_' . $pspa_user->ID ) : get_user_meta( $pspa_user->ID, 'gn_show_' . $field['name'], true );
+                        if ( null !== $show && ! $show ) {
+                            continue;
+                        }
                     }
-                    $value = $field['value'];
+                    $value = function_exists( 'get_field' ) ? get_field( $field['name'], 'user_' . $pspa_user->ID ) : get_user_meta( $pspa_user->ID, $field['name'], true );
                     if ( 'true_false' === $field['type'] ) {
                         if ( empty( $value ) ) {
                             continue;
