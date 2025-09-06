@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.5
+ * Version: 0.0.6
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -220,7 +220,7 @@ function pspa_ms_simple_profile_form( $user_id ) {
         <?php wp_nonce_field( 'pspa_graduate_profile', 'pspa_graduate_profile_nonce' ); ?>
         <p>
             <button type="submit" class="woocommerce-Button button">
-                <?php esc_html_e( 'Save changes', 'pspa-membership-system' ); ?>
+                <?php esc_html_e( 'Αποθήκευση αλλαγών', 'pspa-membership-system' ); ?>
             </button>
         </p>
     </form>
@@ -344,7 +344,7 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
         <?php endif; ?>
         <?php wp_nonce_field( 'pspa_admin_edit_user', 'pspa_admin_edit_user_nonce' ); ?>
         <p>
-            <button type="submit" class="woocommerce-Button button"><?php esc_html_e( 'Save changes', 'pspa-membership-system' ); ?></button>
+            <button type="submit" class="woocommerce-Button button"><?php esc_html_e( 'Αποθήκευση αλλαγών', 'pspa-membership-system' ); ?></button>
         </p>
     </form>
     <?php
