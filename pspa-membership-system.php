@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.12
+ * Version: 0.0.13
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.12' );
+define( 'PSPA_MS_VERSION', '0.0.13' );
 
 /**
  * Enqueue shared dashboard styles.
@@ -548,15 +548,23 @@ function pspa_ms_get_unique_user_meta_values( $meta_key ) {
  * @param int $user_id User ID.
  * @return string
  */
-function pspa_ms_render_graduate_card( $user_id ) {
-    $name      = get_the_author_meta( 'display_name', $user_id );
-    $job       = function_exists( 'get_field' ) ? (string) get_field( 'gn_job_title', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_job_title', true );
-    $company   = function_exists( 'get_field' ) ? (string) get_field( 'gn_position_company', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_position_company', true );
-    $profession = function_exists( 'get_field' ) ? (string) get_field( 'gn_profession', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_profession', true );
-    $city      = function_exists( 'get_field' ) ? (string) get_field( 'gn_city', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_city', true );
-    $country   = function_exists( 'get_field' ) ? (string) get_field( 'gn_country', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_country', true );
+function pspa_ms_get_public_profile_url( $user_id ) {
+    $user = get_userdata( $user_id );
+    if ( ! $user ) {
+        return '';
+    }
+    return home_url( '/graduate/' . $user->user_nicename . '/' );
+}
 
-    $profile_url = get_author_posts_url( $user_id );
+function pspa_ms_render_graduate_card( $user_id ) {
+    $name       = get_the_author_meta( 'display_name', $user_id );
+    $job        = function_exists( 'get_field' ) ? (string) get_field( 'gn_job_title', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_job_title', true );
+    $company    = function_exists( 'get_field' ) ? (string) get_field( 'gn_position_company', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_position_company', true );
+    $profession = function_exists( 'get_field' ) ? (string) get_field( 'gn_profession', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_profession', true );
+    $city       = function_exists( 'get_field' ) ? (string) get_field( 'gn_city', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_city', true );
+    $country    = function_exists( 'get_field' ) ? (string) get_field( 'gn_country', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_country', true );
+
+    $profile_url = pspa_ms_get_public_profile_url( $user_id );
 
     ob_start();
     ?>
@@ -667,17 +675,35 @@ function pspa_ms_ajax_filter_graduates() {
         }
     }
 
-    $args = array(
-        'number'     => -1,
+    $page      = isset( $_POST['page'] ) ? max( 1, absint( $_POST['page'] ) ) : 1;
+    $per_page  = 50;
+    $args      = array(
+        'number'     => $per_page,
+        'offset'     => ( $page - 1 ) * $per_page,
         'meta_query' => $meta_query,
+        'count_total'=> true,
     );
 
-    $users = new WP_User_Query( $args );
-    $html  = '';
+    $users       = new WP_User_Query( $args );
+    $total_users = (int) $users->get_total();
+    $total_pages = (int) ceil( $total_users / $per_page );
+    $html        = '';
 
     if ( ! empty( $users->get_results() ) ) {
         foreach ( $users->get_results() as $user ) {
             $html .= pspa_ms_render_graduate_card( $user->ID );
+        }
+
+        if ( $total_pages > 1 ) {
+            $html .= '<nav class="pspa-dir-pagination">';
+            if ( $page > 1 ) {
+                $html .= '<a href="#" class="prev" data-page="' . ( $page - 1 ) . '">&laquo; ' . esc_html__( 'Προηγούμενη', 'pspa-membership-system' ) . '</a>';
+            }
+            $html .= '<span class="current">' . sprintf( esc_html__( 'Σελίδα %1$d από %2$d', 'pspa-membership-system' ), $page, $total_pages ) . '</span>';
+            if ( $page < $total_pages ) {
+                $html .= '<a href="#" class="next" data-page="' . ( $page + 1 ) . '">' . esc_html__( 'Επόμενη', 'pspa-membership-system' ) . ' &raquo;</a>';
+            }
+            $html .= '</nav>';
         }
     } else {
         $html = '<p>' . esc_html__( 'Δεν βρέθηκαν απόφοιτοι.', 'pspa-membership-system' ) . '</p>';

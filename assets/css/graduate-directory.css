@@ -45,3 +45,19 @@
     color: #fff;
     border-radius: 4px;
 }
+
+.pspa-dir-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1em;
+    margin-top: 1em;
+}
+
+.pspa-dir-pagination a {
+    padding: 0.4em 0.8em;
+    background: var(--ink, #3b2b22);
+    color: #fff;
+    border-radius: 4px;
+    text-decoration: none;
+}
