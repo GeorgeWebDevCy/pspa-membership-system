@@ -1,0 +1,66 @@
+.pspa-linkedin-profile {
+    max-width: 900px;
+    margin: 2rem auto;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.pspa-linkedin-profile .profile-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, var(--ink, #3b2b22), var(--card, #fffaf5));
+    color: #fff;
+}
+
+.pspa-linkedin-profile .profile-picture img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.pspa-linkedin-profile .profile-basics {
+    flex: 1;
+}
+
+.pspa-linkedin-profile .profile-name {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.pspa-linkedin-profile .profile-headline,
+.pspa-linkedin-profile .profile-location {
+    margin: 0.25rem 0;
+    font-size: 1rem;
+}
+
+.pspa-linkedin-profile .profile-section {
+    padding: 1.5rem 2rem;
+    border-top: 1px solid var(--line, #e4d6c8);
+}
+
+.pspa-linkedin-profile .profile-section h2 {
+    margin-top: 0;
+    font-size: 1.25rem;
+    color: var(--ink, #3b2b22);
+}
+
+.pspa-linkedin-profile .profile-field {
+    margin-bottom: 0.75rem;
+}
+
+.pspa-linkedin-profile .profile-field .label {
+    display: block;
+    font-weight: 600;
+    color: var(--ink, #3b2b22);
+}
+
+.pspa-linkedin-profile .profile-field .value {
+    display: block;
+    margin-left: 0.25rem;
+}
