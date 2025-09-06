@@ -440,6 +440,80 @@ function pspa_ms_login_by_details_shortcode() {
 }
 
 /**
+ * Shortcode: list graduates and display individual profile.
+ *
+ * Usage: [pspa_graduate_directory]
+ * Clicking a graduate card appends ?graduate=ID to the URL and renders
+ * the selected profile in a read-only format.
+ *
+ * @return string
+ */
+function pspa_ms_graduate_directory_shortcode() {
+    $view_id = isset( $_GET['graduate'] ) ? absint( $_GET['graduate'] ) : 0;
+
+    if ( $view_id ) {
+        $user = get_user_by( 'id', $view_id );
+        if ( ! $user || ! in_array( 'professionalcatalogue', (array) $user->roles, true ) ) {
+            return '';
+        }
+
+        $first  = get_field( 'gn_first_name', 'user_' . $view_id );
+        $last   = get_field( 'gn_surname', 'user_' . $view_id );
+        $year   = get_field( 'gn_graduation_year', 'user_' . $view_id );
+        $img_id = get_field( 'gn_profile_picture', 'user_' . $view_id );
+        $image  = $img_id ? wp_get_attachment_image( $img_id, 'medium' ) : get_avatar( $view_id, 192 );
+
+        ob_start();
+        echo '<div class="pspa-graduate-profile">';
+        echo '<div class="pspa-profile-picture">' . $image . '</div>';
+        echo '<h2>' . esc_html( trim( $first . ' ' . $last ) ) . '</h2>';
+        if ( $year ) {
+            echo '<p class="pspa-grad-year">' . esc_html__( 'Αποφοίτηση:', 'pspa-membership-system' ) . ' ' . esc_html( $year ) . '</p>';
+        }
+        echo '</div>';
+        return ob_get_clean();
+    }
+
+    $users = get_users(
+        array(
+            'role'   => 'professionalcatalogue',
+            'orderby'=> 'display_name',
+            'order'  => 'ASC',
+            'number' => -1,
+        )
+    );
+
+    if ( empty( $users ) ) {
+        return '<p>' . esc_html__( 'No graduates found.', 'pspa-membership-system' ) . '</p>';
+    }
+
+    ob_start();
+    echo '<div class="pspa-graduate-directory">';
+    foreach ( $users as $user ) {
+        $uid    = $user->ID;
+        $first  = get_field( 'gn_first_name', 'user_' . $uid );
+        $last   = get_field( 'gn_surname', 'user_' . $uid );
+        $year   = get_field( 'gn_graduation_year', 'user_' . $uid );
+        $img_id = get_field( 'gn_profile_picture', 'user_' . $uid );
+        $image  = $img_id ? wp_get_attachment_image( $img_id, 'thumbnail' ) : get_avatar( $uid, 96 );
+        $link   = esc_url( add_query_arg( 'graduate', $uid ) );
+
+        echo '<div class="pspa-graduate-card">';
+        echo '<a href="' . $link . '">';
+        echo '<div class="pspa-card-image">' . $image . '</div>';
+        echo '<h3>' . esc_html( trim( $first . ' ' . $last ) ) . '</h3>';
+        if ( $year ) {
+            echo '<p class="pspa-grad-year">' . esc_html( $year ) . '</p>';
+        }
+        echo '<span class="pspa-more">' . esc_html__( 'Δείτε Περισσότερα', 'pspa-membership-system' ) . '</span>';
+        echo '</a>';
+        echo '</div>';
+    }
+    echo '</div>';
+    return ob_get_clean();
+}
+
+/**
  * Register plugin shortcodes.
  */
 function pspa_ms_register_shortcodes() {
