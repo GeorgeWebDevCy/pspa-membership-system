@@ -4,7 +4,7 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.0.7
+Stable tag: 0.0.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -28,6 +28,8 @@ The plugin registers two custom user roles:
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
+= 0.0.8 =
+* Add `[pspa_graduate_directory]` shortcode to display graduate cards and view non-editable profiles.
 = 0.0.7 =
 * Fix `[pspa_login_by_details]` shortcode not rendering and ensure login actions run.
 
@@ -51,6 +53,8 @@ The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access
 * Initial release.
 
 == Upgrade Notice ==
+= 0.0.8 =
+Introduces a graduate directory shortcode and public profile view.
 = 0.0.7 =
 Resolves missing login form and triggers login hooks when authenticating by details.
 
