@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.10
+ * Version: 0.0.11
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.10' );
+define( 'PSPA_MS_VERSION', '0.0.11' );
 
 /**
  * Enqueue shared dashboard styles.
@@ -361,7 +361,7 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
  */
 function pspa_ms_login_by_details_shortcode() {
     if ( is_user_logged_in() ) {
-        return '';
+        return '<p>' . esc_html__( 'Είστε ήδη επαληθευμένοι.', 'pspa-membership-system' ) . '</p>';
     }
 
     pspa_ms_enqueue_dashboard_styles();
@@ -405,11 +405,8 @@ function pspa_ms_login_by_details_shortcode() {
 
         if ( ! empty( $users ) ) {
             $user = $users[0];
-            wp_set_current_user( $user->ID );
+            wp_set_current_user( $user->ID, $user->user_login );
             wp_set_auth_cookie( $user->ID, true );
-            /**
-             * Fire the login hook so other plugins can perform actions on login.
-             */
             do_action( 'wp_login', $user->user_login, $user );
             wp_safe_redirect( wc_get_account_endpoint_url( 'graduate-profile' ) );
             exit;

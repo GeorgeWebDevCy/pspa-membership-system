@@ -4,7 +4,7 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.0.10
+Stable tag: 0.0.11
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -28,6 +28,8 @@ The plugin registers two custom user roles:
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
+= 0.0.11 =
+* Διορθώθηκε η σύνδεση μέσω `[pspa_login_by_details]` και εμφανίζεται μήνυμα όταν είστε ήδη επαληθευμένοι.
 = 0.0.10 =
 * Μεταφράστηκαν όλα τα κουμπιά και οι προεπιλεγμένες επιλογές στα ελληνικά.
 * Εφαρμόστηκε ενιαία εμφάνιση στα shortcodes και οι κάρτες αποφοίτων είναι πλέον κλικαμπλ.
@@ -62,6 +64,8 @@ The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access
 * Initial release.
 
 == Upgrade Notice ==
+= 0.0.11 =
+Διορθώνει τη σύνδεση μέσω στοιχείων και εμφανίζει μήνυμα επαλήθευσης για συνδεδεμένους χρήστες.
 = 0.0.10 =
 Βελτιωμένη εμπειρία χρήστη με ελληνικά κουμπιά, ενοποιημένο στυλ και κλικαμπλ κάρτες αποφοίτων.
 = 0.0.9 =
