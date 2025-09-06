@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.13
+ * Version: 0.0.14
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.13' );
+define( 'PSPA_MS_VERSION', '0.0.14' );
 
 /**
  * Enqueue shared dashboard styles.
@@ -117,6 +117,49 @@ function pspa_ms_add_graduate_profile_link( $items ) {
     return $items;
 }
 add_filter( 'woocommerce_account_menu_items', 'pspa_ms_add_graduate_profile_link' );
+
+/**
+ * Register public graduate profile rewrite rule.
+ */
+function pspa_ms_register_public_profile_route() {
+    add_rewrite_rule( '^graduate/([^/]+)/?$', 'index.php?pspa_graduate=$matches[1]', 'top' );
+}
+add_action( 'init', 'pspa_ms_register_public_profile_route' );
+
+/**
+ * Add query var for public graduate profiles.
+ *
+ * @param array $vars Query vars.
+ * @return array
+ */
+function pspa_ms_public_profile_query_vars( $vars ) {
+    $vars[] = 'pspa_graduate';
+    return $vars;
+}
+add_filter( 'query_vars', 'pspa_ms_public_profile_query_vars' );
+
+/**
+ * Load template for public graduate profiles.
+ *
+ * @param string $template Template path.
+ * @return string
+ */
+function pspa_ms_public_profile_template( $template ) {
+    $slug = get_query_var( 'pspa_graduate' );
+    if ( $slug ) {
+        $user = get_user_by( 'slug', $slug );
+        if ( ! $user ) {
+            return get_404_template();
+        }
+        set_query_var( 'pspa_graduate_user', $user );
+        $new_template = plugin_dir_path( __FILE__ ) . 'templates/graduate-public-profile.php';
+        if ( file_exists( $new_template ) ) {
+            return $new_template;
+        }
+    }
+    return $template;
+}
+add_filter( 'template_include', 'pspa_ms_public_profile_template' );
 
 /**
  * Prepare ACF for front-end forms when viewing the graduate profile endpoint.
@@ -718,6 +761,7 @@ add_action( 'wp_ajax_pspa_ms_filter_graduates', 'pspa_ms_ajax_filter_graduates' 
  */
 function pspa_ms_flush_rewrite_rules() {
     pspa_ms_register_graduate_profile_endpoint();
+    pspa_ms_register_public_profile_route();
     flush_rewrite_rules();
 }
 register_activation_hook( __FILE__, 'pspa_ms_flush_rewrite_rules' );
