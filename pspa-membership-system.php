@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.6
+ * Version: 0.0.7
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -401,6 +401,10 @@ function pspa_ms_login_by_details_shortcode() {
             $user = $users[0];
             wp_set_current_user( $user->ID );
             wp_set_auth_cookie( $user->ID, true );
+            /**
+             * Fire the login hook so other plugins can perform actions on login.
+             */
+            do_action( 'wp_login', $user->user_login, $user );
             wp_safe_redirect( wc_get_account_endpoint_url( 'graduate-profile' ) );
             exit;
         } else {
@@ -432,7 +436,14 @@ function pspa_ms_login_by_details_shortcode() {
     $output .= ob_get_clean();
     return $output;
 }
-add_shortcode( 'pspa_login_by_details', 'pspa_ms_login_by_details_shortcode' );
+
+/**
+ * Register plugin shortcodes.
+ */
+function pspa_ms_register_shortcodes() {
+    add_shortcode( 'pspa_login_by_details', 'pspa_ms_login_by_details_shortcode' );
+}
+add_action( 'init', 'pspa_ms_register_shortcodes' );
 
 /**
  * Sync first, last and display names with ACF fields after saving.
