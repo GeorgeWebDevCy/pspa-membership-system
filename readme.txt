@@ -14,12 +14,12 @@ This plugin powers the PSPA membership system and integrates with WooCommerce an
 == Installation ==
 1. Upload `pspa-membership-system` to the `/wp-content/plugins/` directory.
 2. Activate the plugin through the 'Plugins' menu in WordPress.
-3. Ensure that ACF Pro and WooCommerce are installed and activated.
+3. Ensure that ACF Pro, WooCommerce, and Advanced Access Manager are installed and activated.
 
 == Frequently Asked Questions ==
 
 = What dependencies are required? =
-The plugin requires Advanced Custom Fields Pro and WooCommerce.
+The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
 = 0.0.1 =

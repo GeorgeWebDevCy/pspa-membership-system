@@ -19,6 +19,7 @@ Dependencies:
 
 - [Advanced Custom Fields Pro](https://www.advancedcustomfields.com/pro/)
 - [WooCommerce](https://woocommerce.com/)
+- [Advanced Access Manager](https://wordpress.org/plugins/advanced-access-manager/)
 
 ## ACF Field Reference
 
