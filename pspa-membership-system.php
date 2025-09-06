@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.12
+ * Version: 0.0.13
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.12' );
+define( 'PSPA_MS_VERSION', '0.0.13' );
 
 /**
  * Enqueue shared dashboard styles.
@@ -53,6 +53,7 @@ function pspa_ms_check_dependencies() {
     }
 
     if ( ! empty( $missing_plugins ) ) {
+        pspa_ms_log( 'Missing plugins: ' . implode( ', ', $missing_plugins ), 'error' );
         add_action(
             'admin_notices',
             static function () use ( $missing_plugins ) {
@@ -66,6 +67,8 @@ function pspa_ms_check_dependencies() {
         );
 
         deactivate_plugins( plugin_basename( __FILE__ ) );
+    } else {
+        pspa_ms_log( 'All required plugins active.' );
     }
 }
 
@@ -91,6 +94,7 @@ $pspa_update_checker->setBranch( 'main' );
  */
 function pspa_ms_register_graduate_profile_endpoint() {
     add_rewrite_endpoint( 'graduate-profile', EP_ROOT | EP_PAGES );
+    pspa_ms_log( 'Registered graduate-profile endpoint', 'debug' );
 }
 add_action( 'init', 'pspa_ms_register_graduate_profile_endpoint' );
 
@@ -128,6 +132,7 @@ function pspa_ms_maybe_acf_form_head() {
 
     if ( is_account_page() && false !== get_query_var( 'graduate-profile', false ) ) {
         acf_form_head();
+        pspa_ms_log( 'Loaded ACF form head', 'debug' );
     }
 }
 add_action( 'template_redirect', 'pspa_ms_maybe_acf_form_head' );
@@ -154,6 +159,7 @@ add_filter( 'acf/prepare_field/name=gn_visibility_mode', 'pspa_ms_hide_visibilit
  */
 function pspa_ms_graduate_profile_content() {
     if ( ! is_user_logged_in() ) {
+        pspa_ms_log( 'Graduate profile accessed without login', 'warning' );
         echo esc_html__( 'Πρέπει να είστε συνδεδεμένοι για να επεξεργαστείτε το προφίλ σας.', 'pspa-membership-system' );
         return;
     }
@@ -161,10 +167,12 @@ function pspa_ms_graduate_profile_content() {
     $current_user = wp_get_current_user();
 
     if ( current_user_can( 'manage_options' ) || in_array( 'system-admin', (array) $current_user->roles, true ) ) {
+        pspa_ms_log( 'Admin interface loaded for user ID ' . $current_user->ID );
         pspa_ms_admin_profile_interface();
         return;
     }
 
+    pspa_ms_log( 'Graduate profile form loaded for user ID ' . $current_user->ID );
     pspa_ms_simple_profile_form( $current_user->ID );
 }
 add_action( 'woocommerce_account_graduate-profile_endpoint', 'pspa_ms_graduate_profile_content' );
@@ -197,6 +205,7 @@ function pspa_ms_simple_profile_form( $user_id ) {
 
         if ( count( $update_data ) > 1 ) {
             wp_update_user( $update_data );
+            pspa_ms_log( 'Updated graduate profile', 'info', $update_data );
         }
 
         wc_add_notice( __( 'Το προφίλ ενημερώθηκε με επιτυχία.', 'pspa-membership-system' ) );
@@ -266,6 +275,7 @@ function pspa_ms_admin_profile_interface() {
         );
 
         $user_ids = array_unique( array_merge( $user_ids, $user_ids2 ) );
+        pspa_ms_log( 'Admin search', 'debug', array( 'term' => $search_term, 'results' => count( $user_ids ) ) );
 
         if ( ! empty( $user_ids ) ) {
             echo '<ul class="pspa-user-search-results">';
@@ -289,6 +299,7 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
     $user = get_user_by( 'id', $user_id );
 
     if ( ! $user ) {
+        pspa_ms_log( 'Invalid user for admin edit: ' . $user_id, 'error' );
         echo esc_html__( 'Μη έγκυρος χρήστης.', 'pspa-membership-system' );
         return;
     }
@@ -316,6 +327,7 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
         }
 
         wp_update_user( $update_data );
+        pspa_ms_log( 'Admin updated user', 'info', array( 'user_id' => $user_id ) + $update_data );
 
         wc_add_notice( __( 'Το προφίλ ενημερώθηκε με επιτυχία.', 'pspa-membership-system' ) );
         $user = get_user_by( 'id', $user_id );
@@ -361,7 +373,7 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
  */
 function pspa_ms_login_by_details_shortcode() {
     if ( is_user_logged_in() ) {
-        pspa_ms_log( 'Login form accessed by logged-in user ID ' . get_current_user_id() );
+        pspa_ms_log( 'Login form accessed by logged-in user ID ' . get_current_user_id(), 'debug' );
         return '<p>' . esc_html__( 'Είστε ήδη επαληθευμένοι.', 'pspa-membership-system' ) . '</p>';
     }
 
@@ -378,7 +390,7 @@ function pspa_ms_login_by_details_shortcode() {
         $last  = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
         $year  = isset( $_POST['graduation_year'] ) ? sanitize_text_field( wp_unslash( $_POST['graduation_year'] ) ) : '';
 
-        pspa_ms_log( 'Login attempt: ' . $first . ' ' . $last . ' (' . $year . ')' );
+        pspa_ms_log( 'Login attempt: ' . $first . ' ' . $last . ' (' . $year . ')', 'debug' );
 
         $query = new WP_User_Query(
             array(
@@ -408,14 +420,14 @@ function pspa_ms_login_by_details_shortcode() {
 
         if ( ! empty( $users ) ) {
             $user = $users[0];
-            pspa_ms_log( 'Login success for user ID ' . $user->ID );
+            pspa_ms_log( 'Login success for user ID ' . $user->ID, 'info' );
             wp_set_current_user( $user->ID, $user->user_login );
             wp_set_auth_cookie( $user->ID, true );
             do_action( 'wp_login', $user->user_login, $user );
             wp_safe_redirect( wc_get_account_endpoint_url( 'graduate-profile' ) );
             exit;
         } else {
-            pspa_ms_log( 'Login failed for ' . $first . ' ' . $last . ' (' . $year . ')' );
+            pspa_ms_log( 'Login failed for ' . $first . ' ' . $last . ' (' . $year . ')', 'warning' );
             $output .= '<p>' . esc_html__( 'Δεν βρέθηκε αντίστοιχος χρήστης.', 'pspa-membership-system' ) . '</p>';
         }
     }
@@ -451,6 +463,7 @@ function pspa_ms_login_by_details_shortcode() {
 function pspa_ms_register_shortcodes() {
     add_shortcode( 'pspa_login_by_details', 'pspa_ms_login_by_details_shortcode' );
     add_shortcode( 'pspa_graduate_directory', 'pspa_ms_graduate_directory_shortcode' );
+    pspa_ms_log( 'Shortcodes registered', 'debug' );
 }
 add_action( 'init', 'pspa_ms_register_shortcodes' );
 
@@ -472,6 +485,7 @@ function pspa_ms_maybe_hide_login_menu_item( $items, $menu, $args ) {
             $post = get_post( $item->object_id );
             if ( $post && has_shortcode( $post->post_content, 'pspa_login_by_details' ) ) {
                 unset( $items[ $key ] );
+                pspa_ms_log( 'Hid login-by-details menu item for user ' . get_current_user_id(), 'debug' );
             }
         }
     }
@@ -483,20 +497,34 @@ add_filter( 'wp_nav_menu_objects', 'pspa_ms_maybe_hide_login_menu_item', 10, 3 )
 /**
  * Append a message to the PSPA log.
  *
- * @param string $message Log message.
+ * @param mixed  $message Log message or data.
+ * @param string $level   Log level.
+ * @param array  $context Additional context.
  */
-function pspa_ms_log( $message ) {
-    $logs   = get_option( 'pspa_ms_logs', array() );
-    $logs[] = array(
+function pspa_ms_log( $message, $level = 'info', $context = array() ) {
+    if ( ! is_scalar( $message ) ) {
+        $message = wp_json_encode( $message );
+    }
+
+    $entry = array(
         'time'    => current_time( 'mysql' ),
-        'message' => $message,
+        'level'   => $level,
+        'message' => (string) $message,
+        'context' => $context,
     );
+
+    $logs   = get_option( 'pspa_ms_logs', array() );
+    $logs[] = $entry;
 
     if ( count( $logs ) > 200 ) {
         $logs = array_slice( $logs, -200 );
     }
 
     update_option( 'pspa_ms_logs', $logs );
+
+    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+        error_log( strtoupper( $level ) . ': ' . $entry['message'] . ( ! empty( $context ) ? ' ' . wp_json_encode( $context ) : '' ) );
+    }
 }
 
 /**
@@ -537,10 +565,14 @@ function pspa_ms_render_logs_page() {
         return;
     }
 
-    echo '<table class="widefat"><thead><tr><th>' . esc_html__( 'Time', 'pspa-membership-system' ) . '</th><th>' . esc_html__( 'Message', 'pspa-membership-system' ) . '</th></tr></thead><tbody>';
+    echo '<table class="widefat"><thead><tr><th>' . esc_html__( 'Time', 'pspa-membership-system' ) . '</th><th>' . esc_html__( 'Level', 'pspa-membership-system' ) . '</th><th>' . esc_html__( 'Message', 'pspa-membership-system' ) . '</th></tr></thead><tbody>';
 
     foreach ( $logs as $log ) {
-        echo '<tr><td>' . esc_html( $log['time'] ) . '</td><td>' . esc_html( $log['message'] ) . '</td></tr>';
+        $msg = $log['message'];
+        if ( ! empty( $log['context'] ) ) {
+            $msg .= ' ' . wp_json_encode( $log['context'] );
+        }
+        echo '<tr><td>' . esc_html( $log['time'] ) . '</td><td>' . esc_html( strtoupper( $log['level'] ) ) . '</td><td>' . esc_html( $msg ) . '</td></tr>';
     }
 
     echo '</tbody></table></div>';
@@ -575,6 +607,7 @@ function pspa_ms_sync_user_names( $post_id ) {
 
     if ( count( $data ) > 1 ) {
         wp_update_user( $data );
+        pspa_ms_log( 'Synced user names', 'debug', array( 'user_id' => $uid ) );
     }
 }
 add_action( 'acf/save_post', 'pspa_ms_sync_user_names', 20 );
@@ -590,6 +623,7 @@ add_action( 'acf/save_post', 'pspa_ms_sync_user_names', 20 );
  */
 function pspa_ms_login_redirect( $redirect_to, $request, $user ) {
     if ( isset( $user->ID ) && ( in_array( 'system-admin', (array) $user->roles, true ) || in_array( 'professionalcatalogue', (array) $user->roles, true ) ) ) {
+        pspa_ms_log( 'Redirecting user ID ' . $user->ID . ' after login', 'debug' );
         return wc_get_account_endpoint_url( 'graduate-profile' );
     }
     return $redirect_to;
@@ -603,6 +637,7 @@ function pspa_ms_block_admin_access() {
     if ( is_admin() && ! wp_doing_ajax() && is_user_logged_in() ) {
         $user = wp_get_current_user();
         if ( in_array( 'system-admin', (array) $user->roles, true ) || in_array( 'professionalcatalogue', (array) $user->roles, true ) ) {
+            pspa_ms_log( 'Blocked admin access for user ID ' . $user->ID, 'warning' );
             wp_safe_redirect( wc_get_account_endpoint_url( 'graduate-profile' ) );
             exit;
         }
@@ -619,6 +654,7 @@ add_action( 'init', 'pspa_ms_block_admin_access' );
 function pspa_ms_get_unique_user_meta_values( $meta_key ) {
     global $wpdb;
     $values = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT meta_value FROM {$wpdb->usermeta} WHERE meta_key = %s AND meta_value <> '' ORDER BY meta_value ASC", $meta_key ) );
+    pspa_ms_log( 'Fetched unique meta values', 'debug', array( 'meta_key' => $meta_key, 'count' => count( $values ) ) );
     return $values;
 }
 
@@ -667,6 +703,7 @@ function pspa_ms_render_graduate_card( $user_id ) {
  */
 function pspa_ms_graduate_directory_shortcode() {
     if ( ! is_user_logged_in() ) {
+        pspa_ms_log( 'Graduate directory accessed without login', 'warning' );
         return '<p>' . esc_html__( 'Πρέπει να είστε συνδεδεμένοι για να δείτε τον κατάλογο αποφοίτων.', 'pspa-membership-system' ) . '</p>';
     }
 
@@ -683,6 +720,12 @@ function pspa_ms_graduate_directory_shortcode() {
     $jobs        = pspa_ms_get_unique_user_meta_values( 'gn_job_title' );
     $cities      = pspa_ms_get_unique_user_meta_values( 'gn_city' );
     $countries   = pspa_ms_get_unique_user_meta_values( 'gn_country' );
+    pspa_ms_log( 'Graduate directory rendered', 'debug', array(
+        'professions' => count( $professions ),
+        'jobs'        => count( $jobs ),
+        'cities'      => count( $cities ),
+        'countries'   => count( $countries ),
+    ) );
 
     ob_start();
     ?>
@@ -726,6 +769,7 @@ function pspa_ms_ajax_filter_graduates() {
     check_ajax_referer( 'pspa_ms_dir', 'nonce' );
 
     if ( ! is_user_logged_in() ) {
+        pspa_ms_log( 'Unauthorized graduate directory AJAX request', 'warning' );
         wp_send_json_error();
     }
 
@@ -754,6 +798,7 @@ function pspa_ms_ajax_filter_graduates() {
 
     $users = new WP_User_Query( $args );
     $html  = '';
+    pspa_ms_log( 'Graduate directory filters', 'debug', array( 'filters' => $meta_query, 'results' => count( $users->get_results() ) ) );
 
     if ( ! empty( $users->get_results() ) ) {
         foreach ( $users->get_results() as $user ) {
@@ -773,6 +818,7 @@ add_action( 'wp_ajax_pspa_ms_filter_graduates', 'pspa_ms_ajax_filter_graduates' 
 function pspa_ms_flush_rewrite_rules() {
     pspa_ms_register_graduate_profile_endpoint();
     flush_rewrite_rules();
+    pspa_ms_log( 'Flushed rewrite rules', 'info' );
 }
 register_activation_hook( __FILE__, 'pspa_ms_flush_rewrite_rules' );
 register_deactivation_hook( __FILE__, 'flush_rewrite_rules' );
