@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.11
+ * Version: 0.0.12
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.11' );
+define( 'PSPA_MS_VERSION', '0.0.12' );
 
 /**
  * Enqueue shared dashboard styles.
@@ -361,6 +361,7 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
  */
 function pspa_ms_login_by_details_shortcode() {
     if ( is_user_logged_in() ) {
+        pspa_ms_log( 'Login form accessed by logged-in user ID ' . get_current_user_id() );
         return '<p>' . esc_html__( 'Είστε ήδη επαληθευμένοι.', 'pspa-membership-system' ) . '</p>';
     }
 
@@ -376,6 +377,8 @@ function pspa_ms_login_by_details_shortcode() {
         $first = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
         $last  = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
         $year  = isset( $_POST['graduation_year'] ) ? sanitize_text_field( wp_unslash( $_POST['graduation_year'] ) ) : '';
+
+        pspa_ms_log( 'Login attempt: ' . $first . ' ' . $last . ' (' . $year . ')' );
 
         $query = new WP_User_Query(
             array(
@@ -405,12 +408,14 @@ function pspa_ms_login_by_details_shortcode() {
 
         if ( ! empty( $users ) ) {
             $user = $users[0];
+            pspa_ms_log( 'Login success for user ID ' . $user->ID );
             wp_set_current_user( $user->ID, $user->user_login );
             wp_set_auth_cookie( $user->ID, true );
             do_action( 'wp_login', $user->user_login, $user );
             wp_safe_redirect( wc_get_account_endpoint_url( 'graduate-profile' ) );
             exit;
         } else {
+            pspa_ms_log( 'Login failed for ' . $first . ' ' . $last . ' (' . $year . ')' );
             $output .= '<p>' . esc_html__( 'Δεν βρέθηκε αντίστοιχος χρήστης.', 'pspa-membership-system' ) . '</p>';
         }
     }
@@ -448,6 +453,98 @@ function pspa_ms_register_shortcodes() {
     add_shortcode( 'pspa_graduate_directory', 'pspa_ms_graduate_directory_shortcode' );
 }
 add_action( 'init', 'pspa_ms_register_shortcodes' );
+
+/**
+ * Hide menu items leading to the login-by-details page once a user is logged in.
+ *
+ * @param array  $items Menu items.
+ * @param object $menu  Menu object.
+ * @param array  $args  Menu arguments.
+ * @return array
+ */
+function pspa_ms_maybe_hide_login_menu_item( $items, $menu, $args ) {
+    if ( ! is_user_logged_in() ) {
+        return $items;
+    }
+
+    foreach ( $items as $key => $item ) {
+        if ( 'page' === $item->object ) {
+            $post = get_post( $item->object_id );
+            if ( $post && has_shortcode( $post->post_content, 'pspa_login_by_details' ) ) {
+                unset( $items[ $key ] );
+            }
+        }
+    }
+
+    return $items;
+}
+add_filter( 'wp_nav_menu_objects', 'pspa_ms_maybe_hide_login_menu_item', 10, 3 );
+
+/**
+ * Append a message to the PSPA log.
+ *
+ * @param string $message Log message.
+ */
+function pspa_ms_log( $message ) {
+    $logs   = get_option( 'pspa_ms_logs', array() );
+    $logs[] = array(
+        'time'    => current_time( 'mysql' ),
+        'message' => $message,
+    );
+
+    if ( count( $logs ) > 200 ) {
+        $logs = array_slice( $logs, -200 );
+    }
+
+    update_option( 'pspa_ms_logs', $logs );
+}
+
+/**
+ * Register an admin page to display PSPA logs.
+ */
+function pspa_ms_register_logs_page() {
+    add_menu_page(
+        __( 'PSPA Logs', 'pspa-membership-system' ),
+        __( 'PSPA Logs', 'pspa-membership-system' ),
+        'manage_options',
+        'pspa-ms-logs',
+        'pspa_ms_render_logs_page',
+        'dashicons-list-view',
+        80
+    );
+}
+add_action( 'admin_menu', 'pspa_ms_register_logs_page' );
+
+/**
+ * Render the PSPA logs admin page.
+ */
+function pspa_ms_render_logs_page() {
+    if ( isset( $_POST['pspa_ms_clear_logs'] ) && check_admin_referer( 'pspa_ms_clear_logs_action', 'pspa_ms_clear_logs_nonce' ) ) {
+        delete_option( 'pspa_ms_logs' );
+        echo '<div class="updated"><p>' . esc_html__( 'Logs cleared.', 'pspa-membership-system' ) . '</p></div>';
+    }
+
+    $logs = get_option( 'pspa_ms_logs', array() );
+
+    echo '<div class="wrap"><h1>' . esc_html__( 'PSPA Logs', 'pspa-membership-system' ) . '</h1>';
+    echo '<form method="post">';
+    wp_nonce_field( 'pspa_ms_clear_logs_action', 'pspa_ms_clear_logs_nonce' );
+    echo '<p><input type="submit" name="pspa_ms_clear_logs" class="button" value="' . esc_attr__( 'Clear Logs', 'pspa-membership-system' ) . '" /></p>';
+    echo '</form>';
+
+    if ( empty( $logs ) ) {
+        echo '<p>' . esc_html__( 'No log entries found.', 'pspa-membership-system' ) . '</p></div>';
+        return;
+    }
+
+    echo '<table class="widefat"><thead><tr><th>' . esc_html__( 'Time', 'pspa-membership-system' ) . '</th><th>' . esc_html__( 'Message', 'pspa-membership-system' ) . '</th></tr></thead><tbody>';
+
+    foreach ( $logs as $log ) {
+        echo '<tr><td>' . esc_html( $log['time'] ) . '</td><td>' . esc_html( $log['message'] ) . '</td></tr>';
+    }
+
+    echo '</tbody></table></div>';
+}
 
 /**
  * Sync first, last and display names with ACF fields after saving.
