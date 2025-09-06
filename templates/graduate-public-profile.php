@@ -61,10 +61,10 @@ $show_country = function_exists( 'get_field' ) ? get_field( 'gn_show_country', '
             <p class="pspa-graduate-location"><?php echo esc_html( trim( $city_display . ( $country_display ? ', ' . $country_display : '' ) ) ); ?></p>
         <?php endif; ?>
     </div>
-    <?php if ( function_exists( 'acf_get_fields' ) && 'hide_all' !== $visibility ) : ?>
+    <?php if ( function_exists( 'get_fields' ) && 'hide_all' !== $visibility ) : ?>
         <div class="pspa-graduate-details">
             <?php
-            $fields        = acf_get_fields( 'group_gn_graduate_profile' );
+            $fields        = get_fields( 'user_' . $pspa_user->ID );
             $header_fields = array(
                 'gn_job_title',
                 'gn_position_company',
@@ -74,31 +74,29 @@ $show_country = function_exists( 'get_field' ) ? get_field( 'gn_show_country', '
                 'gn_profile_picture',
             );
             if ( $fields ) {
-                foreach ( $fields as $field ) {
-                    if ( 'tab' === $field['type'] ) {
+                foreach ( $fields as $name => $value ) {
+                    if ( 'gn_visibility_mode' === $name || 0 === strpos( $name, 'gn_show_' ) ) {
                         continue;
                     }
-                    if ( 'gn_visibility_mode' === $field['name'] || 0 === strpos( $field['name'], 'gn_show_' ) ) {
-                        continue;
-                    }
-                    if ( in_array( $field['name'], $header_fields, true ) ) {
+                    if ( in_array( $name, $header_fields, true ) ) {
                         continue;
                     }
                     if ( 'show_all' !== $visibility ) {
-                        $show = function_exists( 'get_field' ) ? get_field( 'gn_show_' . $field['name'], 'user_' . $pspa_user->ID ) : get_user_meta( $pspa_user->ID, 'gn_show_' . $field['name'], true );
+                        $show = function_exists( 'get_field' ) ? get_field( 'gn_show_' . $name, 'user_' . $pspa_user->ID ) : get_user_meta( $pspa_user->ID, 'gn_show_' . $name, true );
                         if ( null !== $show && ! $show ) {
                             continue;
                         }
                     }
-                    $value = function_exists( 'get_field' ) ? get_field( $field['name'], 'user_' . $pspa_user->ID ) : get_user_meta( $pspa_user->ID, $field['name'], true );
-                    if ( 'true_false' === $field['type'] ) {
-                        if ( empty( $value ) ) {
+                    $field_obj = function_exists( 'acf_get_field' ) ? acf_get_field( $name ) : false;
+                    $label     = $field_obj ? $field_obj['label'] : $name;
+                    if ( is_bool( $value ) ) {
+                        if ( ! $value ) {
                             continue;
                         }
                         printf(
                             '<p class="pspa-graduate-field pspa-graduate-field-%1$s"><strong>%2$s</strong></p>',
-                            esc_attr( $field['name'] ),
-                            esc_html( $field['label'] )
+                            esc_attr( $name ),
+                            esc_html( $label )
                         );
                         continue;
                     }
@@ -110,8 +108,8 @@ $show_country = function_exists( 'get_field' ) ? get_field( 'gn_show_country', '
                     }
                     printf(
                         '<p class="pspa-graduate-field pspa-graduate-field-%1$s"><strong>%2$s:</strong> %3$s</p>',
-                        esc_attr( $field['name'] ),
-                        esc_html( $field['label'] ),
+                        esc_attr( $name ),
+                        esc_html( $label ),
                         esc_html( $value )
                     );
                 }
