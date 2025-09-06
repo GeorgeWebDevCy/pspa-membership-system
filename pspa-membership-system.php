@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.11
+ * Version: 0.0.12
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.11' );
+define( 'PSPA_MS_VERSION', '0.0.12' );
 
 /**
  * Enqueue shared dashboard styles.
@@ -148,6 +148,23 @@ function pspa_ms_hide_visibility_fields( $field ) {
 }
 add_filter( 'acf/prepare_field/key=tab_gn_visibility', 'pspa_ms_hide_visibility_fields' );
 add_filter( 'acf/prepare_field/name=gn_visibility_mode', 'pspa_ms_hide_visibility_fields' );
+
+/**
+ * Hide "show on public profile" toggles when viewing public profiles.
+ *
+ * @param array $field Field settings.
+ * @return array|false
+ */
+function pspa_ms_hide_public_visibility_toggles( $field ) {
+    if ( 0 === strpos( $field['name'], 'gn_show_' ) ) {
+        if ( function_exists( 'is_account_page' ) && is_account_page() && false !== get_query_var( 'graduate-profile', false ) ) {
+            return $field;
+        }
+        return false;
+    }
+    return $field;
+}
+add_filter( 'acf/prepare_field', 'pspa_ms_hide_public_visibility_toggles', 20 );
 
 /**
  * Render Graduate Profile endpoint content.
