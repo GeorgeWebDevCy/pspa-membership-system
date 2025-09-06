@@ -19,6 +19,12 @@ if ( ! $pspa_user instanceof WP_User ) {
 }
 
 pspa_ms_enqueue_dashboard_styles();
+wp_enqueue_style(
+    'pspa-graduate-profile',
+    plugins_url( 'assets/css/graduate-profile.css', dirname( __DIR__ ) . '/pspa-membership-system.php' ),
+    array( 'pspa-ms-dashboard' ),
+    PSPA_MS_VERSION
+);
 get_header();
 
 $uid        = $pspa_user->ID;
@@ -89,6 +95,13 @@ foreach ( $header_field_names as $name ) {
     $current_section_open = false;
     foreach ( $fields as $field ) {
         if ( 'tab' === $field['type'] ) {
+            if ( isset( $field['key'] ) && 'tab_gn_visibility' === $field['key'] ) {
+                if ( $current_section_open ) {
+                    echo '</div></section>';
+                    $current_section_open = false;
+                }
+                continue;
+            }
             if ( $current_section_open ) {
                 echo '</div></section>';
             }
