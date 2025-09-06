@@ -1,0 +1,1173 @@
+[
+  {
+    "key": "group_gn_graduate_profile",
+    "title": "Graduate Profile",
+    "fields": [
+      {
+        "key": "tab_gn_basic",
+        "label": "Βασικά στοιχεία",
+        "name": "",
+        "aria-label": "",
+        "type": "tab",
+        "instructions": "",
+        "required": 0,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "",
+          "class": "",
+          "id": ""
+        },
+        "placement": "left",
+        "endpoint": 0,
+        "selected": 0
+      },
+      {
+        "key": "field_gn_surname",
+        "label": "Επώνυμο",
+        "name": "gn_surname",
+        "aria-label": "",
+        "type": "text",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "maxlength": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": ""
+      },
+      {
+        "key": "field_gn_show_surname",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: Επώνυμο",
+        "name": "gn_show_surname",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "field_gn_first_name",
+        "label": "Όνομα",
+        "name": "gn_first_name",
+        "aria-label": "",
+        "type": "text",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "maxlength": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": ""
+      },
+      {
+        "key": "field_gn_show_first_name",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: Όνομα",
+        "name": "gn_show_first_name",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "field_gn_father_name",
+        "label": "Πατρώνυμο",
+        "name": "gn_father_name",
+        "aria-label": "",
+        "type": "text",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "maxlength": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": ""
+      },
+      {
+        "key": "field_gn_show_father_name",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: Πατρώνυμο",
+        "name": "gn_show_father_name",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "field_gn_graduation_year",
+        "label": "Αποφοίτηση (Έτος)",
+        "name": "gn_graduation_year",
+        "aria-label": "",
+        "type": "number",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "33",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "min": "",
+        "max": "",
+        "step": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": ""
+      },
+      {
+        "key": "field_gn_show_graduation_year",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: Αποφοίτηση (Έτος)",
+        "name": "gn_show_graduation_year",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "33",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "field_gn_deceased",
+        "label": "Α (ΠΟΒΙΩΣΑΣ) – Απεβίωσε",
+        "name": "gn_deceased",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "33",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 0,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "field_gn_show_deceased",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: Α (ΠΟΒΙΩΣΑΣ) – Απεβίωσε",
+        "name": "gn_show_deceased",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "33",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 0,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "field_gn_notes",
+        "label": "ΣΧΟΛΙΑ",
+        "name": "gn_notes",
+        "aria-label": "",
+        "type": "textarea",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "100",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "new_lines": "",
+        "maxlength": "",
+        "placeholder": "",
+        "rows": ""
+      },
+      {
+        "key": "field_gn_show_notes",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: ΣΧΟΛΙΑ",
+        "name": "gn_show_notes",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "100",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "field_gn_profile_picture",
+        "label": "Φωτογραφία προφίλ",
+        "name": "gn_profile_picture",
+        "aria-label": "",
+        "type": "image",
+        "instructions": "Ανεβάστε μια φωτογραφία προφίλ.",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "return_format": "id",
+        "preview_size": "medium",
+        "library": "all",
+        "min_width": "",
+        "min_height": "",
+        "min_size": "",
+        "max_width": "",
+        "max_height": "",
+        "max_size": "",
+        "mime_types": ""
+      },
+      {
+        "key": "field_gn_show_profile_picture",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: Φωτογραφία προφίλ",
+        "name": "gn_show_profile_picture",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "Αν είναι απενεργοποιημένο, θα εμφανίζεται η προεπιλεγμένη εικόνα.",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "tab_gn_contact",
+        "label": "Επικοινωνία",
+        "name": "",
+        "aria-label": "",
+        "type": "tab",
+        "instructions": "",
+        "required": 0,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "",
+          "class": "",
+          "id": ""
+        },
+        "placement": "left",
+        "endpoint": 0,
+        "selected": 0
+      },
+      {
+        "key": "field_gn_email",
+        "label": "e-Mail",
+        "name": "gn_email",
+        "aria-label": "",
+        "type": "email",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": ""
+      },
+      {
+        "key": "field_gn_show_email",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: e-Mail",
+        "name": "gn_show_email",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "field_gn_mobile",
+        "label": "Κινητό",
+        "name": "gn_mobile",
+        "aria-label": "",
+        "type": "text",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "maxlength": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": ""
+      },
+      {
+        "key": "field_gn_show_mobile",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: Κινητό",
+        "name": "gn_show_mobile",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "field_gn_work_phone",
+        "label": "Τηλ. Εργασίας",
+        "name": "gn_work_phone",
+        "aria-label": "",
+        "type": "text",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "maxlength": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": ""
+      },
+      {
+        "key": "field_gn_show_work_phone",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: Τηλ. Εργασίας",
+        "name": "gn_show_work_phone",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "field_gn_work_phone_2",
+        "label": "Εργασίας 2",
+        "name": "gn_work_phone_2",
+        "aria-label": "",
+        "type": "text",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "maxlength": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": ""
+      },
+      {
+        "key": "field_gn_show_work_phone_2",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: Εργασίας 2",
+        "name": "gn_show_work_phone_2",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "field_gn_home_phone",
+        "label": "Τηλ. Κατοικίας",
+        "name": "gn_home_phone",
+        "aria-label": "",
+        "type": "text",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "maxlength": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": ""
+      },
+      {
+        "key": "field_gn_show_home_phone",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: Τηλ. Κατοικίας",
+        "name": "gn_show_home_phone",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "field_gn_home_phone_2",
+        "label": "Κατοικίας 2",
+        "name": "gn_home_phone_2",
+        "aria-label": "",
+        "type": "text",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "maxlength": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": ""
+      },
+      {
+        "key": "field_gn_show_home_phone_2",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: Κατοικίας 2",
+        "name": "gn_show_home_phone_2",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "field_gn_fax",
+        "label": "FAX",
+        "name": "gn_fax",
+        "aria-label": "",
+        "type": "text",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "maxlength": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": ""
+      },
+      {
+        "key": "field_gn_show_fax",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: FAX",
+        "name": "gn_show_fax",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "tab_gn_address",
+        "label": "Διεύθυνση",
+        "name": "",
+        "aria-label": "",
+        "type": "tab",
+        "instructions": "",
+        "required": 0,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "",
+          "class": "",
+          "id": ""
+        },
+        "placement": "left",
+        "endpoint": 0,
+        "selected": 0
+      },
+      {
+        "key": "field_gn_street_address",
+        "label": "Οδός/Αριθμός",
+        "name": "gn_street_address",
+        "aria-label": "",
+        "type": "text",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "60",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "maxlength": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": ""
+      },
+      {
+        "key": "field_gn_show_street_address",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: Οδός/Αριθμός",
+        "name": "gn_show_street_address",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "60",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "field_gn_postal_code",
+        "label": "Τ.Κ.",
+        "name": "gn_postal_code",
+        "aria-label": "",
+        "type": "text",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "20",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "maxlength": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": ""
+      },
+      {
+        "key": "field_gn_show_postal_code",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: Τ.Κ.",
+        "name": "gn_show_postal_code",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "20",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "field_gn_area",
+        "label": "Περιοχή",
+        "name": "gn_area",
+        "aria-label": "",
+        "type": "text",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "20",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "maxlength": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": ""
+      },
+      {
+        "key": "field_gn_show_area",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: Περιοχή",
+        "name": "gn_show_area",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "20",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "field_gn_city",
+        "label": "Πόλη",
+        "name": "gn_city",
+        "aria-label": "",
+        "type": "text",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "maxlength": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": ""
+      },
+      {
+        "key": "field_gn_show_city",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: Πόλη",
+        "name": "gn_show_city",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "field_gn_country",
+        "label": "Κράτος",
+        "name": "gn_country",
+        "aria-label": "",
+        "type": "text",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "maxlength": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": ""
+      },
+      {
+        "key": "field_gn_show_country",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: Κράτος",
+        "name": "gn_show_country",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "tab_gn_edu",
+        "label": "Σπουδές",
+        "name": "",
+        "aria-label": "",
+        "type": "tab",
+        "instructions": "",
+        "required": 0,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "",
+          "class": "",
+          "id": ""
+        },
+        "placement": "left",
+        "endpoint": 0,
+        "selected": 0
+      },
+      {
+        "key": "field_gn_degree",
+        "label": "ΣΠΟΥΔΕΣ Πτυχίο",
+        "name": "gn_degree",
+        "aria-label": "",
+        "type": "text",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "maxlength": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": ""
+      },
+      {
+        "key": "field_gn_show_degree",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: ΣΠΟΥΔΕΣ Πτυχίο",
+        "name": "gn_show_degree",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "field_gn_university",
+        "label": "ΣΠΟΥΔΕΣ ΑΕΙ (Ίδρυμα)",
+        "name": "gn_university",
+        "aria-label": "",
+        "type": "text",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "maxlength": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": ""
+      },
+      {
+        "key": "field_gn_show_university",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: ΣΠΟΥΔΕΣ ΑΕΙ (Ίδρυμα)",
+        "name": "gn_show_university",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "field_gn_specialization",
+        "label": "Ειδικότητα",
+        "name": "gn_specialization",
+        "aria-label": "",
+        "type": "text",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "maxlength": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": ""
+      },
+      {
+        "key": "field_gn_show_specialization",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: Ειδικότητα",
+        "name": "gn_show_specialization",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "tab_gn_work",
+        "label": "Εργασία",
+        "name": "",
+        "aria-label": "",
+        "type": "tab",
+        "instructions": "",
+        "required": 0,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "",
+          "class": "",
+          "id": ""
+        },
+        "placement": "left",
+        "endpoint": 0,
+        "selected": 0
+      },
+      {
+        "key": "field_gn_profession",
+        "label": "Επάγγελμα",
+        "name": "gn_profession",
+        "aria-label": "",
+        "type": "text",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "maxlength": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": ""
+      },
+      {
+        "key": "field_gn_show_profession",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: Επάγγελμα",
+        "name": "gn_show_profession",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "field_gn_job_title",
+        "label": "Τίτλος",
+        "name": "gn_job_title",
+        "aria-label": "",
+        "type": "text",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "maxlength": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": ""
+      },
+      {
+        "key": "field_gn_show_job_title",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: Τίτλος",
+        "name": "gn_show_job_title",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "field_gn_position_company",
+        "label": "Θέση-Εταιρεία",
+        "name": "gn_position_company",
+        "aria-label": "",
+        "type": "text",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "maxlength": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": ""
+      },
+      {
+        "key": "field_gn_show_position_company",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: Θέση-Εταιρεία",
+        "name": "gn_show_position_company",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 1,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
+      },
+      {
+        "key": "tab_gn_visibility",
+        "label": "Ρυθμίσεις ορατότητας",
+        "name": "",
+        "aria-label": "",
+        "type": "tab",
+        "instructions": "",
+        "required": 0,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "",
+          "class": "",
+          "id": ""
+        },
+        "placement": "left",
+        "endpoint": 0,
+        "selected": 0
+      },
+      {
+        "key": "field_gn_visibility_mode",
+        "label": "Λειτουργία ορατότητας",
+        "name": "gn_visibility_mode",
+        "aria-label": "",
+        "type": "radio",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "",
+          "class": "",
+          "id": ""
+        },
+        "choices": {
+          "use_checkboxes": "Χρήση των επιμέρους checkbox (προεπιλογή)",
+          "show_all": "Εμφάνιση όλων",
+          "hide_all": "Απόκρυψη όλων"
+        },
+        "default_value": "use_checkboxes",
+        "layout": "horizontal",
+        "other_choice": 0,
+        "save_other_choice": 0,
+        "allow_null": 0,
+        "return_format": "value"
+      }
+    ],
+    "location": [
+      [
+        {
+          "param": "user_role",
+          "operator": "==",
+          "value": "system-admin"
+        }
+      ],
+      [
+        {
+          "param": "user_role",
+          "operator": "==",
+          "value": "professionalcatalogue"
+        }
+      ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "description": "",
+    "show_in_rest": 0
+  }
+]
