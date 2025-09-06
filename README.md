@@ -103,6 +103,3 @@ The plugin registers a **Graduate Profile** field group in Advanced Custom Field
 - **Εμφάνιση στο δημόσιο προφίλ: Τίτλος** (`gn_show_job_title`, true_false)
 - **Θέση-Εταιρεία** (`gn_position_company`, text)
 - **Εμφάνιση στο δημόσιο προφίλ: Θέση-Εταιρεία** (`gn_show_position_company`, true_false)
-
-### Ρυθμίσεις ορατότητας
-- **Λειτουργία ορατότητας** (`gn_visibility_mode`, radio)
