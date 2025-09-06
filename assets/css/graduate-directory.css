@@ -21,6 +21,8 @@
     padding: 1em;
     margin-bottom: 1em;
     background: #fff;
+    text-decoration: none;
+    color: inherit;
 }
 
 .pspa-graduate-avatar {
@@ -33,4 +35,13 @@
 
 .pspa-graduate-details p {
     margin: 0.2em 0;
+}
+
+.pspa-graduate-more {
+    display: inline-block;
+    margin-top: 0.5em;
+    padding: 0.4em 0.8em;
+    background: var(--ink, #3b2b22);
+    color: #fff;
+    border-radius: 4px;
 }

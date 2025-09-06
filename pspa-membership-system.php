@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.9
+ * Version: 0.0.10
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,19 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.9' );
+define( 'PSPA_MS_VERSION', '0.0.10' );
+
+/**
+ * Enqueue shared dashboard styles.
+ */
+function pspa_ms_enqueue_dashboard_styles() {
+    wp_enqueue_style(
+        'pspa-ms-dashboard',
+        plugin_dir_url( __FILE__ ) . 'assets/css/dashboard.css',
+        array(),
+        PSPA_MS_VERSION
+    );
+}
 
 /**
  * Ensure required plugins are active.
@@ -142,7 +154,7 @@ add_filter( 'acf/prepare_field/name=gn_visibility_mode', 'pspa_ms_hide_visibilit
  */
 function pspa_ms_graduate_profile_content() {
     if ( ! is_user_logged_in() ) {
-        echo esc_html__( 'You need to be logged in to edit your profile.', 'pspa-membership-system' );
+        echo esc_html__( 'Πρέπει να είστε συνδεδεμένοι για να επεξεργαστείτε το προφίλ σας.', 'pspa-membership-system' );
         return;
     }
 
@@ -187,22 +199,12 @@ function pspa_ms_simple_profile_form( $user_id ) {
             wp_update_user( $update_data );
         }
 
-        wc_add_notice( __( 'Profile updated successfully.', 'pspa-membership-system' ) );
+        wc_add_notice( __( 'Το προφίλ ενημερώθηκε με επιτυχία.', 'pspa-membership-system' ) );
         $user = wp_get_current_user();
     }
 
+    pspa_ms_enqueue_dashboard_styles();
     ?>
-    <style>
-    .pspa-dashboard{--bg:#f2ece4;--card:#fffaf5;--ink:#3b2b22;--line:#e4d6c8}
-    .pspa-dashboard .acf-field{background:var(--card);border:1px solid var(--line);padding:10px 12px;margin-bottom:12px;border-radius:14px}
-    .pspa-dashboard .acf-label label{color:var(--ink);font-weight:600}
-    .pspa-dashboard input[type="text"],
-    .pspa-dashboard input[type="email"],
-    .pspa-dashboard input[type="number"],
-    .pspa-dashboard input[type="password"],
-    .pspa-dashboard select,
-    .pspa-dashboard textarea{width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
-    </style>
     <form class="woocommerce-EditAccountForm edit-account pspa-dashboard" method="post">
         <?php if ( function_exists( 'acf_form' ) ) : ?>
             <?php acf_form( array(
@@ -212,11 +214,11 @@ function pspa_ms_simple_profile_form( $user_id ) {
             ) ); ?>
         <?php endif; ?>
         <p class="form-row form-row-wide">
-            <label for="email"><?php esc_html_e( 'Email address', 'pspa-membership-system' ); ?></label>
+            <label for="email"><?php esc_html_e( 'Διεύθυνση email', 'pspa-membership-system' ); ?></label>
             <input type="email" name="email" id="email" value="<?php echo esc_attr( $user->user_email ); ?>" />
         </p>
         <p class="form-row form-row-wide">
-            <label for="password"><?php esc_html_e( 'New password', 'pspa-membership-system' ); ?></label>
+            <label for="password"><?php esc_html_e( 'Νέος κωδικός', 'pspa-membership-system' ); ?></label>
             <input type="password" name="password" id="password" />
         </p>
         <?php wp_nonce_field( 'pspa_graduate_profile', 'pspa_graduate_profile_nonce' ); ?>
@@ -245,8 +247,8 @@ function pspa_ms_admin_profile_interface() {
     ?>
     <form method="post" style="margin-bottom:20px;">
         <p>
-            <input type="text" name="pspa_user_search" value="<?php echo esc_attr( $search_term ); ?>" placeholder="<?php esc_attr_e( 'Search users', 'pspa-membership-system' ); ?>" />
-            <button type="submit" class="button"><?php esc_html_e( 'Search', 'pspa-membership-system' ); ?></button>
+            <input type="text" name="pspa_user_search" value="<?php echo esc_attr( $search_term ); ?>" placeholder="<?php esc_attr_e( 'Αναζήτηση χρηστών', 'pspa-membership-system' ); ?>" />
+            <button type="submit" class="button"><?php esc_html_e( 'Αναζήτηση', 'pspa-membership-system' ); ?></button>
         </p>
     </form>
     <?php
@@ -273,7 +275,7 @@ function pspa_ms_admin_profile_interface() {
             }
             echo '</ul>';
         } else {
-            echo '<p>' . esc_html__( 'No users found.', 'pspa-membership-system' ) . '</p>';
+            echo '<p>' . esc_html__( 'Δεν βρέθηκαν χρήστες.', 'pspa-membership-system' ) . '</p>';
         }
     }
 }
@@ -287,7 +289,7 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
     $user = get_user_by( 'id', $user_id );
 
     if ( ! $user ) {
-        echo esc_html__( 'Invalid user.', 'pspa-membership-system' );
+        echo esc_html__( 'Μη έγκυρος χρήστης.', 'pspa-membership-system' );
         return;
     }
 
@@ -315,28 +317,28 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
 
         wp_update_user( $update_data );
 
-        wc_add_notice( __( 'Profile updated successfully.', 'pspa-membership-system' ) );
+        wc_add_notice( __( 'Το προφίλ ενημερώθηκε με επιτυχία.', 'pspa-membership-system' ) );
         $user = get_user_by( 'id', $user_id );
     }
 
-    echo '<p><a href="' . esc_url( remove_query_arg( 'edit_user' ) ) . '">&larr; ' . esc_html__( 'Back to search', 'pspa-membership-system' ) . '</a></p>';
+    echo '<p><a href="' . esc_url( remove_query_arg( 'edit_user' ) ) . '">&larr; ' . esc_html__( 'Επιστροφή στην αναζήτηση', 'pspa-membership-system' ) . '</a></p>';
 
     ?>
     <form method="post" class="pspa-admin-edit-user">
         <p class="form-row form-row-first">
-            <label for="first_name"><?php esc_html_e( 'First name', 'pspa-membership-system' ); ?></label>
+            <label for="first_name"><?php esc_html_e( 'Όνομα', 'pspa-membership-system' ); ?></label>
             <input type="text" name="first_name" id="first_name" value="<?php echo esc_attr( $user->first_name ); ?>" />
         </p>
         <p class="form-row form-row-last">
-            <label for="last_name"><?php esc_html_e( 'Last name', 'pspa-membership-system' ); ?></label>
+            <label for="last_name"><?php esc_html_e( 'Επίθετο', 'pspa-membership-system' ); ?></label>
             <input type="text" name="last_name" id="last_name" value="<?php echo esc_attr( $user->last_name ); ?>" />
         </p>
         <p class="form-row form-row-wide">
-            <label for="email"><?php esc_html_e( 'Email address', 'pspa-membership-system' ); ?></label>
+            <label for="email"><?php esc_html_e( 'Διεύθυνση email', 'pspa-membership-system' ); ?></label>
             <input type="email" name="email" id="email" value="<?php echo esc_attr( $user->user_email ); ?>" />
         </p>
         <p class="form-row form-row-wide">
-            <label for="password"><?php esc_html_e( 'New password', 'pspa-membership-system' ); ?></label>
+            <label for="password"><?php esc_html_e( 'Νέος κωδικός', 'pspa-membership-system' ); ?></label>
             <input type="password" name="password" id="password" />
         </p>
         <?php if ( function_exists( 'acf_form' ) ) : ?>
@@ -361,6 +363,8 @@ function pspa_ms_login_by_details_shortcode() {
     if ( is_user_logged_in() ) {
         return '';
     }
+
+    pspa_ms_enqueue_dashboard_styles();
 
     $output = '';
 
@@ -410,28 +414,28 @@ function pspa_ms_login_by_details_shortcode() {
             wp_safe_redirect( wc_get_account_endpoint_url( 'graduate-profile' ) );
             exit;
         } else {
-            $output .= '<p>' . esc_html__( 'No matching user found.', 'pspa-membership-system' ) . '</p>';
+            $output .= '<p>' . esc_html__( 'Δεν βρέθηκε αντίστοιχος χρήστης.', 'pspa-membership-system' ) . '</p>';
         }
     }
 
     ob_start();
     ?>
-    <form method="post" class="pspa-login-by-details">
+    <form method="post" class="pspa-login-by-details pspa-dashboard">
         <p>
-            <label for="first_name"><?php esc_html_e( 'First Name', 'pspa-membership-system' ); ?></label>
+            <label for="first_name"><?php esc_html_e( 'Όνομα', 'pspa-membership-system' ); ?></label>
             <input type="text" name="first_name" id="first_name" required />
         </p>
         <p>
-            <label for="last_name"><?php esc_html_e( 'Last Name', 'pspa-membership-system' ); ?></label>
+            <label for="last_name"><?php esc_html_e( 'Επίθετο', 'pspa-membership-system' ); ?></label>
             <input type="text" name="last_name" id="last_name" required />
         </p>
         <p>
-            <label for="graduation_year"><?php esc_html_e( 'Graduation Year', 'pspa-membership-system' ); ?></label>
+            <label for="graduation_year"><?php esc_html_e( 'Έτος Αποφοίτησης', 'pspa-membership-system' ); ?></label>
             <input type="text" name="graduation_year" id="graduation_year" required />
         </p>
         <?php wp_nonce_field( 'pspa_login_details', 'pspa_login_details_nonce' ); ?>
         <p>
-            <button type="submit" class="button"><?php esc_html_e( 'Log In', 'pspa-membership-system' ); ?></button>
+            <button type="submit" class="button"><?php esc_html_e( 'Σύνδεση', 'pspa-membership-system' ); ?></button>
         </p>
     </form>
     <?php
@@ -538,9 +542,11 @@ function pspa_ms_render_graduate_card( $user_id ) {
     $city      = function_exists( 'get_field' ) ? (string) get_field( 'gn_city', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_city', true );
     $country   = function_exists( 'get_field' ) ? (string) get_field( 'gn_country', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_country', true );
 
+    $profile_url = get_author_posts_url( $user_id );
+
     ob_start();
     ?>
-    <div class="pspa-graduate-card">
+    <a class="pspa-graduate-card" href="<?php echo esc_url( $profile_url ); ?>">
         <div class="pspa-graduate-avatar"><?php echo get_avatar( $user_id, 96 ); ?></div>
         <div class="pspa-graduate-details">
             <h3 class="pspa-graduate-name"><?php echo esc_html( $name ); ?></h3>
@@ -553,8 +559,9 @@ function pspa_ms_render_graduate_card( $user_id ) {
             <?php if ( $city || $country ) : ?>
                 <p class="pspa-graduate-location"><?php echo esc_html( trim( $city . ( $country ? ', ' . $country : '' ) ) ); ?></p>
             <?php endif; ?>
+            <span class="pspa-graduate-more">Δείτε Περισσότερο</span>
         </div>
-    </div>
+    </a>
     <?php
     return ob_get_clean();
 }
@@ -566,8 +573,10 @@ function pspa_ms_render_graduate_card( $user_id ) {
  */
 function pspa_ms_graduate_directory_shortcode() {
     if ( ! is_user_logged_in() ) {
-        return '<p>' . esc_html__( 'You must be logged in to view the graduate directory.', 'pspa-membership-system' ) . '</p>';
+        return '<p>' . esc_html__( 'Πρέπει να είστε συνδεδεμένοι για να δείτε τον κατάλογο αποφοίτων.', 'pspa-membership-system' ) . '</p>';
     }
+
+    pspa_ms_enqueue_dashboard_styles();
 
     wp_enqueue_style( 'pspa-ms-graduate-directory', plugin_dir_url( __FILE__ ) . 'assets/css/graduate-directory.css', array(), PSPA_MS_VERSION );
     wp_enqueue_script( 'pspa-ms-graduate-directory', plugin_dir_url( __FILE__ ) . 'assets/js/graduate-directory.js', array( 'jquery' ), PSPA_MS_VERSION, true );
@@ -583,34 +592,34 @@ function pspa_ms_graduate_directory_shortcode() {
 
     ob_start();
     ?>
-    <div class="pspa-graduate-directory">
+    <div class="pspa-graduate-directory pspa-dashboard">
         <form id="pspa-graduate-filters">
             <select name="profession">
-                <option value=""><?php esc_html_e( 'All Occupations', 'pspa-membership-system' ); ?></option>
+                <option value=""><?php esc_html_e( 'Όλα τα Επαγγέλματα', 'pspa-membership-system' ); ?></option>
                 <?php foreach ( $professions as $p ) : ?>
                     <option value="<?php echo esc_attr( $p ); ?>"><?php echo esc_html( $p ); ?></option>
                 <?php endforeach; ?>
             </select>
             <select name="job_title">
-                <option value=""><?php esc_html_e( 'All Job Titles', 'pspa-membership-system' ); ?></option>
+                <option value=""><?php esc_html_e( 'Όλοι οι Τίτλοι Εργασίας', 'pspa-membership-system' ); ?></option>
                 <?php foreach ( $jobs as $j ) : ?>
                     <option value="<?php echo esc_attr( $j ); ?>"><?php echo esc_html( $j ); ?></option>
                 <?php endforeach; ?>
             </select>
             <select name="city">
-                <option value=""><?php esc_html_e( 'All Towns', 'pspa-membership-system' ); ?></option>
+                <option value=""><?php esc_html_e( 'Όλες οι Πόλεις', 'pspa-membership-system' ); ?></option>
                 <?php foreach ( $cities as $c ) : ?>
                     <option value="<?php echo esc_attr( $c ); ?>"><?php echo esc_html( $c ); ?></option>
                 <?php endforeach; ?>
             </select>
             <select name="country">
-                <option value=""><?php esc_html_e( 'All Countries', 'pspa-membership-system' ); ?></option>
+                <option value=""><?php esc_html_e( 'Όλες οι Χώρες', 'pspa-membership-system' ); ?></option>
                 <?php foreach ( $countries as $co ) : ?>
                     <option value="<?php echo esc_attr( $co ); ?>"><?php echo esc_html( $co ); ?></option>
                 <?php endforeach; ?>
             </select>
         </form>
-        <div id="pspa-graduate-results"><p><?php esc_html_e( 'Loading...', 'pspa-membership-system' ); ?></p></div>
+        <div id="pspa-graduate-results"><p><?php esc_html_e( 'Φόρτωση...', 'pspa-membership-system' ); ?></p></div>
     </div>
     <?php
     return ob_get_clean();
@@ -657,7 +666,7 @@ function pspa_ms_ajax_filter_graduates() {
             $html .= pspa_ms_render_graduate_card( $user->ID );
         }
     } else {
-        $html = '<p>' . esc_html__( 'No graduates found.', 'pspa-membership-system' ) . '</p>';
+        $html = '<p>' . esc_html__( 'Δεν βρέθηκαν απόφοιτοι.', 'pspa-membership-system' ) . '</p>';
     }
 
     wp_send_json_success( array( 'html' => $html ) );

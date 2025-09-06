@@ -1,0 +1,9 @@
+.pspa-dashboard{--bg:#f2ece4;--card:#fffaf5;--ink:#3b2b22;--line:#e4d6c8}
+.pspa-dashboard .acf-field{background:var(--card);border:1px solid var(--line);padding:10px 12px;margin-bottom:12px;border-radius:14px}
+.pspa-dashboard .acf-label label{color:var(--ink);font-weight:600}
+.pspa-dashboard input[type="text"],
+.pspa-dashboard input[type="email"],
+.pspa-dashboard input[type="number"],
+.pspa-dashboard input[type="password"],
+.pspa-dashboard select,
+.pspa-dashboard textarea{width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
