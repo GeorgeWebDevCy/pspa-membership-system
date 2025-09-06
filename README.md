@@ -28,6 +28,18 @@ Dependencies:
 - [WooCommerce](https://woocommerce.com/)
 - [Advanced Access Manager](https://wordpress.org/plugins/advanced-access-manager/)
 
+## Administrator Tools
+
+System Admins and site administrators can search for graduates and edit any user profile directly from the `Προφίλ Απόφοιτου` endpoint. The search covers all graduate fields and opens an editable form with ACF data, email and password controls.
+
+## Login by Details
+
+The `[pspa_login_by_details]` shortcode renders a form asking for first name, last name and graduation year. When the details match a graduate record the user is logged in and redirected to the dashboard.
+
+## Role-based Redirection
+
+Graduates and System Admins are redirected to the `Προφίλ Απόφοιτου` dashboard after login and are prevented from accessing the WordPress admin area.
+
 ## ACF Field Reference
 
 The plugin registers a **Graduate Profile** field group in Advanced Custom Fields. The field definitions are exported to `acf-export-2025-09-06-with-profile.json` and include the following fields:

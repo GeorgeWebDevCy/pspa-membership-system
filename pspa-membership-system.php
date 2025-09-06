@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.2
+ * Version: 0.0.3
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -105,6 +105,20 @@ function pspa_ms_add_graduate_profile_link( $items ) {
 add_filter( 'woocommerce_account_menu_items', 'pspa_ms_add_graduate_profile_link' );
 
 /**
+ * Prepare ACF for front-end forms when viewing the graduate profile endpoint.
+ */
+function pspa_ms_maybe_acf_form_head() {
+    if ( ! function_exists( 'acf_form_head' ) ) {
+        return;
+    }
+
+    if ( is_account_page() && false !== get_query_var( 'graduate-profile', false ) ) {
+        acf_form_head();
+    }
+}
+add_action( 'template_redirect', 'pspa_ms_maybe_acf_form_head' );
+
+/**
  * Render Graduate Profile endpoint content.
  */
 function pspa_ms_graduate_profile_content() {
@@ -113,8 +127,24 @@ function pspa_ms_graduate_profile_content() {
         return;
     }
 
-    $user_id = get_current_user_id();
-    $user    = wp_get_current_user();
+    $current_user = wp_get_current_user();
+
+    if ( current_user_can( 'manage_options' ) || in_array( 'system-admin', (array) $current_user->roles, true ) ) {
+        pspa_ms_admin_profile_interface();
+        return;
+    }
+
+    pspa_ms_simple_profile_form( $current_user->ID );
+}
+add_action( 'woocommerce_account_graduate-profile_endpoint', 'pspa_ms_graduate_profile_content' );
+
+/**
+ * Render the simple profile form for graduates.
+ *
+ * @param int $user_id User ID.
+ */
+function pspa_ms_simple_profile_form( $user_id ) {
+    $user = get_user_by( 'id', $user_id );
 
     if (
         'POST' === $_SERVER['REQUEST_METHOD'] &&
@@ -124,16 +154,21 @@ function pspa_ms_graduate_profile_content() {
         $first_name = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
         $last_name  = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
         $email      = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+        $password   = isset( $_POST['password'] ) ? wp_unslash( $_POST['password'] ) : '';
 
-        wp_update_user(
-            array(
-                'ID'           => $user_id,
-                'first_name'   => $first_name,
-                'last_name'    => $last_name,
-                'user_email'   => $email,
-                'display_name' => trim( $first_name . ' ' . $last_name ),
-            )
+        $update_data = array(
+            'ID'           => $user_id,
+            'first_name'   => $first_name,
+            'last_name'    => $last_name,
+            'user_email'   => $email,
+            'display_name' => trim( $first_name . ' ' . $last_name ),
         );
+
+        if ( ! empty( $password ) ) {
+            $update_data['user_pass'] = $password;
+        }
+
+        wp_update_user( $update_data );
 
         wc_add_notice( __( 'Profile updated successfully.', 'pspa-membership-system' ) );
         $user = wp_get_current_user();
@@ -153,6 +188,10 @@ function pspa_ms_graduate_profile_content() {
             <label for="email"><?php esc_html_e( 'Email address', 'pspa-membership-system' ); ?></label>
             <input type="email" name="email" id="email" value="<?php echo esc_attr( $user->user_email ); ?>" />
         </p>
+        <p class="form-row form-row-wide">
+            <label for="password"><?php esc_html_e( 'New password', 'pspa-membership-system' ); ?></label>
+            <input type="password" name="password" id="password" />
+        </p>
         <?php wp_nonce_field( 'pspa_graduate_profile', 'pspa_graduate_profile_nonce' ); ?>
         <p>
             <button type="submit" class="woocommerce-Button button">
@@ -162,7 +201,244 @@ function pspa_ms_graduate_profile_content() {
     </form>
     <?php
 }
-add_action( 'woocommerce_account_graduate-profile_endpoint', 'pspa_ms_graduate_profile_content' );
+
+/**
+ * Render admin interface allowing search and editing of users.
+ */
+function pspa_ms_admin_profile_interface() {
+    $edit_user_id = isset( $_GET['edit_user'] ) ? absint( $_GET['edit_user'] ) : 0;
+
+    if ( $edit_user_id ) {
+        pspa_ms_admin_edit_user_form( $edit_user_id );
+        return;
+    }
+
+    $search_term = isset( $_POST['pspa_user_search'] ) ? sanitize_text_field( wp_unslash( $_POST['pspa_user_search'] ) ) : '';
+
+    ?>
+    <form method="post" style="margin-bottom:20px;">
+        <p>
+            <input type="text" name="pspa_user_search" value="<?php echo esc_attr( $search_term ); ?>" placeholder="<?php esc_attr_e( 'Search users', 'pspa-membership-system' ); ?>" />
+            <button type="submit" class="button"><?php esc_html_e( 'Search', 'pspa-membership-system' ); ?></button>
+        </p>
+    </form>
+    <?php
+
+    if ( ! empty( $search_term ) ) {
+        global $wpdb;
+        $like      = '%' . $wpdb->esc_like( $search_term ) . '%';
+        $user_ids  = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT user_id FROM {$wpdb->usermeta} WHERE meta_value LIKE %s", $like ) );
+        $user_ids2 = get_users(
+            array(
+                'search'         => '*' . esc_attr( $search_term ) . '*',
+                'fields'         => 'ID',
+                'search_columns' => array( 'user_login', 'user_nicename', 'user_email', 'user_url' ),
+            )
+        );
+
+        $user_ids = array_unique( array_merge( $user_ids, $user_ids2 ) );
+
+        if ( ! empty( $user_ids ) ) {
+            echo '<ul class="pspa-user-search-results">';
+            foreach ( $user_ids as $id ) {
+                $u = get_user_by( 'id', $id );
+                echo '<li><a href="' . esc_url( add_query_arg( 'edit_user', $id ) ) . '">' . esc_html( $u->display_name . ' (' . $u->user_email . ')' ) . '</a></li>';
+            }
+            echo '</ul>';
+        } else {
+            echo '<p>' . esc_html__( 'No users found.', 'pspa-membership-system' ) . '</p>';
+        }
+    }
+}
+
+/**
+ * Render admin edit form for a specific user.
+ *
+ * @param int $user_id User ID being edited.
+ */
+function pspa_ms_admin_edit_user_form( $user_id ) {
+    $user = get_user_by( 'id', $user_id );
+
+    if ( ! $user ) {
+        echo esc_html__( 'Invalid user.', 'pspa-membership-system' );
+        return;
+    }
+
+    if (
+        'POST' === $_SERVER['REQUEST_METHOD'] &&
+        isset( $_POST['pspa_admin_edit_user_nonce'] ) &&
+        wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['pspa_admin_edit_user_nonce'] ) ), 'pspa_admin_edit_user' )
+    ) {
+        $first_name = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
+        $last_name  = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
+        $email      = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+        $password   = isset( $_POST['password'] ) ? wp_unslash( $_POST['password'] ) : '';
+
+        $update_data = array(
+            'ID'           => $user_id,
+            'first_name'   => $first_name,
+            'last_name'    => $last_name,
+            'user_email'   => $email,
+            'display_name' => trim( $first_name . ' ' . $last_name ),
+        );
+
+        if ( ! empty( $password ) ) {
+            $update_data['user_pass'] = $password;
+        }
+
+        wp_update_user( $update_data );
+
+        wc_add_notice( __( 'Profile updated successfully.', 'pspa-membership-system' ) );
+        $user = get_user_by( 'id', $user_id );
+    }
+
+    echo '<p><a href="' . esc_url( remove_query_arg( 'edit_user' ) ) . '">&larr; ' . esc_html__( 'Back to search', 'pspa-membership-system' ) . '</a></p>';
+
+    ?>
+    <form method="post" class="pspa-admin-edit-user">
+        <p class="form-row form-row-first">
+            <label for="first_name"><?php esc_html_e( 'First name', 'pspa-membership-system' ); ?></label>
+            <input type="text" name="first_name" id="first_name" value="<?php echo esc_attr( $user->first_name ); ?>" />
+        </p>
+        <p class="form-row form-row-last">
+            <label for="last_name"><?php esc_html_e( 'Last name', 'pspa-membership-system' ); ?></label>
+            <input type="text" name="last_name" id="last_name" value="<?php echo esc_attr( $user->last_name ); ?>" />
+        </p>
+        <p class="form-row form-row-wide">
+            <label for="email"><?php esc_html_e( 'Email address', 'pspa-membership-system' ); ?></label>
+            <input type="email" name="email" id="email" value="<?php echo esc_attr( $user->user_email ); ?>" />
+        </p>
+        <p class="form-row form-row-wide">
+            <label for="password"><?php esc_html_e( 'New password', 'pspa-membership-system' ); ?></label>
+            <input type="password" name="password" id="password" />
+        </p>
+        <?php if ( function_exists( 'acf_form' ) ) : ?>
+            <div class="pspa-acf-fields">
+                <?php acf_form( array( 'post_id' => 'user_' . $user_id, 'form' => false ) ); ?>
+            </div>
+        <?php endif; ?>
+        <?php wp_nonce_field( 'pspa_admin_edit_user', 'pspa_admin_edit_user_nonce' ); ?>
+        <p>
+            <button type="submit" class="woocommerce-Button button"><?php esc_html_e( 'Save changes', 'pspa-membership-system' ); ?></button>
+        </p>
+    </form>
+    <?php
+}
+
+/**
+ * Shortcode: login by details.
+ *
+ * @return string
+ */
+function pspa_ms_login_by_details_shortcode() {
+    if ( is_user_logged_in() ) {
+        return '';
+    }
+
+    $output = '';
+
+    if (
+        'POST' === $_SERVER['REQUEST_METHOD'] &&
+        isset( $_POST['pspa_login_details_nonce'] ) &&
+        wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['pspa_login_details_nonce'] ) ), 'pspa_login_details' )
+    ) {
+        $first = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
+        $last  = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
+        $year  = isset( $_POST['graduation_year'] ) ? sanitize_text_field( wp_unslash( $_POST['graduation_year'] ) ) : '';
+
+        $query = new WP_User_Query(
+            array(
+                'number'     => 1,
+                'meta_query' => array(
+                    'relation' => 'AND',
+                    array(
+                        'key'     => 'gn_first_name',
+                        'value'   => $first,
+                        'compare' => '=',
+                    ),
+                    array(
+                        'key'     => 'gn_surname',
+                        'value'   => $last,
+                        'compare' => '=',
+                    ),
+                    array(
+                        'key'     => 'gn_graduation_year',
+                        'value'   => $year,
+                        'compare' => '=',
+                    ),
+                ),
+            )
+        );
+
+        $users = $query->get_results();
+
+        if ( ! empty( $users ) ) {
+            $user = $users[0];
+            wp_set_current_user( $user->ID );
+            wp_set_auth_cookie( $user->ID, true );
+            wp_safe_redirect( wc_get_account_endpoint_url( 'graduate-profile' ) );
+            exit;
+        } else {
+            $output .= '<p>' . esc_html__( 'No matching user found.', 'pspa-membership-system' ) . '</p>';
+        }
+    }
+
+    ob_start();
+    ?>
+    <form method="post" class="pspa-login-by-details">
+        <p>
+            <label for="first_name"><?php esc_html_e( 'First Name', 'pspa-membership-system' ); ?></label>
+            <input type="text" name="first_name" id="first_name" required />
+        </p>
+        <p>
+            <label for="last_name"><?php esc_html_e( 'Last Name', 'pspa-membership-system' ); ?></label>
+            <input type="text" name="last_name" id="last_name" required />
+        </p>
+        <p>
+            <label for="graduation_year"><?php esc_html_e( 'Graduation Year', 'pspa-membership-system' ); ?></label>
+            <input type="text" name="graduation_year" id="graduation_year" required />
+        </p>
+        <?php wp_nonce_field( 'pspa_login_details', 'pspa_login_details_nonce' ); ?>
+        <p>
+            <button type="submit" class="button"><?php esc_html_e( 'Log In', 'pspa-membership-system' ); ?></button>
+        </p>
+    </form>
+    <?php
+    $output .= ob_get_clean();
+    return $output;
+}
+add_shortcode( 'pspa_login_by_details', 'pspa_ms_login_by_details_shortcode' );
+
+/**
+ * Force graduates and system admins to stay on the front end.
+ *
+ * @param string  $redirect_to Redirect destination.
+ * @param string  $request     Request parameter.
+ * @param WP_User $user        User object.
+ *
+ * @return string
+ */
+function pspa_ms_login_redirect( $redirect_to, $request, $user ) {
+    if ( isset( $user->ID ) && ( in_array( 'system-admin', (array) $user->roles, true ) || in_array( 'professionalcatalogue', (array) $user->roles, true ) ) ) {
+        return wc_get_account_endpoint_url( 'graduate-profile' );
+    }
+    return $redirect_to;
+}
+add_filter( 'login_redirect', 'pspa_ms_login_redirect', 10, 3 );
+
+/**
+ * Block backend access for graduates and system admins.
+ */
+function pspa_ms_block_admin_access() {
+    if ( is_admin() && ! wp_doing_ajax() && is_user_logged_in() ) {
+        $user = wp_get_current_user();
+        if ( in_array( 'system-admin', (array) $user->roles, true ) || in_array( 'professionalcatalogue', (array) $user->roles, true ) ) {
+            wp_safe_redirect( wc_get_account_endpoint_url( 'graduate-profile' ) );
+            exit;
+        }
+    }
+}
+add_action( 'init', 'pspa_ms_block_admin_access' );
 
 /**
  * Flush rewrite rules on activation and deactivation.

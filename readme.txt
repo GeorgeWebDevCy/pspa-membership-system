@@ -4,12 +4,12 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.0.2
+Stable tag: 0.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 == Description ==
-This plugin powers the PSPA membership system and integrates with WooCommerce and Advanced Custom Fields (ACF) Pro.
+This plugin powers the PSPA membership system and integrates with WooCommerce and Advanced Custom Fields (ACF) Pro. It provides a graduate dashboard, administrator search tools and a login-by-details shortcode.
 
 == Custom User Roles ==
 The plugin registers two custom user roles:
@@ -28,12 +28,18 @@ The plugin registers two custom user roles:
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
+= 0.0.3 =
+* Added administrator search and editing interface on the graduate profile endpoint.
+* Implemented `[pspa_login_by_details]` shortcode for logging in by first name, last name and graduation year.
+* Added role-based redirection to the graduate profile and blocked backend access.
 = 0.0.2 =
 * Added "Προφίλ Απόφοιτου" WooCommerce endpoint for graduates to edit their personal details.
 = 0.0.1 =
 * Initial release.
 
 == Upgrade Notice ==
+= 0.0.3 =
+Introduces administrator editing, login-by-details and role-based redirects.
 = 0.0.2 =
 Adds a WooCommerce endpoint for graduates to update their profile.
 = 0.0.1 =
