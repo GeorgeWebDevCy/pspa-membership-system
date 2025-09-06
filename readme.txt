@@ -4,7 +4,7 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.0.3
+Stable tag: 0.0.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -28,6 +28,10 @@ The plugin registers two custom user roles:
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
+= 0.0.4 =
+* Render all graduate profile fields via ACF on the front-end form.
+* Added name synchronization with WordPress user fields after saving.
+
 = 0.0.3 =
 * Added administrator search and editing interface on the graduate profile endpoint.
 * Implemented `[pspa_login_by_details]` shortcode for logging in by first name, last name and graduation year.
@@ -38,6 +42,9 @@ The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access
 * Initial release.
 
 == Upgrade Notice ==
+= 0.0.4 =
+Displays full ACF profile fields and syncs user names.
+
 = 0.0.3 =
 Introduces administrator editing, login-by-details and role-based redirects.
 = 0.0.2 =

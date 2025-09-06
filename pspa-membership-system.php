@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.3
+ * Version: 0.0.4
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -151,39 +151,47 @@ function pspa_ms_simple_profile_form( $user_id ) {
         isset( $_POST['pspa_graduate_profile_nonce'] ) &&
         wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['pspa_graduate_profile_nonce'] ) ), 'pspa_graduate_profile' )
     ) {
-        $first_name = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
-        $last_name  = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
-        $email      = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
-        $password   = isset( $_POST['password'] ) ? wp_unslash( $_POST['password'] ) : '';
+        $email    = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+        $password = isset( $_POST['password'] ) ? wp_unslash( $_POST['password'] ) : '';
 
-        $update_data = array(
-            'ID'           => $user_id,
-            'first_name'   => $first_name,
-            'last_name'    => $last_name,
-            'user_email'   => $email,
-            'display_name' => trim( $first_name . ' ' . $last_name ),
-        );
+        $update_data = array( 'ID' => $user_id );
+
+        if ( ! empty( $email ) ) {
+            $update_data['user_email'] = $email;
+        }
 
         if ( ! empty( $password ) ) {
             $update_data['user_pass'] = $password;
         }
 
-        wp_update_user( $update_data );
+        if ( count( $update_data ) > 1 ) {
+            wp_update_user( $update_data );
+        }
 
         wc_add_notice( __( 'Profile updated successfully.', 'pspa-membership-system' ) );
         $user = wp_get_current_user();
     }
 
     ?>
-    <form class="woocommerce-EditAccountForm edit-account" method="post">
-        <p class="form-row form-row-first">
-            <label for="first_name"><?php esc_html_e( 'First name', 'pspa-membership-system' ); ?></label>
-            <input type="text" name="first_name" id="first_name" value="<?php echo esc_attr( $user->first_name ); ?>" />
-        </p>
-        <p class="form-row form-row-last">
-            <label for="last_name"><?php esc_html_e( 'Last name', 'pspa-membership-system' ); ?></label>
-            <input type="text" name="last_name" id="last_name" value="<?php echo esc_attr( $user->last_name ); ?>" />
-        </p>
+    <style>
+    .pspa-dashboard{--bg:#f2ece4;--card:#fffaf5;--ink:#3b2b22;--line:#e4d6c8}
+    .pspa-dashboard .acf-field{background:var(--card);border:1px solid var(--line);padding:10px 12px;margin-bottom:12px;border-radius:14px}
+    .pspa-dashboard .acf-label label{color:var(--ink);font-weight:600}
+    .pspa-dashboard input[type="text"],
+    .pspa-dashboard input[type="email"],
+    .pspa-dashboard input[type="number"],
+    .pspa-dashboard input[type="password"],
+    .pspa-dashboard select,
+    .pspa-dashboard textarea{width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+    </style>
+    <form class="woocommerce-EditAccountForm edit-account pspa-dashboard" method="post">
+        <?php if ( function_exists( 'acf_form' ) ) : ?>
+            <?php acf_form( array(
+                'post_id'      => 'user_' . $user_id,
+                'form'         => false,
+                'field_groups' => array( 'group_gn_graduate_profile' ),
+            ) ); ?>
+        <?php endif; ?>
         <p class="form-row form-row-wide">
             <label for="email"><?php esc_html_e( 'Email address', 'pspa-membership-system' ); ?></label>
             <input type="email" name="email" id="email" value="<?php echo esc_attr( $user->user_email ); ?>" />
@@ -408,6 +416,39 @@ function pspa_ms_login_by_details_shortcode() {
     return $output;
 }
 add_shortcode( 'pspa_login_by_details', 'pspa_ms_login_by_details_shortcode' );
+
+/**
+ * Sync first, last and display names with ACF fields after saving.
+ *
+ * @param string $post_id Post identifier.
+ */
+function pspa_ms_sync_user_names( $post_id ) {
+    if ( 0 !== strpos( $post_id, 'user_' ) ) {
+        return;
+    }
+
+    $uid   = (int) substr( $post_id, 5 );
+    $first = trim( (string) get_field( 'gn_first_name', 'user_' . $uid ) );
+    $last  = trim( (string) get_field( 'gn_surname', 'user_' . $uid ) );
+    $data  = array( 'ID' => $uid );
+
+    if ( '' !== $first ) {
+        $data['first_name'] = $first;
+    }
+
+    if ( '' !== $last ) {
+        $data['last_name'] = $last;
+    }
+
+    if ( '' !== $first || '' !== $last ) {
+        $data['display_name'] = trim( $first . ' ' . $last );
+    }
+
+    if ( count( $data ) > 1 ) {
+        wp_update_user( $data );
+    }
+}
+add_action( 'acf/save_post', 'pspa_ms_sync_user_names', 20 );
 
 /**
  * Force graduates and system admins to stay on the front end.
