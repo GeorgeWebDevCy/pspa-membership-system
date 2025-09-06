@@ -11,6 +11,12 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
 == Description ==
 This plugin powers the PSPA membership system and integrates with WooCommerce and Advanced Custom Fields (ACF) Pro.
 
+== Custom User Roles ==
+The plugin registers two custom user roles:
+
+* Professional Catalogue (`professionalcatalogue`)
+* System Admin (`system-admin`)
+
 == Installation ==
 1. Upload `pspa-membership-system` to the `/wp-content/plugins/` directory.
 2. Activate the plugin through the 'Plugins' menu in WordPress.
