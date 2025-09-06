@@ -47,10 +47,10 @@ $show_pic   = function_exists( 'get_field' ) ? get_field( 'gn_show_profile_pictu
             <p class="pspa-graduate-location"><?php echo esc_html( trim( $city . ( $country ? ', ' . $country : '' ) ) ); ?></p>
         <?php endif; ?>
     </div>
-    <?php if ( function_exists( 'get_field_objects' ) ) : ?>
+    <?php if ( function_exists( 'acf_get_fields' ) ) : ?>
         <div class="pspa-graduate-details">
             <?php
-            $fields        = get_field_objects( 'user_' . $pspa_user->ID );
+            $fields        = acf_get_fields( 'group_gn_graduate_profile' );
             $header_fields = array(
                 'gn_job_title',
                 'gn_position_company',
@@ -70,11 +70,11 @@ $show_pic   = function_exists( 'get_field' ) ? get_field( 'gn_show_profile_pictu
                     if ( in_array( $field['name'], $header_fields, true ) ) {
                         continue;
                     }
-                    $show = get_field( 'gn_show_' . $field['name'], 'user_' . $pspa_user->ID );
+                    $show = function_exists( 'get_field' ) ? get_field( 'gn_show_' . $field['name'], 'user_' . $pspa_user->ID ) : get_user_meta( $pspa_user->ID, 'gn_show_' . $field['name'], true );
                     if ( null !== $show && ! $show ) {
                         continue;
                     }
-                    $value = $field['value'];
+                    $value = function_exists( 'get_field' ) ? get_field( $field['name'], 'user_' . $pspa_user->ID ) : get_user_meta( $pspa_user->ID, $field['name'], true );
                     if ( 'true_false' === $field['type'] ) {
                         if ( empty( $value ) ) {
                             continue;
