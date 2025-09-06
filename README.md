@@ -36,6 +36,10 @@ System Admins and site administrators can search for graduates and edit any user
 
 The `[pspa_login_by_details]` shortcode renders a form asking for first name, last name and graduation year. When the details match a graduate record the user is logged in and redirected to the dashboard.
 
+## Graduate Directory
+
+The `[pspa_graduate_directory]` shortcode outputs a grid of graduates showing their profile photo, full name and graduation year. Clicking a card or the "Δείτε Περισσότερα" link opens the graduate's public, non-editable profile.
+
 ## Role-based Redirection
 
 Graduates and System Admins are redirected to the `Προφίλ Απόφοιτου` dashboard after login and are prevented from accessing the WordPress admin area.
