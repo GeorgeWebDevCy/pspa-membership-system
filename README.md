@@ -38,7 +38,7 @@ The `[pspa_login_by_details]` shortcode renders a form asking for first name, la
 
 ## Graduate Directory
 
-The `[pspa_graduate_directory]` shortcode outputs a grid of graduates showing their profile photo, full name and graduation year. Clicking a card or the "Δείτε Περισσότερα" link opens the graduate's public, non-editable profile.
+The `[pspa_graduate_directory]` shortcode outputs a grid of graduates showing their profile photo, full name and graduation year. Clicking a card or the "Δείτε Περισσότερο" link opens the graduate's public, non-editable profile.
 
 ## Role-based Redirection
 
