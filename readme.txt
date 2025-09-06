@@ -29,7 +29,10 @@ The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access
 
 == Changelog ==
 = 0.0.8 =
+
+* Add graduate directory with AJAX filters restricted to logged-in users.
 * Add `[pspa_graduate_directory]` shortcode to display graduate cards and view non-editable profiles.
+
 = 0.0.7 =
 * Fix `[pspa_login_by_details]` shortcode not rendering and ensure login actions run.
 
@@ -54,7 +57,10 @@ The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access
 
 == Upgrade Notice ==
 = 0.0.8 =
+Introduces a LinkedIn-style graduate directory with dynamic filters.
+
 Introduces a graduate directory shortcode and public profile view.
+
 = 0.0.7 =
 Resolves missing login form and triggers login hooks when authenticating by details.
 
