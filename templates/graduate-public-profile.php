@@ -22,10 +22,20 @@ $company    = function_exists( 'get_field' ) ? (string) get_field( 'gn_position_
 $profession = function_exists( 'get_field' ) ? (string) get_field( 'gn_profession', 'user_' . $pspa_user->ID ) : get_user_meta( $pspa_user->ID, 'gn_profession', true );
 $city       = function_exists( 'get_field' ) ? (string) get_field( 'gn_city', 'user_' . $pspa_user->ID ) : get_user_meta( $pspa_user->ID, 'gn_city', true );
 $country    = function_exists( 'get_field' ) ? (string) get_field( 'gn_country', 'user_' . $pspa_user->ID ) : get_user_meta( $pspa_user->ID, 'gn_country', true );
+$picture    = function_exists( 'get_field' ) ? get_field( 'gn_profile_picture', 'user_' . $pspa_user->ID ) : get_user_meta( $pspa_user->ID, 'gn_profile_picture', true );
+$show_pic   = function_exists( 'get_field' ) ? get_field( 'gn_show_profile_picture', 'user_' . $pspa_user->ID ) : get_user_meta( $pspa_user->ID, 'gn_show_profile_picture', true );
 ?>
 <div class="pspa-graduate-profile pspa-dashboard">
     <div class="pspa-graduate-header">
-        <div class="pspa-graduate-avatar"><?php echo get_avatar( $pspa_user->ID, 128 ); ?></div>
+        <div class="pspa-graduate-avatar">
+            <?php
+            if ( $picture && ( null === $show_pic || $show_pic ) ) {
+                echo wp_get_attachment_image( $picture, 'thumbnail' );
+            } else {
+                echo get_avatar( $pspa_user->ID, 128 );
+            }
+            ?>
+        </div>
         <h1 class="pspa-graduate-name"><?php echo esc_html( $pspa_user->display_name ); ?></h1>
         <?php if ( $job || $company ) : ?>
             <p class="pspa-graduate-title"><?php echo esc_html( trim( $job . ( $company ? ' - ' . $company : '' ) ) ); ?></p>
@@ -37,6 +47,62 @@ $country    = function_exists( 'get_field' ) ? (string) get_field( 'gn_country',
             <p class="pspa-graduate-location"><?php echo esc_html( trim( $city . ( $country ? ', ' . $country : '' ) ) ); ?></p>
         <?php endif; ?>
     </div>
+    <?php if ( function_exists( 'get_field_objects' ) ) : ?>
+        <div class="pspa-graduate-details">
+            <?php
+            $fields        = get_field_objects( 'user_' . $pspa_user->ID );
+            $header_fields = array(
+                'gn_job_title',
+                'gn_position_company',
+                'gn_profession',
+                'gn_city',
+                'gn_country',
+                'gn_profile_picture',
+            );
+            if ( $fields ) {
+                foreach ( $fields as $field ) {
+                    if ( 'tab' === $field['type'] ) {
+                        continue;
+                    }
+                    if ( 'gn_visibility_mode' === $field['name'] || 0 === strpos( $field['name'], 'gn_show_' ) ) {
+                        continue;
+                    }
+                    if ( in_array( $field['name'], $header_fields, true ) ) {
+                        continue;
+                    }
+                    $show = get_field( 'gn_show_' . $field['name'], 'user_' . $pspa_user->ID );
+                    if ( null !== $show && ! $show ) {
+                        continue;
+                    }
+                    $value = $field['value'];
+                    if ( 'true_false' === $field['type'] ) {
+                        if ( empty( $value ) ) {
+                            continue;
+                        }
+                        printf(
+                            '<p class="pspa-graduate-field pspa-graduate-field-%1$s"><strong>%2$s</strong></p>',
+                            esc_attr( $field['name'] ),
+                            esc_html( $field['label'] )
+                        );
+                        continue;
+                    }
+                    if ( empty( $value ) ) {
+                        continue;
+                    }
+                    if ( is_array( $value ) ) {
+                        $value = implode( ', ', array_map( 'strval', array_filter( $value ) ) );
+                    }
+                    printf(
+                        '<p class="pspa-graduate-field pspa-graduate-field-%1$s"><strong>%2$s:</strong> %3$s</p>',
+                        esc_attr( $field['name'] ),
+                        esc_html( $field['label'] ),
+                        esc_html( $value )
+                    );
+                }
+            }
+            ?>
+        </div>
+    <?php endif; ?>
 </div>
 <?php
 get_footer();
