@@ -4,7 +4,7 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.0.1
+Stable tag: 0.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -28,9 +28,13 @@ The plugin registers two custom user roles:
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
+= 0.0.2 =
+* Added "Προφίλ Απόφοιτου" WooCommerce endpoint for graduates to edit their personal details.
 = 0.0.1 =
 * Initial release.
 
 == Upgrade Notice ==
+= 0.0.2 =
+Adds a WooCommerce endpoint for graduates to update their profile.
 = 0.0.1 =
 Initial release.

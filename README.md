@@ -11,7 +11,7 @@ The plugin registers two custom user roles:
 
 ## Graduate Profile Dashboard
 
-The `Graduate Profile Dashboard` provides a single-page front-end form for graduates to manage their profile data. It is available under the WooCommerce "My Account" area via the `graduate-profile` endpoint.
+The `Graduate Profile Dashboard` provides a single-page front-end form for graduates to manage their profile data. It is available under the WooCommerce "My Account" area via the `graduate-profile` endpoint, labeled "Προφίλ Απόφοιτου".
 
 Key features:
 
