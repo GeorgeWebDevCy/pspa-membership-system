@@ -4,7 +4,7 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.0.20
+Stable tag: 0.0.21
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -28,6 +28,8 @@ The plugin registers two custom user roles:
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
+= 0.0.21 =
+* Fix fatal error in graduate public profile template.
 = 0.0.20 =
 * Display public graduate profiles in a LinkedIn-style layout and show visible fields even when empty.
 

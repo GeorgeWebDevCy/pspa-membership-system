@@ -24,9 +24,9 @@ get_header();
 $uid        = $pspa_user->ID;
 $visibility = function_exists( 'get_field' ) ? get_field( 'gn_visibility_mode', 'user_' . $uid ) : get_user_meta( $uid, 'gn_visibility_mode', true );
 
-$fields              = function_exists( 'acf_get_fields' ) ? acf_get_fields( 'group_gn_graduate_profile' ) : array();
-$header_field_names  = array( 'gn_profile_picture', 'gn_first_name', 'gn_surname', 'gn_job_title', 'gn_position_company', 'gn_city', 'gn_country' );
-$header              = array( 'picture' => '', 'name' => array(), 'headline' => array(), 'location' => array() );
+$fields             = function_exists( 'acf_get_fields' ) ? acf_get_fields( 'group_gn_graduate_profile' ) : array();
+$header_field_names = array( 'gn_profile_picture', 'gn_first_name', 'gn_surname', 'gn_job_title', 'gn_position_company', 'gn_city', 'gn_country' );
+$header             = array( 'picture' => '', 'name' => array(), 'headline' => array(), 'location' => array() );
 
 foreach ( $header_field_names as $name ) {
     if ( 'hide_all' === $visibility ) {
@@ -119,7 +119,7 @@ foreach ( $header_field_names as $name ) {
         $value = function_exists( 'get_field' ) ? get_field( $field['name'], 'user_' . $uid ) : get_user_meta( $uid, $field['name'], true );
 
         if ( 'image' === $field['type'] ) {
-            $img_id    = is_array( $value ) ? ( $value['ID'] ?? 0 ) : $value;
+            $img_id     = is_array( $value ) ? ( $value['ID'] ?? 0 ) : $value;
             $value_html = $img_id ? wp_get_attachment_image( $img_id, 'medium' ) : '';
         } elseif ( 'true_false' === $field['type'] ) {
             $value_html = $value ? esc_html__( 'Yes', 'pspa-membership-system' ) : '';
@@ -131,54 +131,9 @@ foreach ( $header_field_names as $name ) {
     }
     if ( $current_section_open ) {
         echo '</div></section>';
-=======
-$visibility = function_exists( 'get_field' ) ? get_field( 'gn_visibility_mode', 'user_' . $pspa_user->ID ) : get_user_meta( $pspa_user->ID, 'gn_visibility_mode', true );
-
-// Hide fields according to individual visibility settings.
-$prepare_field = static function( $field ) use ( $pspa_user, $visibility ) {
-    if ( 'hide_all' === $visibility ) {
-        return false;
-    }
-
-    if ( 'show_all' !== $visibility ) {
-        $show = function_exists( 'get_field' ) ? get_field( 'gn_show_' . $field['name'], 'user_' . $pspa_user->ID ) : get_user_meta( $pspa_user->ID, 'gn_show_' . $field['name'], true );
-
-        if ( null !== $show && ! $show ) {
-            return false;
-        }
-    }
-
-    return $field;
-};
-
-add_filter( 'acf/prepare_field', $prepare_field );
-?>
-<div class="pspa-graduate-profile pspa-dashboard">
-    <?php
-    if ( function_exists( 'acf_form' ) ) {
-        acf_form( array(
-            'post_id'      => 'user_' . $pspa_user->ID,
-            'form'         => false,
-            'field_groups' => array( 'group_gn_graduate_profile' ),
-        ) );
     }
     ?>
 </div>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    var container = document.querySelector('.pspa-graduate-profile');
-    if (!container) {
-        return;
-    }
-    container.querySelectorAll('input, select, textarea, button').forEach(function(el) {
-        el.setAttribute('disabled', 'disabled');
-    });
-    container.querySelectorAll('.acf-actions').forEach(function(el){
-        el.remove();
-    });
-});
-</script>
 <?php
-remove_filter( 'acf/prepare_field', $prepare_field );
 get_footer();
 
