@@ -15,7 +15,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'PSPA_MS_VERSION', '0.0.20' );
-
 /**
  * Enqueue shared dashboard styles.
  */
