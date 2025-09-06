@@ -176,7 +176,7 @@ function pspa_gp_init_updater() {
     $updateChecker = Puc_v4_Factory::buildUpdateChecker(
         $repo_url,
         __FILE__,
-        'pspa-graduate-profile'
+        'pspa-membership-system'
     );
 
     // Optional: set branch (default: master or main depending on repo)
