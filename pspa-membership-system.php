@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.4
+ * Version: 0.0.5
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -117,6 +117,23 @@ function pspa_ms_maybe_acf_form_head() {
     }
 }
 add_action( 'template_redirect', 'pspa_ms_maybe_acf_form_head' );
+
+/**
+ * Hide the "Ρυθμίσεις ορατότητας" tab and associated control field.
+ *
+ * The graduate profile field group uses ACF tabs for internal organization but
+ * the front-end form should display as a single page. This filter removes the
+ * visibility settings tab (`tab_gn_visibility`) and the `gn_visibility_mode`
+ * field so no user can access them.
+ *
+ * @param array $field Field settings.
+ * @return false
+ */
+function pspa_ms_hide_visibility_fields( $field ) {
+    return false;
+}
+add_filter( 'acf/prepare_field/key=tab_gn_visibility', 'pspa_ms_hide_visibility_fields' );
+add_filter( 'acf/prepare_field/name=gn_visibility_mode', 'pspa_ms_hide_visibility_fields' );
 
 /**
  * Render Graduate Profile endpoint content.
