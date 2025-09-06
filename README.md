@@ -2,6 +2,13 @@
 
 This plugin powers the PSPA membership system and integrates with WooCommerce and Advanced Custom Fields (ACF) Pro.
 
+## Custom User Roles
+
+The plugin registers two custom user roles:
+
+- **Professional Catalogue** (`professionalcatalogue`)
+- **System Admin** (`system-admin`)
+
 ## Graduate Profile Dashboard
 
 The `Graduate Profile Dashboard` provides a single-page front-end form for graduates to manage their profile data. It is available under the WooCommerce "My Account" area via the `graduate-profile` endpoint.
