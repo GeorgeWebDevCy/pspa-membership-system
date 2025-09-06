@@ -3,7 +3,8 @@
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
  * Version: 0.0.1
- * Author: PSPA
+ * Author: George Nicolaou
+ * Author URI: https://profiles.wordpress.org/orionaselite/
  *
  * @package PSPA\MembershipSystem
  */
