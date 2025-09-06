@@ -1,4 +1,6 @@
 jQuery(function($){
+    let currentPage = 1;
+
     function fetchGraduates(){
         var data = {
             action: 'pspa_ms_filter_graduates',
@@ -6,7 +8,8 @@ jQuery(function($){
             profession: $('#pspa-graduate-filters [name="profession"]').val(),
             job_title: $('#pspa-graduate-filters [name="job_title"]').val(),
             city: $('#pspa-graduate-filters [name="city"]').val(),
-            country: $('#pspa-graduate-filters [name="country"]').val()
+            country: $('#pspa-graduate-filters [name="country"]').val(),
+            page: currentPage
         };
         $.post(pspaMsDir.ajaxUrl, data, function(response){
             if(response.success){
@@ -15,6 +18,16 @@ jQuery(function($){
         });
     }
 
-    $('#pspa-graduate-filters').on('change', 'select', fetchGraduates);
+    $('#pspa-graduate-filters').on('change', 'select', function(){
+        currentPage = 1;
+        fetchGraduates();
+    });
+
+    $('#pspa-graduate-results').on('click', '.pspa-dir-pagination a', function(e){
+        e.preventDefault();
+        currentPage = $(this).data('page');
+        fetchGraduates();
+    });
+
     fetchGraduates();
 });
