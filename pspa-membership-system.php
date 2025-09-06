@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.13
+ * Version: 0.0.14
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.13' );
+define( 'PSPA_MS_VERSION', '0.0.14' );
 
 /**
  * Enqueue shared dashboard styles.
@@ -32,10 +32,6 @@ function pspa_ms_enqueue_dashboard_styles() {
  * Ensure required plugins are active.
  */
 function pspa_ms_check_dependencies() {
-    if ( ! is_admin() ) {
-        return;
-    }
-
     require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
     $required_plugins = array(
@@ -54,25 +50,33 @@ function pspa_ms_check_dependencies() {
 
     if ( ! empty( $missing_plugins ) ) {
         pspa_ms_log( 'Missing plugins: ' . implode( ', ', $missing_plugins ), 'error' );
-        add_action(
-            'admin_notices',
-            static function () use ( $missing_plugins ) {
-                echo '<div class="notice notice-error"><p>';
-                printf(
-                    'PSPA Membership System requires the following plugins to be active: %s.',
-                    esc_html( implode( ', ', $missing_plugins ) )
-                );
-                echo '</p></div>';
-            }
-        );
+
+        if ( is_admin() ) {
+            add_action(
+                'admin_notices',
+                static function () use ( $missing_plugins ) {
+                    echo '<div class="notice notice-error"><p>';
+                    printf(
+                        'PSPA Membership System requires the following plugins to be active: %s.',
+                        esc_html( implode( ', ', $missing_plugins ) )
+                    );
+                    echo '</p></div>';
+                }
+            );
+        }
 
         deactivate_plugins( plugin_basename( __FILE__ ) );
-    } else {
-        pspa_ms_log( 'All required plugins active.' );
+
+        return false;
     }
+
+    pspa_ms_log( 'All required plugins active.' );
+    return true;
 }
 
-pspa_ms_check_dependencies();
+if ( ! pspa_ms_check_dependencies() ) {
+    return;
+}
 
 // Load the plugin update checker library.
 require plugin_dir_path( __FILE__ ) . 'plugin-update-checker/plugin-update-checker.php';

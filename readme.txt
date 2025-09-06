@@ -4,7 +4,7 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.0.13
+Stable tag: 0.0.14
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -28,6 +28,9 @@ The plugin registers two custom user roles:
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
+= 0.0.14 =
+* Prevent the plugin from loading when required dependencies are missing to avoid blank front-end pages.
+
 = 0.0.13 =
 * Generalized logger and added verbose debug logs across the plugin.
 
@@ -69,6 +72,9 @@ The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access
 * Initial release.
 
 == Upgrade Notice ==
+= 0.0.14 =
+Ensures missing dependencies are detected early, preventing blank pages on the front end.
+
 = 0.0.13 =
 Generalizes the logger and adds verbose debug logs across the plugin.
 
