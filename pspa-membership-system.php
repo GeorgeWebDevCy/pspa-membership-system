@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.7
+ * Version: 0.0.8
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -13,6 +13,8 @@
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
+
+define( 'PSPA_MS_VERSION', '0.0.8' );
 
 /**
  * Ensure required plugins are active.
@@ -442,6 +444,7 @@ function pspa_ms_login_by_details_shortcode() {
  */
 function pspa_ms_register_shortcodes() {
     add_shortcode( 'pspa_login_by_details', 'pspa_ms_login_by_details_shortcode' );
+    add_shortcode( 'pspa_graduate_directory', 'pspa_ms_graduate_directory_shortcode' );
 }
 add_action( 'init', 'pspa_ms_register_shortcodes' );
 
@@ -508,6 +511,158 @@ function pspa_ms_block_admin_access() {
     }
 }
 add_action( 'init', 'pspa_ms_block_admin_access' );
+
+/**
+ * Get unique user meta values for filters.
+ *
+ * @param string $meta_key User meta key.
+ * @return array
+ */
+function pspa_ms_get_unique_user_meta_values( $meta_key ) {
+    global $wpdb;
+    $values = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT meta_value FROM {$wpdb->usermeta} WHERE meta_key = %s AND meta_value <> '' ORDER BY meta_value ASC", $meta_key ) );
+    return $values;
+}
+
+/**
+ * Render a graduate profile card.
+ *
+ * @param int $user_id User ID.
+ * @return string
+ */
+function pspa_ms_render_graduate_card( $user_id ) {
+    $name      = get_the_author_meta( 'display_name', $user_id );
+    $job       = function_exists( 'get_field' ) ? (string) get_field( 'gn_job_title', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_job_title', true );
+    $company   = function_exists( 'get_field' ) ? (string) get_field( 'gn_position_company', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_position_company', true );
+    $profession = function_exists( 'get_field' ) ? (string) get_field( 'gn_profession', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_profession', true );
+    $city      = function_exists( 'get_field' ) ? (string) get_field( 'gn_city', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_city', true );
+    $country   = function_exists( 'get_field' ) ? (string) get_field( 'gn_country', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_country', true );
+
+    ob_start();
+    ?>
+    <div class="pspa-graduate-card">
+        <div class="pspa-graduate-avatar"><?php echo get_avatar( $user_id, 96 ); ?></div>
+        <div class="pspa-graduate-details">
+            <h3 class="pspa-graduate-name"><?php echo esc_html( $name ); ?></h3>
+            <?php if ( $job || $company ) : ?>
+                <p class="pspa-graduate-title"><?php echo esc_html( trim( $job . ( $company ? ' - ' . $company : '' ) ) ); ?></p>
+            <?php endif; ?>
+            <?php if ( $profession ) : ?>
+                <p class="pspa-graduate-profession"><?php echo esc_html( $profession ); ?></p>
+            <?php endif; ?>
+            <?php if ( $city || $country ) : ?>
+                <p class="pspa-graduate-location"><?php echo esc_html( trim( $city . ( $country ? ', ' . $country : '' ) ) ); ?></p>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+
+/**
+ * Shortcode callback for the graduate directory.
+ *
+ * @return string
+ */
+function pspa_ms_graduate_directory_shortcode() {
+    if ( ! is_user_logged_in() ) {
+        return '<p>' . esc_html__( 'You must be logged in to view the graduate directory.', 'pspa-membership-system' ) . '</p>';
+    }
+
+    wp_enqueue_style( 'pspa-ms-graduate-directory', plugin_dir_url( __FILE__ ) . 'assets/css/graduate-directory.css', array(), PSPA_MS_VERSION );
+    wp_enqueue_script( 'pspa-ms-graduate-directory', plugin_dir_url( __FILE__ ) . 'assets/js/graduate-directory.js', array( 'jquery' ), PSPA_MS_VERSION, true );
+    wp_localize_script( 'pspa-ms-graduate-directory', 'pspaMsDir', array(
+        'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+        'nonce'   => wp_create_nonce( 'pspa_ms_dir' ),
+    ) );
+
+    $professions = pspa_ms_get_unique_user_meta_values( 'gn_profession' );
+    $jobs        = pspa_ms_get_unique_user_meta_values( 'gn_job_title' );
+    $cities      = pspa_ms_get_unique_user_meta_values( 'gn_city' );
+    $countries   = pspa_ms_get_unique_user_meta_values( 'gn_country' );
+
+    ob_start();
+    ?>
+    <div class="pspa-graduate-directory">
+        <form id="pspa-graduate-filters">
+            <select name="profession">
+                <option value=""><?php esc_html_e( 'All Occupations', 'pspa-membership-system' ); ?></option>
+                <?php foreach ( $professions as $p ) : ?>
+                    <option value="<?php echo esc_attr( $p ); ?>"><?php echo esc_html( $p ); ?></option>
+                <?php endforeach; ?>
+            </select>
+            <select name="job_title">
+                <option value=""><?php esc_html_e( 'All Job Titles', 'pspa-membership-system' ); ?></option>
+                <?php foreach ( $jobs as $j ) : ?>
+                    <option value="<?php echo esc_attr( $j ); ?>"><?php echo esc_html( $j ); ?></option>
+                <?php endforeach; ?>
+            </select>
+            <select name="city">
+                <option value=""><?php esc_html_e( 'All Towns', 'pspa-membership-system' ); ?></option>
+                <?php foreach ( $cities as $c ) : ?>
+                    <option value="<?php echo esc_attr( $c ); ?>"><?php echo esc_html( $c ); ?></option>
+                <?php endforeach; ?>
+            </select>
+            <select name="country">
+                <option value=""><?php esc_html_e( 'All Countries', 'pspa-membership-system' ); ?></option>
+                <?php foreach ( $countries as $co ) : ?>
+                    <option value="<?php echo esc_attr( $co ); ?>"><?php echo esc_html( $co ); ?></option>
+                <?php endforeach; ?>
+            </select>
+        </form>
+        <div id="pspa-graduate-results"><p><?php esc_html_e( 'Loading...', 'pspa-membership-system' ); ?></p></div>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+
+/**
+ * AJAX handler for filtering graduates.
+ */
+function pspa_ms_ajax_filter_graduates() {
+    check_ajax_referer( 'pspa_ms_dir', 'nonce' );
+
+    if ( ! is_user_logged_in() ) {
+        wp_send_json_error();
+    }
+
+    $fields = array(
+        'profession' => 'gn_profession',
+        'job_title'  => 'gn_job_title',
+        'city'       => 'gn_city',
+        'country'    => 'gn_country',
+    );
+
+    $meta_query = array( 'relation' => 'AND' );
+
+    foreach ( $fields as $request => $key ) {
+        if ( ! empty( $_POST[ $request ] ) ) {
+            $meta_query[] = array(
+                'key'   => $key,
+                'value' => sanitize_text_field( wp_unslash( $_POST[ $request ] ) ),
+            );
+        }
+    }
+
+    $args = array(
+        'number'     => -1,
+        'meta_query' => $meta_query,
+    );
+
+    $users = new WP_User_Query( $args );
+    $html  = '';
+
+    if ( ! empty( $users->get_results() ) ) {
+        foreach ( $users->get_results() as $user ) {
+            $html .= pspa_ms_render_graduate_card( $user->ID );
+        }
+    } else {
+        $html = '<p>' . esc_html__( 'No graduates found.', 'pspa-membership-system' ) . '</p>';
+    }
+
+    wp_send_json_success( array( 'html' => $html ) );
+}
+add_action( 'wp_ajax_pspa_ms_filter_graduates', 'pspa_ms_ajax_filter_graduates' );
 
 /**
  * Flush rewrite rules on activation and deactivation.

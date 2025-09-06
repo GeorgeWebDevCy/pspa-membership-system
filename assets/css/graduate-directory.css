@@ -1,0 +1,36 @@
+.pspa-graduate-directory {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+#pspa-graduate-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5em;
+    margin-bottom: 1em;
+}
+
+#pspa-graduate-filters select {
+    min-width: 150px;
+}
+
+.pspa-graduate-card {
+    display: flex;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 1em;
+    margin-bottom: 1em;
+    background: #fff;
+}
+
+.pspa-graduate-avatar {
+    margin-right: 1em;
+}
+
+.pspa-graduate-details h3 {
+    margin: 0;
+}
+
+.pspa-graduate-details p {
+    margin: 0.2em 0;
+}
