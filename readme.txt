@@ -4,7 +4,7 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.0.29
+Stable tag: 0.0.30
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,10 @@ The plugin registers two custom user roles:
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
+= 0.0.30 =
+* Style WooCommerce account navigation to match the dashboard.
+* Bump version to 0.0.30.
+
 = 0.0.29 =
 * Ensure admin profile edit links always point to the My Account graduate profile endpoint.
 * Bump version to 0.0.29.
