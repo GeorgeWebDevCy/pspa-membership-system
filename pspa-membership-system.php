@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.40
+ * Version: 0.0.41
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.40' );
+define( 'PSPA_MS_VERSION', '0.0.41' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -848,7 +848,7 @@ function pspa_ms_ajax_filter_graduates() {
 
     if ( ! empty( $_POST['full_name'] ) ) {
         $full_name = sanitize_text_field( wp_unslash( $_POST['full_name'] ) );
-        $parts     = preg_split( '/\s+/', $full_name, 2 );
+        $parts     = preg_split( '/\s+/u', $full_name, 2 );
 
         $name_query = array( 'relation' => 'OR' );
 
@@ -858,12 +858,12 @@ function pspa_ms_ajax_filter_graduates() {
                 array(
                     'key'     => 'gn_first_name',
                     'value'   => $parts[0],
-                    'compare' => 'LIKE',
+                    'compare' => '=',
                 ),
                 array(
                     'key'     => 'gn_surname',
                     'value'   => $parts[1],
-                    'compare' => 'LIKE',
+                    'compare' => '=',
                 ),
             );
         } else {
