@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.26
+ * Version: 0.0.27
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.26' );
+define( 'PSPA_MS_VERSION', '0.0.27' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -232,7 +232,11 @@ function pspa_ms_graduate_profile_content() {
 
     $current_user = wp_get_current_user();
 
-    if ( current_user_can( 'manage_options' ) || in_array( 'system-admin', (array) $current_user->roles, true ) ) {
+    if (
+        current_user_can( 'manage_options' ) ||
+        in_array( 'system-admin', (array) $current_user->roles, true ) ||
+        in_array( 'professionalcatalogue', (array) $current_user->roles, true )
+    ) {
         pspa_ms_admin_profile_interface();
         return;
     }
@@ -291,7 +295,7 @@ function pspa_ms_simple_profile_form( $user_id ) {
         </p>
         <p class="form-row form-row-wide">
             <label for="password"><?php esc_html_e( 'Νέος κωδικός', 'pspa-membership-system' ); ?></label>
-            <input type="password" name="password" id="password" />
+            <input type="password" name="password" id="password" autocomplete="new-password" />
         </p>
         <?php wp_nonce_field( 'pspa_graduate_profile', 'pspa_graduate_profile_nonce' ); ?>
         <p>
@@ -419,11 +423,15 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
         </p>
         <p class="form-row form-row-wide">
             <label for="password"><?php esc_html_e( 'Νέος κωδικός', 'pspa-membership-system' ); ?></label>
-            <input type="password" name="password" id="password" />
+            <input type="password" name="password" id="password" autocomplete="new-password" />
         </p>
         <?php if ( function_exists( 'acf_form' ) ) : ?>
             <div class="pspa-acf-fields">
-                <?php acf_form( array( 'post_id' => 'user_' . $user_id, 'form' => false ) ); ?>
+                <?php acf_form( array(
+                    'post_id'      => 'user_' . $user_id,
+                    'form'         => false,
+                    'field_groups' => array( 'group_gn_graduate_profile' ),
+                ) ); ?>
             </div>
         <?php endif; ?>
         <?php wp_nonce_field( 'pspa_admin_edit_user', 'pspa_admin_edit_user_nonce' ); ?>

@@ -4,7 +4,7 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.0.26
+Stable tag: 0.0.27
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,10 @@ The plugin registers two custom user roles:
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
+= 0.0.27 =
+* Allow System Admins and Professional Catalogue users to edit all graduate profile fields using the unified interface.
+* Let graduates update their password from the front-end profile form.
+
 = 0.0.26 =
 * Apply dashboard styling to the System Admin user search and edit forms for a consistent front-end experience.
 
