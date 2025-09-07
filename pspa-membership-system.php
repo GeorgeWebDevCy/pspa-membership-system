@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.42
+ * Version: 0.0.43
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.42' );
+define( 'PSPA_MS_VERSION', '0.0.43' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -848,48 +848,43 @@ function pspa_ms_ajax_filter_graduates() {
 
     if ( ! empty( $_POST['full_name'] ) ) {
         $full_name = sanitize_text_field( wp_unslash( $_POST['full_name'] ) );
-        $parts     = preg_split( '/\s+/u', $full_name, 2 );
+        $parts     = preg_split( '/\s+/u', $full_name );
 
-        $name_query = array( 'relation' => 'OR' );
+        $compare      = 'LIKE';
+        $current_user = wp_get_current_user();
+        if (
+            current_user_can( 'manage_options' ) ||
+            in_array( 'system-admin', (array) $current_user->roles, true ) ||
+            in_array( 'sysadmin', (array) $current_user->roles, true )
+        ) {
+            $compare = '=';
+        }
 
-        if ( ! empty( $parts[0] ) && ! empty( $parts[1] ) ) {
-            $name_query = array(
-                'relation' => 'AND',
-                array(
-                    'key'     => 'gn_first_name',
-                    'value'   => $parts[0],
-                    'compare' => '=',
-                ),
-                array(
-                    'key'     => 'gn_surname',
-                    'value'   => $parts[1],
-                    'compare' => '=',
-                ),
-            );
-        } else {
-            $compare      = 'LIKE';
-            $current_user = wp_get_current_user();
-            if (
-                current_user_can( 'manage_options' ) ||
-                in_array( 'system-admin', (array) $current_user->roles, true ) ||
-                in_array( 'sysadmin', (array) $current_user->roles, true )
-            ) {
-                $compare = '=';
+        $name_query = array( 'relation' => 'AND' );
+
+        foreach ( $parts as $part ) {
+            if ( '' === $part ) {
+                continue;
             }
 
             $name_query[] = array(
-                'key'     => 'gn_first_name',
-                'value'   => $full_name,
-                'compare' => $compare,
-            );
-            $name_query[] = array(
-                'key'     => 'gn_surname',
-                'value'   => $full_name,
-                'compare' => $compare,
+                'relation' => 'OR',
+                array(
+                    'key'     => 'gn_first_name',
+                    'value'   => $part,
+                    'compare' => $compare,
+                ),
+                array(
+                    'key'     => 'gn_surname',
+                    'value'   => $part,
+                    'compare' => $compare,
+                ),
             );
         }
 
-        $meta_query[] = $name_query;
+        if ( count( $name_query ) > 1 ) {
+            $meta_query[] = $name_query;
+        }
     }
 
     $page     = isset( $_POST['page'] ) ? max( 1, absint( $_POST['page'] ) ) : 1;
