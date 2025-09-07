@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.23
+ * Version: 0.0.25
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.23' );
+define( 'PSPA_MS_VERSION', '0.0.25' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -432,7 +432,10 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
  * @return string
  */
 function pspa_ms_login_by_details_shortcode() {
+    pspa_ms_log( 'Login-by-details form loaded. Current user: ' . ( is_user_logged_in() ? get_current_user_id() : 'guest' ) );
+
     if ( is_user_logged_in() ) {
+        pspa_ms_log( 'Login-by-details aborted: already logged in as user ID ' . get_current_user_id() );
         return '<p>' . esc_html__( 'Είστε ήδη επαληθευμένοι.', 'pspa-membership-system' ) . '</p>';
     }
 
@@ -440,54 +443,59 @@ function pspa_ms_login_by_details_shortcode() {
 
     $output = '';
 
-    if (
-        'POST' === $_SERVER['REQUEST_METHOD'] &&
-        isset( $_POST['pspa_login_details_nonce'] ) &&
-        wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['pspa_login_details_nonce'] ) ), 'pspa_login_details' )
-    ) {
-        $first = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
-        $last  = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
-        $year  = isset( $_POST['graduation_year'] ) ? sanitize_text_field( wp_unslash( $_POST['graduation_year'] ) ) : '';
-
-        pspa_ms_log( sprintf( 'Login attempt: %s %s (%s)', $first, $last, $year ) );
-
-        $query = new WP_User_Query(
-            array(
-                'number'     => 1,
-                'meta_query' => array(
-                    'relation' => 'AND',
-                    array(
-                        'key'     => 'gn_first_name',
-                        'value'   => $first,
-                        'compare' => '=',
-                    ),
-                    array(
-                        'key'     => 'gn_surname',
-                        'value'   => $last,
-                        'compare' => '=',
-                    ),
-                    array(
-                        'key'     => 'gn_graduation_year',
-                        'value'   => $year,
-                        'compare' => '=',
-                    ),
-                ),
-            )
-        );
-
-        $users = $query->get_results();
-
-        if ( ! empty( $users ) ) {
-            $user = $users[0];
-            pspa_ms_log( 'Login success for user ID ' . $user->ID );
-            wp_set_current_user( $user->ID, $user->user_login );
-            wp_set_auth_cookie( $user->ID, true );
-            do_action( 'wp_login', $user->user_login, $user );
-            wp_safe_redirect( wc_get_account_endpoint_url( 'graduate-profile' ) );
-            exit;
+    if ( 'POST' === $_SERVER['REQUEST_METHOD'] ) {
+        if (
+            ! isset( $_POST['pspa_login_details_nonce'] ) ||
+            ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['pspa_login_details_nonce'] ) ), 'pspa_login_details' )
+        ) {
+            pspa_ms_log( 'Login failed: invalid or missing nonce' );
         } else {
-            pspa_ms_log( 'Login failed: no matching user' );
-            $output .= '<p>' . esc_html__( 'Δεν βρέθηκε αντίστοιχος χρήστης.', 'pspa-membership-system' ) . '</p>';
+            $first = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
+            $last  = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
+            $year  = isset( $_POST['graduation_year'] ) ? sanitize_text_field( wp_unslash( $_POST['graduation_year'] ) ) : '';
+
+            pspa_ms_log( sprintf( 'Login attempt: %s %s (%s)', $first, $last, $year ) );
+
+            $query = new WP_User_Query(
+                array(
+                    'number'     => 1,
+                    'meta_query' => array(
+                        'relation' => 'AND',
+                        array(
+                            'key'     => 'gn_first_name',
+                            'value'   => $first,
+                            'compare' => '=',
+                        ),
+                        array(
+                            'key'     => 'gn_surname',
+                            'value'   => $last,
+                            'compare' => '=',
+                        ),
+                        array(
+                            'key'     => 'gn_graduation_year',
+                            'value'   => $year,
+                            'compare' => '=',
+                        ),
+                    ),
+                )
+            );
+
+            $users = $query->get_results();
+
+            if ( ! empty( $users ) ) {
+                $user = $users[0];
+                pspa_ms_log( 'Login success for user ID ' . $user->ID );
+                wp_set_current_user( $user->ID, $user->user_login );
+                // Ensure the auth cookie respects the current SSL state so that
+                // browsers do not reject it when the site forces HTTPS.
+                wp_set_auth_cookie( $user->ID, true, is_ssl() );
+                do_action( 'wp_login', $user->user_login, $user );
+                wp_safe_redirect( wc_get_account_endpoint_url( 'graduate-profile' ) );
+                exit;
+            } else {
+                pspa_ms_log( 'Login failed: no matching user' );
+                $output .= '<p>' . esc_html__( 'Δεν βρέθηκε αντίστοιχος χρήστης.', 'pspa-membership-system' ) . '</p>';
+            }
         }
     }
 
