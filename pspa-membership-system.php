@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.22
+ * Version: 0.0.23
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,20 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.22' );
+define( 'PSPA_MS_VERSION', '0.0.23' );
+
+define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
+
+/**
+ * Log a message to the PSPA log file.
+ *
+ * @param string $message Message to log.
+ */
+function pspa_ms_log( $message ) {
+    $entry = sprintf( "[%s] %s\n", gmdate( 'c' ), $message );
+    // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_file_put_contents
+    file_put_contents( PSPA_MS_LOG_FILE, $entry, FILE_APPEND );
+}
 /**
  * Enqueue shared dashboard styles.
  */
@@ -436,6 +449,8 @@ function pspa_ms_login_by_details_shortcode() {
         $last  = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
         $year  = isset( $_POST['graduation_year'] ) ? sanitize_text_field( wp_unslash( $_POST['graduation_year'] ) ) : '';
 
+        pspa_ms_log( sprintf( 'Login attempt: %s %s (%s)', $first, $last, $year ) );
+
         $query = new WP_User_Query(
             array(
                 'number'     => 1,
@@ -464,12 +479,14 @@ function pspa_ms_login_by_details_shortcode() {
 
         if ( ! empty( $users ) ) {
             $user = $users[0];
+            pspa_ms_log( 'Login success for user ID ' . $user->ID );
             wp_set_current_user( $user->ID, $user->user_login );
             wp_set_auth_cookie( $user->ID, true );
             do_action( 'wp_login', $user->user_login, $user );
             wp_safe_redirect( wc_get_account_endpoint_url( 'graduate-profile' ) );
             exit;
         } else {
+            pspa_ms_log( 'Login failed: no matching user' );
             $output .= '<p>' . esc_html__( 'Δεν βρέθηκε αντίστοιχος χρήστης.', 'pspa-membership-system' ) . '</p>';
         }
     }
@@ -507,6 +524,39 @@ function pspa_ms_register_shortcodes() {
     add_shortcode( 'pspa_graduate_directory', 'pspa_ms_graduate_directory_shortcode' );
 }
 add_action( 'init', 'pspa_ms_register_shortcodes' );
+
+/**
+ * Register the admin page for viewing PSPA logs.
+ */
+function pspa_ms_register_logs_page() {
+    add_menu_page(
+        __( 'PSPA Logs', 'pspa-membership-system' ),
+        __( 'PSPA Logs', 'pspa-membership-system' ),
+        'manage_options',
+        'pspa-ms-logs',
+        'pspa_ms_render_logs_page',
+        'dashicons-list-view',
+        99
+    );
+}
+add_action( 'admin_menu', 'pspa_ms_register_logs_page' );
+
+/**
+ * Render the logs page.
+ */
+function pspa_ms_render_logs_page() {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        return;
+    }
+
+    echo '<div class="wrap"><h1>' . esc_html__( 'PSPA Logs', 'pspa-membership-system' ) . '</h1><pre style="white-space:pre-wrap;">';
+    if ( file_exists( PSPA_MS_LOG_FILE ) ) {
+        echo esc_html( file_get_contents( PSPA_MS_LOG_FILE ) );
+    } else {
+        esc_html_e( 'Log file is empty.', 'pspa-membership-system' );
+    }
+    echo '</pre></div>';
+}
 
 /**
  * Sync first, last and display names with ACF fields after saving.
