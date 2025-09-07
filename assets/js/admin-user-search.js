@@ -2,6 +2,7 @@ jQuery(function($){
     var $input = $('#pspa_user_search');
     if ($input.length){
         $input.autocomplete({
+            minLength: 3,
             source: function(request, response){
                 $.getJSON(pspaMsAdminSearch.ajaxUrl, {
                     action: 'pspa_ms_user_autocomplete',
