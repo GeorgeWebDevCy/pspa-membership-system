@@ -31,7 +31,7 @@ Dependencies:
 
 ## Administrator Tools
 
-System Admins and site administrators can search for graduates and edit any user profile directly from the `Προφίλ Απόφοιτου` endpoint. The search covers all graduate fields and opens an editable form with ACF data, email and password controls. The interface uses the same `pspa-dashboard` styles as the graduate profile for a consistent appearance.
+System Admins and site administrators can search for graduates and edit any user profile directly from the `Προφίλ Απόφοιτου` endpoint. The search covers all graduate fields and opens an editable form with ACF data, email and password controls. Search results are displayed using the same card layout as the Graduate Directory, and cards include an edit button for administrators. The interface uses the same `pspa-dashboard` styles as the graduate profile for a consistent appearance.
 
 ## Login by Details
 
@@ -41,7 +41,7 @@ The `[pspa_login_by_details]` shortcode renders a form asking for first name, la
 
 ## Graduate Directory
 
-The `[pspa_graduate_directory]` shortcode outputs a grid of graduates showing their profile photo, full name and graduation year. Clicking a card or the "Δείτε Περισσότερο" link opens the graduate's public, non-editable profile. Public profiles are also accessible directly at `/graduate/<username>/`.
+The `[pspa_graduate_directory]` shortcode outputs a grid of graduates showing their profile photo, full name and graduation year. Clicking "Δείτε Περισσότερο" opens the graduate's public, non-editable profile. When logged in as an administrator or System Admin, cards also show an "Επεξεργασία" link to jump directly to the editing interface. Public profiles are also accessible directly at `/graduate/<username>/`.
 
 ## Role-based Redirection
 
