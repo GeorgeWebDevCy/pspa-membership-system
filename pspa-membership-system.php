@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 1.0.1
+ * Version: 1.0.2
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '1.0.1' );
+define( 'PSPA_MS_VERSION', '1.0.2' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -376,22 +376,44 @@ function pspa_ms_admin_profile_interface() {
         return;
     }
 
-    $search_term = isset( $_POST['pspa_user_search'] ) ? sanitize_text_field( wp_unslash( $_POST['pspa_user_search'] ) ) : '';
+    wp_enqueue_script( 'jquery-ui-autocomplete' );
+    wp_enqueue_script(
+        'pspa-ms-admin-user-search',
+        plugin_dir_url( __FILE__ ) . 'assets/js/admin-user-search.js',
+        array( 'jquery', 'jquery-ui-autocomplete' ),
+        PSPA_MS_VERSION,
+        true
+    );
+    wp_localize_script(
+        'pspa-ms-admin-user-search',
+        'pspaMsAdminSearch',
+        array(
+            'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+            'nonce'   => wp_create_nonce( 'pspa_ms_admin_user_autocomplete' ),
+        )
+    );
+
+    $search_term = isset( $_GET['pspa_user_search'] ) ? sanitize_text_field( wp_unslash( $_GET['pspa_user_search'] ) ) : '';
+    $page        = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1;
+    $per_page    = 12;
 
     echo '<div class="pspa-dashboard pspa-admin-dashboard">';
     ?>
-    <form method="post" class="pspa-admin-user-search" style="margin-bottom:20px;">
+    <form method="get" class="pspa-admin-user-search" style="margin-bottom:20px;">
         <p>
-            <input type="text" name="pspa_user_search" value="<?php echo esc_attr( $search_term ); ?>" placeholder="<?php esc_attr_e( 'Αναζήτηση χρηστών', 'pspa-membership-system' ); ?>" />
+            <input type="text" name="pspa_user_search" id="pspa_user_search" value="<?php echo esc_attr( $search_term ); ?>" placeholder="<?php esc_attr_e( 'Αναζήτηση χρηστών', 'pspa-membership-system' ); ?>" />
             <button type="submit" class="button"><?php esc_html_e( 'Αναζήτηση', 'pspa-membership-system' ); ?></button>
         </p>
     </form>
     <?php
 
-    if ( ! empty( $search_term ) ) {
+    $user_ids    = array();
+    $total_users = 0;
+
+    if ( '' !== $search_term ) {
         global $wpdb;
         $like      = '%' . $wpdb->esc_like( $search_term ) . '%';
-        $user_ids  = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT user_id FROM {$wpdb->usermeta} WHERE meta_value LIKE %s", $like ) );
+        $user_ids1 = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT user_id FROM {$wpdb->usermeta} WHERE meta_value LIKE %s", $like ) );
         $user_ids2 = get_users(
             array(
                 'search'         => '*' . esc_attr( $search_term ) . '*',
@@ -399,18 +421,49 @@ function pspa_ms_admin_profile_interface() {
                 'search_columns' => array( 'user_login', 'user_nicename', 'user_email', 'user_url' ),
             )
         );
+        $ids         = array_unique( array_merge( $user_ids1, $user_ids2 ) );
+        $total_users = count( $ids );
+        $user_ids    = array_slice( $ids, ( $page - 1 ) * $per_page, $per_page );
+    } else {
+        $query = new WP_User_Query(
+            array(
+                'number'      => $per_page,
+                'offset'      => ( $page - 1 ) * $per_page,
+                'count_total' => true,
+                'fields'      => 'ID',
+            )
+        );
+        $user_ids    = $query->get_results();
+        $total_users = (int) $query->get_total();
+    }
 
-        $user_ids = array_unique( array_merge( $user_ids, $user_ids2 ) );
-
-        if ( ! empty( $user_ids ) ) {
-            echo '<div class="pspa-user-search-results pspa-graduate-directory">';
-            foreach ( $user_ids as $id ) {
-                echo pspa_ms_render_graduate_card( $id );
-            }
-            echo '</div>';
-        } else {
-            echo '<p>' . esc_html__( 'Δεν βρέθηκαν χρήστες.', 'pspa-membership-system' ) . '</p>';
+    if ( ! empty( $user_ids ) ) {
+        echo '<div class="pspa-user-search-results pspa-graduate-directory">';
+        foreach ( $user_ids as $id ) {
+            echo pspa_ms_render_graduate_card( $id );
         }
+        echo '</div>';
+
+        $total_pages = (int) ceil( $total_users / $per_page );
+        if ( $total_pages > 1 ) {
+            $base_args = array();
+            if ( '' !== $search_term ) {
+                $base_args['pspa_user_search'] = $search_term;
+            }
+            $base_url = wc_get_account_endpoint_url( 'graduate-profile' );
+
+            echo '<nav class="pspa-dir-pagination">';
+            if ( $page > 1 ) {
+                echo '<a class="prev" href="' . esc_url( add_query_arg( array_merge( $base_args, array( 'paged' => $page - 1 ) ), $base_url ) ) . '">&laquo; ' . esc_html__( 'Προηγούμενη', 'pspa-membership-system' ) . '</a>';
+            }
+            echo '<span class="current">' . sprintf( esc_html__( 'Σελίδα %1$d από %2$d', 'pspa-membership-system' ), $page, $total_pages ) . '</span>';
+            if ( $page < $total_pages ) {
+                echo '<a class="next" href="' . esc_url( add_query_arg( array_merge( $base_args, array( 'paged' => $page + 1 ) ), $base_url ) ) . '">' . esc_html__( 'Επόμενη', 'pspa-membership-system' ) . ' &raquo;</a>';
+            }
+            echo '</nav>';
+        }
+    } else {
+        echo '<p>' . esc_html__( 'Δεν βρέθηκαν χρήστες.', 'pspa-membership-system' ) . '</p>';
     }
 
     echo '</div>';
@@ -937,6 +990,44 @@ function pspa_ms_ajax_filter_graduates() {
     wp_send_json_success( array( 'html' => $html ) );
 }
 add_action( 'wp_ajax_pspa_ms_filter_graduates', 'pspa_ms_ajax_filter_graduates' );
+
+/**
+ * AJAX handler for admin user search autocomplete.
+ */
+function pspa_ms_ajax_user_autocomplete() {
+    check_ajax_referer( 'pspa_ms_admin_user_autocomplete', 'nonce' );
+
+    if ( ! is_user_logged_in() ) {
+        wp_send_json( array() );
+    }
+
+    $user  = wp_get_current_user();
+    $roles = (array) $user->roles;
+    if ( ! current_user_can( 'manage_options' ) && ! in_array( 'system-admin', $roles, true ) && ! in_array( 'sysadmin', $roles, true ) && ! in_array( 'professionalcatalogue', $roles, true ) ) {
+        wp_send_json( array() );
+    }
+
+    $term = isset( $_GET['term'] ) ? sanitize_text_field( wp_unslash( $_GET['term'] ) ) : '';
+
+    $args   = array(
+        'search'         => '*' . esc_attr( $term ) . '*',
+        'number'         => 10,
+        'search_columns' => array( 'user_login', 'user_nicename', 'user_email', 'display_name' ),
+        'fields'         => array( 'ID', 'display_name' ),
+    );
+    $users  = get_users( $args );
+    $result = array();
+
+    foreach ( $users as $u ) {
+        $result[] = array(
+            'label' => $u->display_name,
+            'value' => $u->display_name,
+        );
+    }
+
+    wp_send_json( $result );
+}
+add_action( 'wp_ajax_pspa_ms_user_autocomplete', 'pspa_ms_ajax_user_autocomplete' );
 
 /**
  * Flush rewrite rules on activation and deactivation.
