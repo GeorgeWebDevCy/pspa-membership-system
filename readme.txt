@@ -4,7 +4,7 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 1.0.13
+Stable tag: 1.0.14
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,45 +30,9 @@ The plugin registers two custom user roles:
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
-= 1.0.13 =
-* Restrict graduate directory access to the `/επαγγελματικός-κατάλογος/` page and redirect other views to the profile editor.
-= 1.0.12 =
-* Standardize "E-mail" capitalization.
-
-= 1.0.11 =
-* Bump version to 1.0.11 for automatic update testing.
-
-= 1.0.10 =
-* Update GitHub repository URL for automatic updates.
-
-= 1.0.9 =
-* Bump version to 1.0.9 for automatic update testing.
-
-= 1.0.8 =
-* Enable automatic updates using public GitHub release assets.
-* Bump version to 1.0.8.
-= 1.0.7 =
-* Move Graduate Profile endpoint to second My Account menu position.
-* Bump version to 1.0.7.
-= 1.0.6 =
-* Cache graduate cards to reduce repeated field lookups.
-* Sanitize public profile slugs to prevent invalid requests.
-* Bump version to 1.0.6.
-= 1.0.5 =
-* Display graduate names using ACF first and surname fields.
-* Sync WordPress name fields with ACF values and update display name.
-* Bump version to 1.0.5.
-= 1.0.4 =
-* Start admin autocomplete after typing 3 characters.
-* Search includes graduate profile and ACF fields.
-* Bump version to 1.0.4.
-= 1.0.3 =
-* Expand admin search autocomplete to match ACF profile fields.
-* Bump version to 1.0.3.
-= 1.0.2 =
-* Load first 12 users with pagination on the system admin dashboard.
-* Add autocomplete to the graduate search box.
-* Bump version to 1.0.2.
+= 1.0.14 =
+* Revert plugin to version 1.0.1 baseline.
+* Bump version to 1.0.14.
 = 1.0.1 =
 * Show system admin search results with graduate card layout.
 * Add edit button to graduate cards for administrators and system admins.
