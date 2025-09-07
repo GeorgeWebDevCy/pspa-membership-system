@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.23
+ * Version: 0.0.24
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.23' );
+define( 'PSPA_MS_VERSION', '0.0.24' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -481,7 +481,9 @@ function pspa_ms_login_by_details_shortcode() {
             $user = $users[0];
             pspa_ms_log( 'Login success for user ID ' . $user->ID );
             wp_set_current_user( $user->ID, $user->user_login );
-            wp_set_auth_cookie( $user->ID, true );
+            // Ensure the auth cookie respects the current SSL state so that
+            // browsers do not reject it when the site forces HTTPS.
+            wp_set_auth_cookie( $user->ID, true, is_ssl() );
             do_action( 'wp_login', $user->user_login, $user );
             wp_safe_redirect( wc_get_account_endpoint_url( 'graduate-profile' ) );
             exit;

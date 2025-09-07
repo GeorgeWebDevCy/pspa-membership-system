@@ -36,6 +36,8 @@ System Admins and site administrators can search for graduates and edit any user
 
 The `[pspa_login_by_details]` shortcode renders a form asking for first name, last name and graduation year. When the details match a graduate record the user is logged in and redirected to the dashboard.
 
+> **Note:** Earlier versions didn't set the authentication cookie as secure, so on HTTPS sites the browser rejected it and WordPress kept asking you to log in. This has been fixed in version 0.0.24 by respecting the current SSL state when creating the cookie.
+
 ## Graduate Directory
 
 The `[pspa_graduate_directory]` shortcode outputs a grid of graduates showing their profile photo, full name and graduation year. Clicking a card or the "Δείτε Περισσότερο" link opens the graduate's public, non-editable profile. Public profiles are also accessible directly at `/graduate/<username>/`.
