@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 1.0.12
+ * Version: 1.0.13
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '1.0.12' );
+define( 'PSPA_MS_VERSION', '1.0.13' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -804,6 +804,43 @@ function pspa_ms_block_admin_access() {
     }
 }
 add_action( 'init', 'pspa_ms_block_admin_access' );
+
+/**
+ * Restrict graduate directory access to the professional catalogue page.
+ */
+function pspa_ms_restrict_directory_access() {
+    if ( ! is_user_logged_in() ) {
+        return;
+    }
+
+    $user  = wp_get_current_user();
+    $roles = (array) $user->roles;
+
+    if (
+        current_user_can( 'manage_options' ) ||
+        in_array( 'system-admin', $roles, true ) ||
+        in_array( 'sysadmin', $roles, true ) ||
+        in_array( 'professionalcatalogue', $roles, true )
+    ) {
+        return;
+    }
+
+    $allowed_path = trailingslashit( wp_parse_url( home_url( '/επαγγελματικός-κατάλογος/' ), PHP_URL_PATH ) );
+    $current_path = trailingslashit( wp_parse_url( add_query_arg( array() ), PHP_URL_PATH ) );
+
+    if ( $current_path === $allowed_path ) {
+        return;
+    }
+
+    if ( is_singular() ) {
+        global $post;
+        if ( has_shortcode( (string) $post->post_content, 'pspa_graduate_directory' ) ) {
+            wp_safe_redirect( wc_get_account_endpoint_url( 'graduate-profile' ) );
+            exit;
+        }
+    }
+}
+add_action( 'template_redirect', 'pspa_ms_restrict_directory_access' );
 
 /**
  * Get unique user meta values for filters.
