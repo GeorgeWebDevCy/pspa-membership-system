@@ -4,7 +4,7 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,9 @@ The plugin registers two custom user roles:
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
+= 1.0.3 =
+* Expand admin search autocomplete to match ACF profile fields.
+* Bump version to 1.0.3.
 = 1.0.2 =
 * Load first 12 users with pagination on the system admin dashboard.
 * Add autocomplete to the graduate search box.
