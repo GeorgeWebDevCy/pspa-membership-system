@@ -4,12 +4,14 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.0.24
+Stable tag: 0.0.25
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 == Description ==
 This plugin powers the PSPA membership system and integrates with WooCommerce and Advanced Custom Fields (ACF) Pro. It provides a graduate dashboard, administrator search tools and a login-by-details shortcode.
+
+Note: Versions prior to 0.0.25 processed the login form inside the shortcode after page output had begun, so WordPress could not send the authentication cookie and the user remained logged out. The handler now runs before headers are sent, allowing successful submissions to log users in and redirect correctly.
 
 == Custom User Roles ==
 The plugin registers two custom user roles:
@@ -28,6 +30,10 @@ The plugin registers two custom user roles:
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
+= 0.0.25 =
+* Handle login-by-details submissions on `template_redirect` so authentication cookies and redirects work reliably.
+* Log the user's authentication status to aid debugging.
+
 = 0.0.24 =
 * Ensure login-by-details sets a secure auth cookie so sessions persist on HTTPS sites.
 = 0.0.23 =
