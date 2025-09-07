@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 1.0.13
+ * Version: 1.0.14
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '1.0.13' );
+define( 'PSPA_MS_VERSION', '1.0.14' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -107,16 +107,13 @@ use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 
 // Initialize the update checker.
 $pspa_update_checker = PucFactory::buildUpdateChecker(
-    'https://github.com/GeorgeWebDevCy/pspa-membership-system/',
+    'https://github.com/PSPA/pspa-membership-system/',
     __FILE__,
     'pspa-membership-system'
 );
 
 // Optional: set the branch to check for updates.
 $pspa_update_checker->setBranch( 'main' );
-
-// Use release assets from the public GitHub repository for updates.
-$pspa_update_checker->getVcsApi()->enableReleaseAssets();
 
 /**
  * Register the Graduate Profile endpoint.
@@ -145,19 +142,8 @@ add_filter( 'query_vars', 'pspa_ms_graduate_profile_query_vars' );
  * @return array
  */
 function pspa_ms_add_graduate_profile_link( $items ) {
-    $new_items = array();
-    $index     = 0;
-
-    foreach ( $items as $key => $label ) {
-        if ( 1 === $index ) {
-            $new_items['graduate-profile'] = __( 'Προφίλ Απόφοιτου', 'pspa-membership-system' );
-        }
-
-        $new_items[ $key ] = $label;
-        $index++;
-    }
-
-    return $new_items;
+    $items['graduate-profile'] = __( 'Προφίλ Απόφοιτου', 'pspa-membership-system' );
+    return $items;
 }
 add_filter( 'woocommerce_account_menu_items', 'pspa_ms_add_graduate_profile_link' );
 
@@ -188,7 +174,7 @@ add_filter( 'query_vars', 'pspa_ms_public_profile_query_vars' );
  * @return string
  */
 function pspa_ms_public_profile_template( $template ) {
-    $slug = sanitize_title_for_query( get_query_var( 'pspa_graduate' ) );
+    $slug = get_query_var( 'pspa_graduate' );
     if ( $slug ) {
         $user = get_user_by( 'slug', $slug );
         if ( ! $user ) {
@@ -390,44 +376,22 @@ function pspa_ms_admin_profile_interface() {
         return;
     }
 
-    wp_enqueue_script( 'jquery-ui-autocomplete' );
-    wp_enqueue_script(
-        'pspa-ms-admin-user-search',
-        plugin_dir_url( __FILE__ ) . 'assets/js/admin-user-search.js',
-        array( 'jquery', 'jquery-ui-autocomplete' ),
-        PSPA_MS_VERSION,
-        true
-    );
-    wp_localize_script(
-        'pspa-ms-admin-user-search',
-        'pspaMsAdminSearch',
-        array(
-            'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-            'nonce'   => wp_create_nonce( 'pspa_ms_admin_user_autocomplete' ),
-        )
-    );
-
-    $search_term = isset( $_GET['pspa_user_search'] ) ? sanitize_text_field( wp_unslash( $_GET['pspa_user_search'] ) ) : '';
-    $page        = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1;
-    $per_page    = 12;
+    $search_term = isset( $_POST['pspa_user_search'] ) ? sanitize_text_field( wp_unslash( $_POST['pspa_user_search'] ) ) : '';
 
     echo '<div class="pspa-dashboard pspa-admin-dashboard">';
     ?>
-    <form method="get" class="pspa-admin-user-search" style="margin-bottom:20px;">
+    <form method="post" class="pspa-admin-user-search" style="margin-bottom:20px;">
         <p>
-            <input type="text" name="pspa_user_search" id="pspa_user_search" value="<?php echo esc_attr( $search_term ); ?>" placeholder="<?php esc_attr_e( 'Αναζήτηση χρηστών', 'pspa-membership-system' ); ?>" />
+            <input type="text" name="pspa_user_search" value="<?php echo esc_attr( $search_term ); ?>" placeholder="<?php esc_attr_e( 'Αναζήτηση χρηστών', 'pspa-membership-system' ); ?>" />
             <button type="submit" class="button"><?php esc_html_e( 'Αναζήτηση', 'pspa-membership-system' ); ?></button>
         </p>
     </form>
     <?php
 
-    $user_ids    = array();
-    $total_users = 0;
-
-    if ( '' !== $search_term ) {
+    if ( ! empty( $search_term ) ) {
         global $wpdb;
         $like      = '%' . $wpdb->esc_like( $search_term ) . '%';
-        $user_ids1 = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT user_id FROM {$wpdb->usermeta} WHERE meta_value LIKE %s", $like ) );
+        $user_ids  = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT user_id FROM {$wpdb->usermeta} WHERE meta_value LIKE %s", $like ) );
         $user_ids2 = get_users(
             array(
                 'search'         => '*' . esc_attr( $search_term ) . '*',
@@ -435,49 +399,18 @@ function pspa_ms_admin_profile_interface() {
                 'search_columns' => array( 'user_login', 'user_nicename', 'user_email', 'user_url' ),
             )
         );
-        $ids         = array_unique( array_merge( $user_ids1, $user_ids2 ) );
-        $total_users = count( $ids );
-        $user_ids    = array_slice( $ids, ( $page - 1 ) * $per_page, $per_page );
-    } else {
-        $query = new WP_User_Query(
-            array(
-                'number'      => $per_page,
-                'offset'      => ( $page - 1 ) * $per_page,
-                'count_total' => true,
-                'fields'      => 'ID',
-            )
-        );
-        $user_ids    = $query->get_results();
-        $total_users = (int) $query->get_total();
-    }
 
-    if ( ! empty( $user_ids ) ) {
-        echo '<div class="pspa-user-search-results pspa-graduate-directory">';
-        foreach ( $user_ids as $id ) {
-            echo pspa_ms_render_graduate_card( $id );
+        $user_ids = array_unique( array_merge( $user_ids, $user_ids2 ) );
+
+        if ( ! empty( $user_ids ) ) {
+            echo '<div class="pspa-user-search-results pspa-graduate-directory">';
+            foreach ( $user_ids as $id ) {
+                echo pspa_ms_render_graduate_card( $id );
+            }
+            echo '</div>';
+        } else {
+            echo '<p>' . esc_html__( 'Δεν βρέθηκαν χρήστες.', 'pspa-membership-system' ) . '</p>';
         }
-        echo '</div>';
-
-        $total_pages = (int) ceil( $total_users / $per_page );
-        if ( $total_pages > 1 ) {
-            $base_args = array();
-            if ( '' !== $search_term ) {
-                $base_args['pspa_user_search'] = $search_term;
-            }
-            $base_url = wc_get_account_endpoint_url( 'graduate-profile' );
-
-            echo '<nav class="pspa-dir-pagination">';
-            if ( $page > 1 ) {
-                echo '<a class="prev" href="' . esc_url( add_query_arg( array_merge( $base_args, array( 'paged' => $page - 1 ) ), $base_url ) ) . '">&laquo; ' . esc_html__( 'Προηγούμενη', 'pspa-membership-system' ) . '</a>';
-            }
-            echo '<span class="current">' . sprintf( esc_html__( 'Σελίδα %1$d από %2$d', 'pspa-membership-system' ), $page, $total_pages ) . '</span>';
-            if ( $page < $total_pages ) {
-                echo '<a class="next" href="' . esc_url( add_query_arg( array_merge( $base_args, array( 'paged' => $page + 1 ) ), $base_url ) ) . '">' . esc_html__( 'Επόμενη', 'pspa-membership-system' ) . ' &raquo;</a>';
-            }
-            echo '</nav>';
-        }
-    } else {
-        echo '<p>' . esc_html__( 'Δεν βρέθηκαν χρήστες.', 'pspa-membership-system' ) . '</p>';
     }
 
     echo '</div>';
@@ -522,14 +455,6 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
 
         wp_update_user( $update_data );
 
-        if ( function_exists( 'update_field' ) ) {
-            update_field( 'gn_first_name', $first_name, 'user_' . $user_id );
-            update_field( 'gn_surname', $last_name, 'user_' . $user_id );
-        } else {
-            update_user_meta( $user_id, 'gn_first_name', $first_name );
-            update_user_meta( $user_id, 'gn_surname', $last_name );
-        }
-
         wc_add_notice( __( 'Το προφίλ ενημερώθηκε με επιτυχία.', 'pspa-membership-system' ) );
         $user = get_user_by( 'id', $user_id );
     }
@@ -542,11 +467,11 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
     <form method="post">
         <p class="form-row form-row-first">
             <label for="first_name"><?php esc_html_e( 'Όνομα', 'pspa-membership-system' ); ?></label>
-            <input type="text" name="first_name" id="first_name" value="<?php echo esc_attr( function_exists( 'get_field' ) ? (string) get_field( 'gn_first_name', 'user_' . $user_id ) : $user->first_name ); ?>" />
+            <input type="text" name="first_name" id="first_name" value="<?php echo esc_attr( $user->first_name ); ?>" />
         </p>
         <p class="form-row form-row-last">
             <label for="last_name"><?php esc_html_e( 'Επίθετο', 'pspa-membership-system' ); ?></label>
-            <input type="text" name="last_name" id="last_name" value="<?php echo esc_attr( function_exists( 'get_field' ) ? (string) get_field( 'gn_surname', 'user_' . $user_id ) : $user->last_name ); ?>" />
+            <input type="text" name="last_name" id="last_name" value="<?php echo esc_attr( $user->last_name ); ?>" />
         </p>
         <p class="form-row form-row-wide">
             <label for="email"><?php esc_html_e( 'Διεύθυνση email', 'pspa-membership-system' ); ?></label>
@@ -806,43 +731,6 @@ function pspa_ms_block_admin_access() {
 add_action( 'init', 'pspa_ms_block_admin_access' );
 
 /**
- * Restrict graduate directory access to the professional catalogue page.
- */
-function pspa_ms_restrict_directory_access() {
-    if ( ! is_user_logged_in() ) {
-        return;
-    }
-
-    $user  = wp_get_current_user();
-    $roles = (array) $user->roles;
-
-    if (
-        current_user_can( 'manage_options' ) ||
-        in_array( 'system-admin', $roles, true ) ||
-        in_array( 'sysadmin', $roles, true ) ||
-        in_array( 'professionalcatalogue', $roles, true )
-    ) {
-        return;
-    }
-
-    $allowed_path = trailingslashit( wp_parse_url( home_url( '/επαγγελματικός-κατάλογος/' ), PHP_URL_PATH ) );
-    $current_path = trailingslashit( wp_parse_url( add_query_arg( array() ), PHP_URL_PATH ) );
-
-    if ( $current_path === $allowed_path ) {
-        return;
-    }
-
-    if ( is_singular() ) {
-        global $post;
-        if ( has_shortcode( (string) $post->post_content, 'pspa_graduate_directory' ) ) {
-            wp_safe_redirect( wc_get_account_endpoint_url( 'graduate-profile' ) );
-            exit;
-        }
-    }
-}
-add_action( 'template_redirect', 'pspa_ms_restrict_directory_access' );
-
-/**
  * Get unique user meta values for filters.
  *
  * @param string $meta_key User meta key.
@@ -881,25 +769,12 @@ function pspa_ms_get_public_profile_url( $user_id ) {
 }
 
 function pspa_ms_render_graduate_card( $user_id ) {
-    $cache_key = 'pspa_ms_card_' . $user_id;
-    $cached    = wp_cache_get( $cache_key, 'pspa-ms' );
-    if ( false !== $cached ) {
-        return $cached;
-    }
-
-    $use_acf = function_exists( 'get_field' );
-    $get     = $use_acf
-        ? function( $key ) use ( $user_id ) { return (string) get_field( $key, 'user_' . $user_id ); }
-        : function( $key ) use ( $user_id ) { return get_user_meta( $user_id, $key, true ); };
-
-    $first_name = $get( 'gn_first_name' );
-    $last_name  = $get( 'gn_surname' );
-    $name       = trim( $first_name . ' ' . $last_name );
-    $job        = $get( 'gn_job_title' );
-    $company    = $get( 'gn_position_company' );
-    $profession = $get( 'gn_profession' );
-    $city       = $get( 'gn_city' );
-    $country    = $get( 'gn_country' );
+    $name       = get_the_author_meta( 'display_name', $user_id );
+    $job        = function_exists( 'get_field' ) ? (string) get_field( 'gn_job_title', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_job_title', true );
+    $company    = function_exists( 'get_field' ) ? (string) get_field( 'gn_position_company', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_position_company', true );
+    $profession = function_exists( 'get_field' ) ? (string) get_field( 'gn_profession', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_profession', true );
+    $city       = function_exists( 'get_field' ) ? (string) get_field( 'gn_city', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_city', true );
+    $country    = function_exists( 'get_field' ) ? (string) get_field( 'gn_country', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_country', true );
 
     $profile_url = pspa_ms_get_public_profile_url( $user_id );
     $edit_url    = add_query_arg( 'edit_user', $user_id, wc_get_account_endpoint_url( 'graduate-profile' ) );
@@ -935,9 +810,7 @@ function pspa_ms_render_graduate_card( $user_id ) {
         </div>
     </div>
     <?php
-    $html = ob_get_clean();
-    wp_cache_set( $cache_key, $html, 'pspa-ms', HOUR_IN_SECONDS );
-    return $html;
+    return ob_get_clean();
 }
 
 /**
@@ -1064,74 +937,6 @@ function pspa_ms_ajax_filter_graduates() {
     wp_send_json_success( array( 'html' => $html ) );
 }
 add_action( 'wp_ajax_pspa_ms_filter_graduates', 'pspa_ms_ajax_filter_graduates' );
-
-/**
- * AJAX handler for admin user search autocomplete.
- */
-function pspa_ms_ajax_user_autocomplete() {
-    check_ajax_referer( 'pspa_ms_admin_user_autocomplete', 'nonce' );
-
-    if ( ! is_user_logged_in() ) {
-        wp_send_json( array() );
-    }
-
-    $user  = wp_get_current_user();
-    $roles = (array) $user->roles;
-    if ( ! current_user_can( 'manage_options' ) && ! in_array( 'system-admin', $roles, true ) && ! in_array( 'sysadmin', $roles, true ) && ! in_array( 'professionalcatalogue', $roles, true ) ) {
-        wp_send_json( array() );
-    }
-
-    $term = isset( $_GET['term'] ) ? sanitize_text_field( wp_unslash( $_GET['term'] ) ) : '';
-
-    if ( strlen( $term ) < 3 ) {
-        wp_send_json( array() );
-    }
-
-    global $wpdb;
-    $like          = '%' . $wpdb->esc_like( $term ) . '%';
-    $meta_user_ids = $wpdb->get_col(
-        $wpdb->prepare(
-            "SELECT DISTINCT user_id FROM {$wpdb->usermeta} WHERE meta_key NOT LIKE '\\_%' AND meta_value LIKE %s",
-            $like
-        )
-    );
-
-    $field_user_ids = get_users(
-        array(
-            'search'         => '*' . esc_attr( $term ) . '*',
-            'number'         => 10,
-            'search_columns' => array( 'user_login', 'user_nicename', 'user_email', 'display_name' ),
-            'fields'         => 'ID',
-        )
-    );
-
-    $ids = array_slice( array_unique( array_merge( $meta_user_ids, $field_user_ids ) ), 0, 10 );
-
-    if ( empty( $ids ) ) {
-        wp_send_json( array() );
-    }
-
-    $users  = get_users(
-        array(
-            'include' => $ids,
-            'fields'  => array( 'ID' ),
-        )
-    );
-    $result = array();
-
-    foreach ( $users as $u ) {
-        $first = function_exists( 'get_field' ) ? (string) get_field( 'gn_first_name', 'user_' . $u->ID ) : get_user_meta( $u->ID, 'gn_first_name', true );
-        $last  = function_exists( 'get_field' ) ? (string) get_field( 'gn_surname', 'user_' . $u->ID ) : get_user_meta( $u->ID, 'gn_surname', true );
-        $name  = trim( $first . ' ' . $last );
-        $result[] = array(
-            'label' => $name,
-            'value' => $name,
-        );
-    }
-
-    wp_send_json( $result );
-}
-add_action( 'wp_ajax_pspa_ms_user_autocomplete', 'pspa_ms_ajax_user_autocomplete' );
 
 /**
  * Flush rewrite rules on activation and deactivation.
