@@ -328,7 +328,7 @@
       },
       {
         "key": "field_gn_email",
-        "label": "e-Mail",
+        "label": "E-mail",
         "name": "gn_email",
         "aria-label": "",
         "type": "email",
@@ -347,7 +347,7 @@
       },
       {
         "key": "field_gn_show_email",
-        "label": "Εμφάνιση στο δημόσιο προφίλ: e-Mail",
+        "label": "Εμφάνιση στο δημόσιο προφίλ: E-mail",
         "name": "gn_show_email",
         "aria-label": "",
         "type": "true_false",

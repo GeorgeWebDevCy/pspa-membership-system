@@ -68,8 +68,8 @@ The plugin registers a **Graduate Profile** field group in Advanced Custom Field
 - **Εμφάνιση στο δημόσιο προφίλ: Φωτογραφία προφίλ** (`gn_show_profile_picture`, true_false)
 
 ### Επικοινωνία
-- **e-Mail** (`gn_email`, email)
-- **Εμφάνιση στο δημόσιο προφίλ: e-Mail** (`gn_show_email`, true_false)
+ - **E-mail** (`gn_email`, email)
+ - **Εμφάνιση στο δημόσιο προφίλ: E-mail** (`gn_show_email`, true_false)
 - **Κινητό** (`gn_mobile`, text)
 - **Εμφάνιση στο δημόσιο προφίλ: Κινητό** (`gn_show_mobile`, true_false)
 - **Τηλ. Εργασίας** (`gn_work_phone`, text)
