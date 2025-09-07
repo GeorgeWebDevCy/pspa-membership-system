@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.39
+ * Version: 0.0.40
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.39' );
+define( 'PSPA_MS_VERSION', '0.0.40' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -846,15 +846,6 @@ function pspa_ms_ajax_filter_graduates() {
         }
     }
 
-    $page      = isset( $_POST['page'] ) ? max( 1, absint( $_POST['page'] ) ) : 1;
-    $per_page  = 50;
-    $args      = array(
-        'number'     => $per_page,
-        'offset'     => ( $page - 1 ) * $per_page,
-        'meta_query' => $meta_query,
-        'count_total'=> true,
-    );
-
     if ( ! empty( $_POST['full_name'] ) ) {
         $full_name = sanitize_text_field( wp_unslash( $_POST['full_name'] ) );
         $parts     = preg_split( '/\s+/', $full_name, 2 );
@@ -890,6 +881,15 @@ function pspa_ms_ajax_filter_graduates() {
 
         $meta_query[] = $name_query;
     }
+
+    $page     = isset( $_POST['page'] ) ? max( 1, absint( $_POST['page'] ) ) : 1;
+    $per_page = 50;
+    $args     = array(
+        'number'     => $per_page,
+        'offset'     => ( $page - 1 ) * $per_page,
+        'meta_query' => $meta_query,
+        'count_total'=> true,
+    );
 
     $users       = new WP_User_Query( $args );
     $total_users = (int) $users->get_total();
