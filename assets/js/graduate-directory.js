@@ -25,7 +25,7 @@ jQuery(function($){
         fetchGraduates();
     });
 
-    $('#pspa-graduate-filters [name="full_name"]').on('input', function(){
+    $('#pspa-graduate-filters [name="full_name"], #pspa-graduate-filters [name="graduation_year"]').on('input', function(){
         currentPage = 1;
         fetchGraduates();
     });
