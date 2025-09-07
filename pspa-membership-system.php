@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.30
+ * Version: 0.0.31
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.30' );
+define( 'PSPA_MS_VERSION', '0.0.31' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -242,8 +242,7 @@ function pspa_ms_unrestrict_acf_fields_for_admins( $field ) {
     if (
         current_user_can( 'manage_options' ) ||
         in_array( 'system-admin', $roles, true ) ||
-        in_array( 'sysadmin', $roles, true ) ||
-        in_array( 'professionalcatalogue', $roles, true )
+        in_array( 'sysadmin', $roles, true )
     ) {
         $field['required']          = 0;
         $field['conditional_logic'] = 0;
@@ -284,8 +283,7 @@ function pspa_ms_graduate_profile_content() {
     if (
         current_user_can( 'manage_options' ) ||
         in_array( 'system-admin', (array) $current_user->roles, true ) ||
-        in_array( 'sysadmin', (array) $current_user->roles, true ) ||
-        in_array( 'professionalcatalogue', (array) $current_user->roles, true )
+        in_array( 'sysadmin', (array) $current_user->roles, true )
     ) {
         pspa_ms_admin_profile_interface();
         return;
