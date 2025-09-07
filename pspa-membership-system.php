@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 1.0.3
+ * Version: 1.0.4
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '1.0.3' );
+define( 'PSPA_MS_VERSION', '1.0.4' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -1009,9 +1009,18 @@ function pspa_ms_ajax_user_autocomplete() {
 
     $term = isset( $_GET['term'] ) ? sanitize_text_field( wp_unslash( $_GET['term'] ) ) : '';
 
+    if ( strlen( $term ) < 3 ) {
+        wp_send_json( array() );
+    }
+
     global $wpdb;
     $like          = '%' . $wpdb->esc_like( $term ) . '%';
-    $meta_user_ids = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT user_id FROM {$wpdb->usermeta} WHERE meta_value LIKE %s", $like ) );
+    $meta_user_ids = $wpdb->get_col(
+        $wpdb->prepare(
+            "SELECT DISTINCT user_id FROM {$wpdb->usermeta} WHERE meta_key NOT LIKE '\\_%' AND meta_value LIKE %s",
+            $like
+        )
+    );
 
     $field_user_ids = get_users(
         array(
