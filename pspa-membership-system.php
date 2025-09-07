@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.36
+ * Version: 0.0.37
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.36' );
+define( 'PSPA_MS_VERSION', '0.0.37' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -366,7 +366,6 @@ function pspa_ms_simple_profile_form( $user_id ) {
  */
 function pspa_ms_admin_profile_interface() {
     pspa_ms_enqueue_dashboard_styles();
-    wp_enqueue_style( 'pspa-ms-graduate-directory', plugin_dir_url( __FILE__ ) . 'assets/css/graduate-directory.css', array(), PSPA_MS_VERSION );
 
     $edit_user_id = isset( $_GET['edit_user'] ) ? absint( $_GET['edit_user'] ) : 0;
 
@@ -375,44 +374,7 @@ function pspa_ms_admin_profile_interface() {
         return;
     }
 
-    $search_term = isset( $_POST['pspa_user_search'] ) ? sanitize_text_field( wp_unslash( $_POST['pspa_user_search'] ) ) : '';
-
-    echo '<div class="pspa-dashboard pspa-admin-dashboard">';
-    ?>
-    <form method="post" class="pspa-admin-user-search" style="margin-bottom:20px;">
-        <p>
-            <input type="text" name="pspa_user_search" value="<?php echo esc_attr( $search_term ); ?>" placeholder="<?php esc_attr_e( 'Αναζήτηση χρηστών', 'pspa-membership-system' ); ?>" />
-            <button type="submit" class="button"><?php esc_html_e( 'Αναζήτηση', 'pspa-membership-system' ); ?></button>
-        </p>
-    </form>
-    <?php
-
-    if ( ! empty( $search_term ) ) {
-        global $wpdb;
-        $like      = '%' . $wpdb->esc_like( $search_term ) . '%';
-        $user_ids  = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT user_id FROM {$wpdb->usermeta} WHERE meta_value LIKE %s", $like ) );
-        $user_ids2 = get_users(
-            array(
-                'search'         => '*' . esc_attr( $search_term ) . '*',
-                'fields'         => 'ID',
-                'search_columns' => array( 'user_login', 'user_nicename', 'user_email', 'user_url' ),
-            )
-        );
-
-        $user_ids = array_unique( array_merge( $user_ids, $user_ids2 ) );
-
-        if ( ! empty( $user_ids ) ) {
-            echo '<div class="pspa-user-search-results">';
-            foreach ( $user_ids as $id ) {
-                echo pspa_ms_render_graduate_card( $id );
-            }
-            echo '</div>';
-        } else {
-            echo '<p>' . esc_html__( 'Δεν βρέθηκαν χρήστες.', 'pspa-membership-system' ) . '</p>';
-        }
-    }
-
-    echo '</div>';
+    echo pspa_ms_graduate_directory_shortcode();
 }
 
 /**
@@ -817,11 +779,19 @@ function pspa_ms_graduate_directory_shortcode() {
     $jobs        = pspa_ms_get_unique_user_meta_values( 'gn_job_title' );
     $cities      = pspa_ms_get_unique_user_meta_values( 'gn_city' );
     $countries   = pspa_ms_get_unique_user_meta_values( 'gn_country' );
+    $years       = pspa_ms_get_unique_user_meta_values( 'gn_graduation_year' );
 
     ob_start();
     ?>
     <div class="pspa-graduate-directory pspa-dashboard">
         <form id="pspa-graduate-filters">
+            <input type="text" name="full_name" placeholder="<?php esc_attr_e( 'Πλήρες Όνομα', 'pspa-membership-system' ); ?>" />
+            <select name="graduation_year">
+                <option value=""><?php esc_html_e( 'Όλα τα Έτη', 'pspa-membership-system' ); ?></option>
+                <?php foreach ( $years as $y ) : ?>
+                    <option value="<?php echo esc_attr( $y ); ?>"><?php echo esc_html( $y ); ?></option>
+                <?php endforeach; ?>
+            </select>
             <select name="profession">
                 <option value=""><?php esc_html_e( 'Όλα τα Επαγγέλματα', 'pspa-membership-system' ); ?></option>
                 <?php foreach ( $professions as $p ) : ?>
@@ -864,10 +834,11 @@ function pspa_ms_ajax_filter_graduates() {
     }
 
     $fields = array(
-        'profession' => 'gn_profession',
-        'job_title'  => 'gn_job_title',
-        'city'       => 'gn_city',
-        'country'    => 'gn_country',
+        'profession'      => 'gn_profession',
+        'job_title'       => 'gn_job_title',
+        'city'            => 'gn_city',
+        'country'         => 'gn_country',
+        'graduation_year' => 'gn_graduation_year',
     );
 
     $meta_query = array( 'relation' => 'AND' );
@@ -889,6 +860,11 @@ function pspa_ms_ajax_filter_graduates() {
         'meta_query' => $meta_query,
         'count_total'=> true,
     );
+
+    if ( ! empty( $_POST['full_name'] ) ) {
+        $args['search']         = '*' . sanitize_text_field( wp_unslash( $_POST['full_name'] ) ) . '*';
+        $args['search_columns'] = array( 'display_name' );
+    }
 
     $users       = new WP_User_Query( $args );
     $total_users = (int) $users->get_total();
