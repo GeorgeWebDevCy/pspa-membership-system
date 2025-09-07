@@ -4,7 +4,7 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.0.32
+Stable tag: 0.0.33
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,10 @@ The plugin registers two custom user roles:
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
+= 0.0.33 =
+* Fix update checker to use the new GitHub repository.
+* Bump version to 0.0.33.
+
 = 0.0.32 =
 * Render admin search results using the graduate card layout and expose an edit link on cards for administrators.
 * Bump version to 0.0.32.

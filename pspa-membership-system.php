@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.32
+ * Version: 0.0.33
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.32' );
+define( 'PSPA_MS_VERSION', '0.0.33' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -107,7 +107,7 @@ use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 
 // Initialize the update checker.
 $pspa_update_checker = PucFactory::buildUpdateChecker(
-    'https://github.com/PSPA/pspa-membership-system/',
+    'https://github.com/GeorgeWebDevCy/pspa-membership-system/',
     __FILE__,
     'pspa-membership-system'
 );
