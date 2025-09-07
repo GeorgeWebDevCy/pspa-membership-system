@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.31
+ * Version: 0.0.32
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.31' );
+define( 'PSPA_MS_VERSION', '0.0.32' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -360,6 +360,7 @@ function pspa_ms_simple_profile_form( $user_id ) {
  */
 function pspa_ms_admin_profile_interface() {
     pspa_ms_enqueue_dashboard_styles();
+    wp_enqueue_style( 'pspa-ms-graduate-directory', plugin_dir_url( __FILE__ ) . 'assets/css/graduate-directory.css', array(), PSPA_MS_VERSION );
 
     $edit_user_id = isset( $_GET['edit_user'] ) ? absint( $_GET['edit_user'] ) : 0;
 
@@ -395,13 +396,11 @@ function pspa_ms_admin_profile_interface() {
         $user_ids = array_unique( array_merge( $user_ids, $user_ids2 ) );
 
         if ( ! empty( $user_ids ) ) {
-            echo '<ul class="pspa-user-search-results">';
+            echo '<div class="pspa-user-search-results">';
             foreach ( $user_ids as $id ) {
-                $u        = get_user_by( 'id', $id );
-                $edit_url = add_query_arg( 'edit_user', $id, wc_get_account_endpoint_url( 'graduate-profile' ) );
-                echo '<li><a href="' . esc_url( $edit_url ) . '">' . esc_html( $u->display_name . ' (' . $u->user_email . ')' ) . '</a></li>';
+                echo pspa_ms_render_graduate_card( $id );
             }
-            echo '</ul>';
+            echo '</div>';
         } else {
             echo '<p>' . esc_html__( 'Δεν βρέθηκαν χρήστες.', 'pspa-membership-system' ) . '</p>';
         }
@@ -758,11 +757,19 @@ function pspa_ms_render_graduate_card( $user_id ) {
     $city       = function_exists( 'get_field' ) ? (string) get_field( 'gn_city', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_city', true );
     $country    = function_exists( 'get_field' ) ? (string) get_field( 'gn_country', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_country', true );
 
-    $profile_url = pspa_ms_get_public_profile_url( $user_id );
+    $profile_url  = pspa_ms_get_public_profile_url( $user_id );
+    $current_user = wp_get_current_user();
+    $can_edit     = current_user_can( 'manage_options' ) ||
+        in_array( 'system-admin', (array) $current_user->roles, true ) ||
+        in_array( 'sysadmin', (array) $current_user->roles, true );
+
+    if ( $can_edit ) {
+        $edit_url = add_query_arg( 'edit_user', $user_id, wc_get_account_endpoint_url( 'graduate-profile' ) );
+    }
 
     ob_start();
     ?>
-    <a class="pspa-graduate-card" href="<?php echo esc_url( $profile_url ); ?>">
+    <div class="pspa-graduate-card">
         <div class="pspa-graduate-avatar"><?php echo get_avatar( $user_id, 96 ); ?></div>
         <div class="pspa-graduate-details">
             <h3 class="pspa-graduate-name"><?php echo esc_html( $name ); ?></h3>
@@ -775,9 +782,14 @@ function pspa_ms_render_graduate_card( $user_id ) {
             <?php if ( $city || $country ) : ?>
                 <p class="pspa-graduate-location"><?php echo esc_html( trim( $city . ( $country ? ', ' . $country : '' ) ) ); ?></p>
             <?php endif; ?>
-            <span class="pspa-graduate-more">Δείτε Περισσότερο</span>
+            <div class="pspa-graduate-actions">
+                <a class="pspa-graduate-more" href="<?php echo esc_url( $profile_url ); ?>"><?php esc_html_e( 'Δείτε Περισσότερο', 'pspa-membership-system' ); ?></a>
+                <?php if ( $can_edit ) : ?>
+                    <a class="pspa-graduate-edit" href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( 'Επεξεργασία', 'pspa-membership-system' ); ?></a>
+                <?php endif; ?>
+            </div>
         </div>
-    </a>
+    </div>
     <?php
     return ob_get_clean();
 }
