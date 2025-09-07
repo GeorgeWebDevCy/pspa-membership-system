@@ -36,7 +36,7 @@ System Admins and site administrators can search for graduates and edit any user
 
 The `[pspa_login_by_details]` shortcode renders a form asking for first name, last name and graduation year. When the details match a graduate record the user is logged in and redirected to the dashboard.
 
-> **Note:** Earlier versions didn't set the authentication cookie as secure, so on HTTPS sites the browser rejected it and WordPress kept asking you to log in. This has been fixed in version 0.0.24 by respecting the current SSL state when creating the cookie.
+> **Note:** In versions prior to 0.0.25 the login logic ran inside the shortcode after page output had begun, so WordPress could not send the authentication cookie and the user remained logged out. The processing now runs on `template_redirect` before headers are sent, and extra logging records the user's status. Version 0.0.24 also ensured the cookie respects the current SSL state.
 
 ## Graduate Directory
 
