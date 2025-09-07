@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.25
+ * Version: 0.0.26
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.25' );
+define( 'PSPA_MS_VERSION', '0.0.26' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -307,6 +307,8 @@ function pspa_ms_simple_profile_form( $user_id ) {
  * Render admin interface allowing search and editing of users.
  */
 function pspa_ms_admin_profile_interface() {
+    pspa_ms_enqueue_dashboard_styles();
+
     $edit_user_id = isset( $_GET['edit_user'] ) ? absint( $_GET['edit_user'] ) : 0;
 
     if ( $edit_user_id ) {
@@ -316,8 +318,9 @@ function pspa_ms_admin_profile_interface() {
 
     $search_term = isset( $_POST['pspa_user_search'] ) ? sanitize_text_field( wp_unslash( $_POST['pspa_user_search'] ) ) : '';
 
+    echo '<div class="pspa-dashboard pspa-admin-dashboard">';
     ?>
-    <form method="post" style="margin-bottom:20px;">
+    <form method="post" class="pspa-admin-user-search" style="margin-bottom:20px;">
         <p>
             <input type="text" name="pspa_user_search" value="<?php echo esc_attr( $search_term ); ?>" placeholder="<?php esc_attr_e( 'Αναζήτηση χρηστών', 'pspa-membership-system' ); ?>" />
             <button type="submit" class="button"><?php esc_html_e( 'Αναζήτηση', 'pspa-membership-system' ); ?></button>
@@ -350,6 +353,8 @@ function pspa_ms_admin_profile_interface() {
             echo '<p>' . esc_html__( 'Δεν βρέθηκαν χρήστες.', 'pspa-membership-system' ) . '</p>';
         }
     }
+
+    echo '</div>';
 }
 
 /**
@@ -358,6 +363,8 @@ function pspa_ms_admin_profile_interface() {
  * @param int $user_id User ID being edited.
  */
 function pspa_ms_admin_edit_user_form( $user_id ) {
+    pspa_ms_enqueue_dashboard_styles();
+
     $user = get_user_by( 'id', $user_id );
 
     if ( ! $user ) {
@@ -393,10 +400,11 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
         $user = get_user_by( 'id', $user_id );
     }
 
+    echo '<div class="pspa-dashboard pspa-admin-edit-user">';
     echo '<p><a href="' . esc_url( remove_query_arg( 'edit_user' ) ) . '">&larr; ' . esc_html__( 'Επιστροφή στην αναζήτηση', 'pspa-membership-system' ) . '</a></p>';
 
     ?>
-    <form method="post" class="pspa-admin-edit-user">
+    <form method="post">
         <p class="form-row form-row-first">
             <label for="first_name"><?php esc_html_e( 'Όνομα', 'pspa-membership-system' ); ?></label>
             <input type="text" name="first_name" id="first_name" value="<?php echo esc_attr( $user->first_name ); ?>" />
@@ -424,6 +432,7 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
         </p>
     </form>
     <?php
+    echo '</div>';
 }
 
 /**

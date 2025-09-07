@@ -4,7 +4,7 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.0.25
+Stable tag: 0.0.26
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,9 @@ The plugin registers two custom user roles:
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
+= 0.0.26 =
+* Apply dashboard styling to the System Admin user search and edit forms for a consistent front-end experience.
+
 = 0.0.25 =
 * Handle login-by-details submissions on `template_redirect` so authentication cookies and redirects work reliably.
 * Log the user's authentication status to aid debugging.

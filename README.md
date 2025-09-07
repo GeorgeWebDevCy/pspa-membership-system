@@ -30,7 +30,7 @@ Dependencies:
 
 ## Administrator Tools
 
-System Admins and site administrators can search for graduates and edit any user profile directly from the `Προφίλ Απόφοιτου` endpoint. The search covers all graduate fields and opens an editable form with ACF data, email and password controls.
+System Admins and site administrators can search for graduates and edit any user profile directly from the `Προφίλ Απόφοιτου` endpoint. The search covers all graduate fields and opens an editable form with ACF data, email and password controls. The interface uses the same `pspa-dashboard` styles as the graduate profile for a consistent appearance.
 
 ## Login by Details
 
