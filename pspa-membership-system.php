@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.37
+ * Version: 0.0.38
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.37' );
+define( 'PSPA_MS_VERSION', '0.0.38' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -779,19 +779,13 @@ function pspa_ms_graduate_directory_shortcode() {
     $jobs        = pspa_ms_get_unique_user_meta_values( 'gn_job_title' );
     $cities      = pspa_ms_get_unique_user_meta_values( 'gn_city' );
     $countries   = pspa_ms_get_unique_user_meta_values( 'gn_country' );
-    $years       = pspa_ms_get_unique_user_meta_values( 'gn_graduation_year' );
 
     ob_start();
     ?>
     <div class="pspa-graduate-directory pspa-dashboard">
         <form id="pspa-graduate-filters">
             <input type="text" name="full_name" placeholder="<?php esc_attr_e( 'Πλήρες Όνομα', 'pspa-membership-system' ); ?>" />
-            <select name="graduation_year">
-                <option value=""><?php esc_html_e( 'Όλα τα Έτη', 'pspa-membership-system' ); ?></option>
-                <?php foreach ( $years as $y ) : ?>
-                    <option value="<?php echo esc_attr( $y ); ?>"><?php echo esc_html( $y ); ?></option>
-                <?php endforeach; ?>
-            </select>
+            <input type="text" name="graduation_year" placeholder="<?php esc_attr_e( 'Έτος Αποφοίτησης', 'pspa-membership-system' ); ?>" />
             <select name="profession">
                 <option value=""><?php esc_html_e( 'Όλα τα Επαγγέλματα', 'pspa-membership-system' ); ?></option>
                 <?php foreach ( $professions as $p ) : ?>
