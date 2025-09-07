@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 1.0.5
+ * Version: 1.0.6
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '1.0.5' );
+define( 'PSPA_MS_VERSION', '1.0.6' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -174,7 +174,7 @@ add_filter( 'query_vars', 'pspa_ms_public_profile_query_vars' );
  * @return string
  */
 function pspa_ms_public_profile_template( $template ) {
-    $slug = get_query_var( 'pspa_graduate' );
+    $slug = sanitize_title_for_query( get_query_var( 'pspa_graduate' ) );
     if ( $slug ) {
         $user = get_user_by( 'slug', $slug );
         if ( ! $user ) {
@@ -830,14 +830,25 @@ function pspa_ms_get_public_profile_url( $user_id ) {
 }
 
 function pspa_ms_render_graduate_card( $user_id ) {
-    $first_name = function_exists( 'get_field' ) ? (string) get_field( 'gn_first_name', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_first_name', true );
-    $last_name  = function_exists( 'get_field' ) ? (string) get_field( 'gn_surname', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_surname', true );
+    $cache_key = 'pspa_ms_card_' . $user_id;
+    $cached    = wp_cache_get( $cache_key, 'pspa-ms' );
+    if ( false !== $cached ) {
+        return $cached;
+    }
+
+    $use_acf = function_exists( 'get_field' );
+    $get     = $use_acf
+        ? function( $key ) use ( $user_id ) { return (string) get_field( $key, 'user_' . $user_id ); }
+        : function( $key ) use ( $user_id ) { return get_user_meta( $user_id, $key, true ); };
+
+    $first_name = $get( 'gn_first_name' );
+    $last_name  = $get( 'gn_surname' );
     $name       = trim( $first_name . ' ' . $last_name );
-    $job        = function_exists( 'get_field' ) ? (string) get_field( 'gn_job_title', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_job_title', true );
-    $company    = function_exists( 'get_field' ) ? (string) get_field( 'gn_position_company', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_position_company', true );
-    $profession = function_exists( 'get_field' ) ? (string) get_field( 'gn_profession', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_profession', true );
-    $city       = function_exists( 'get_field' ) ? (string) get_field( 'gn_city', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_city', true );
-    $country    = function_exists( 'get_field' ) ? (string) get_field( 'gn_country', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_country', true );
+    $job        = $get( 'gn_job_title' );
+    $company    = $get( 'gn_position_company' );
+    $profession = $get( 'gn_profession' );
+    $city       = $get( 'gn_city' );
+    $country    = $get( 'gn_country' );
 
     $profile_url = pspa_ms_get_public_profile_url( $user_id );
     $edit_url    = add_query_arg( 'edit_user', $user_id, wc_get_account_endpoint_url( 'graduate-profile' ) );
@@ -873,7 +884,9 @@ function pspa_ms_render_graduate_card( $user_id ) {
         </div>
     </div>
     <?php
-    return ob_get_clean();
+    $html = ob_get_clean();
+    wp_cache_set( $cache_key, $html, 'pspa-ms', HOUR_IN_SECONDS );
+    return $html;
 }
 
 /**
