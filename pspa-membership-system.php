@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.30
+ * Version: 1.0.0
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.30' );
+define( 'PSPA_MS_VERSION', '1.0.0' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -588,21 +588,21 @@ function pspa_ms_login_by_details_shortcode() {
     ob_start();
     ?>
     <form method="post" class="pspa-login-by-details pspa-dashboard">
-        <p>
+        <p class="form-row form-row-wide">
             <label for="first_name"><?php esc_html_e( 'Όνομα', 'pspa-membership-system' ); ?></label>
             <input type="text" name="first_name" id="first_name" required />
         </p>
-        <p>
+        <p class="form-row form-row-wide">
             <label for="last_name"><?php esc_html_e( 'Επίθετο', 'pspa-membership-system' ); ?></label>
             <input type="text" name="last_name" id="last_name" required />
         </p>
-        <p>
+        <p class="form-row form-row-wide">
             <label for="graduation_year"><?php esc_html_e( 'Έτος Αποφοίτησης', 'pspa-membership-system' ); ?></label>
             <input type="text" name="graduation_year" id="graduation_year" required />
         </p>
         <?php wp_nonce_field( 'pspa_login_details', 'pspa_login_details_nonce' ); ?>
         <p>
-            <button type="submit" class="button"><?php esc_html_e( 'Σύνδεση', 'pspa-membership-system' ); ?></button>
+            <button type="submit" class="woocommerce-Button button"><?php esc_html_e( 'Σύνδεση', 'pspa-membership-system' ); ?></button>
         </p>
     </form>
     <?php
@@ -733,8 +733,20 @@ add_action( 'init', 'pspa_ms_block_admin_access' );
  * @return array
  */
 function pspa_ms_get_unique_user_meta_values( $meta_key ) {
+    $cache_key = 'pspa_ms_unique_' . sanitize_key( $meta_key );
+    $values    = get_transient( $cache_key );
+    if ( false !== $values ) {
+        return $values;
+    }
+
     global $wpdb;
-    $values = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT meta_value FROM {$wpdb->usermeta} WHERE meta_key = %s AND meta_value <> '' ORDER BY meta_value ASC", $meta_key ) );
+    $values = $wpdb->get_col(
+        $wpdb->prepare(
+            "SELECT DISTINCT meta_value FROM {$wpdb->usermeta} WHERE meta_key = %s AND meta_value <> '' ORDER BY meta_value ASC",
+            $meta_key
+        )
+    );
+    set_transient( $cache_key, $values, DAY_IN_SECONDS );
     return $values;
 }
 
