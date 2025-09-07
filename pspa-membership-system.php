@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.27
+ * Version: 0.0.28
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.27' );
+define( 'PSPA_MS_VERSION', '0.0.28' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -205,6 +205,38 @@ add_filter( 'acf/prepare_field/key=tab_gn_visibility', 'pspa_ms_hide_visibility_
 add_filter( 'acf/prepare_field/name=gn_visibility_mode', 'pspa_ms_hide_visibility_fields' );
 
 /**
+ * Ensure admins can edit all ACF fields even when empty.
+ *
+ * System admins and catalogue editors may need to populate missing data,
+ * so remove validation and conditional logic that would otherwise prevent
+ * saving the form with empty fields.
+ *
+ * @param array $field Field settings.
+ * @return array
+ */
+function pspa_ms_unrestrict_acf_fields_for_admins( $field ) {
+    if ( ! is_user_logged_in() ) {
+        return $field;
+    }
+
+    $user  = wp_get_current_user();
+    $roles = (array) $user->roles;
+
+    if (
+        current_user_can( 'manage_options' ) ||
+        in_array( 'system-admin', $roles, true ) ||
+        in_array( 'sysadmin', $roles, true ) ||
+        in_array( 'professionalcatalogue', $roles, true )
+    ) {
+        $field['required']          = 0;
+        $field['conditional_logic'] = 0;
+    }
+
+    return $field;
+}
+add_filter( 'acf/prepare_field', 'pspa_ms_unrestrict_acf_fields_for_admins', 5 );
+
+/**
  * Hide "show on public profile" toggles when viewing public profiles.
  *
  * @param array $field Field settings.
@@ -235,6 +267,7 @@ function pspa_ms_graduate_profile_content() {
     if (
         current_user_can( 'manage_options' ) ||
         in_array( 'system-admin', (array) $current_user->roles, true ) ||
+        in_array( 'sysadmin', (array) $current_user->roles, true ) ||
         in_array( 'professionalcatalogue', (array) $current_user->roles, true )
     ) {
         pspa_ms_admin_profile_interface();
@@ -643,7 +676,13 @@ add_action( 'acf/save_post', 'pspa_ms_sync_user_names', 20 );
  * @return string
  */
 function pspa_ms_login_redirect( $redirect_to, $request, $user ) {
-    if ( isset( $user->ID ) && ( in_array( 'system-admin', (array) $user->roles, true ) || in_array( 'professionalcatalogue', (array) $user->roles, true ) ) ) {
+    if (
+        isset( $user->ID ) && (
+            in_array( 'system-admin', (array) $user->roles, true ) ||
+            in_array( 'sysadmin', (array) $user->roles, true ) ||
+            in_array( 'professionalcatalogue', (array) $user->roles, true )
+        )
+    ) {
         return wc_get_account_endpoint_url( 'graduate-profile' );
     }
     return $redirect_to;
@@ -656,7 +695,11 @@ add_filter( 'login_redirect', 'pspa_ms_login_redirect', 10, 3 );
 function pspa_ms_block_admin_access() {
     if ( is_admin() && ! wp_doing_ajax() && is_user_logged_in() ) {
         $user = wp_get_current_user();
-        if ( in_array( 'system-admin', (array) $user->roles, true ) || in_array( 'professionalcatalogue', (array) $user->roles, true ) ) {
+        if (
+            in_array( 'system-admin', (array) $user->roles, true ) ||
+            in_array( 'sysadmin', (array) $user->roles, true ) ||
+            in_array( 'professionalcatalogue', (array) $user->roles, true )
+        ) {
             wp_safe_redirect( wc_get_account_endpoint_url( 'graduate-profile' ) );
             exit;
         }
