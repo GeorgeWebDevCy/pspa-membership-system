@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.28
+ * Version: 0.0.29
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.28' );
+define( 'PSPA_MS_VERSION', '0.0.29' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -382,8 +382,9 @@ function pspa_ms_admin_profile_interface() {
         if ( ! empty( $user_ids ) ) {
             echo '<ul class="pspa-user-search-results">';
             foreach ( $user_ids as $id ) {
-                $u = get_user_by( 'id', $id );
-                echo '<li><a href="' . esc_url( add_query_arg( 'edit_user', $id ) ) . '">' . esc_html( $u->display_name . ' (' . $u->user_email . ')' ) . '</a></li>';
+                $u        = get_user_by( 'id', $id );
+                $edit_url = add_query_arg( 'edit_user', $id, wc_get_account_endpoint_url( 'graduate-profile' ) );
+                echo '<li><a href="' . esc_url( $edit_url ) . '">' . esc_html( $u->display_name . ' (' . $u->user_email . ')' ) . '</a></li>';
             }
             echo '</ul>';
         } else {
@@ -438,7 +439,8 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
     }
 
     echo '<div class="pspa-dashboard pspa-admin-edit-user">';
-    echo '<p><a href="' . esc_url( remove_query_arg( 'edit_user' ) ) . '">&larr; ' . esc_html__( 'Επιστροφή στην αναζήτηση', 'pspa-membership-system' ) . '</a></p>';
+    $search_url = wc_get_account_endpoint_url( 'graduate-profile' );
+    echo '<p><a href="' . esc_url( $search_url ) . '">&larr; ' . esc_html__( 'Επιστροφή στην αναζήτηση', 'pspa-membership-system' ) . '</a></p>';
 
     ?>
     <form method="post">
