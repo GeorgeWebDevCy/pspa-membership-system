@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.38
+ * Version: 0.0.39
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.38' );
+define( 'PSPA_MS_VERSION', '0.0.39' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -856,8 +856,39 @@ function pspa_ms_ajax_filter_graduates() {
     );
 
     if ( ! empty( $_POST['full_name'] ) ) {
-        $args['search']         = '*' . sanitize_text_field( wp_unslash( $_POST['full_name'] ) ) . '*';
-        $args['search_columns'] = array( 'display_name' );
+        $full_name = sanitize_text_field( wp_unslash( $_POST['full_name'] ) );
+        $parts     = preg_split( '/\s+/', $full_name, 2 );
+
+        $name_query = array( 'relation' => 'OR' );
+
+        if ( ! empty( $parts[0] ) && ! empty( $parts[1] ) ) {
+            $name_query = array(
+                'relation' => 'AND',
+                array(
+                    'key'     => 'gn_first_name',
+                    'value'   => $parts[0],
+                    'compare' => 'LIKE',
+                ),
+                array(
+                    'key'     => 'gn_surname',
+                    'value'   => $parts[1],
+                    'compare' => 'LIKE',
+                ),
+            );
+        } else {
+            $name_query[] = array(
+                'key'     => 'gn_first_name',
+                'value'   => $full_name,
+                'compare' => 'LIKE',
+            );
+            $name_query[] = array(
+                'key'     => 'gn_surname',
+                'value'   => $full_name,
+                'compare' => 'LIKE',
+            );
+        }
+
+        $meta_query[] = $name_query;
     }
 
     $users       = new WP_User_Query( $args );

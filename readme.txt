@@ -4,7 +4,7 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.0.38
+Stable tag: 0.0.39
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,10 @@ The plugin registers two custom user roles:
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
+= 0.0.39 =
+* Search full name using ACF first and surname fields.
+* Bump version to 0.0.39.
+
 = 0.0.38 =
 * Make graduation year filter a text field.
 * Bump version to 0.0.38.
