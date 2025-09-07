@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 1.0.4
+ * Version: 1.0.5
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '1.0.4' );
+define( 'PSPA_MS_VERSION', '1.0.5' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -508,6 +508,14 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
 
         wp_update_user( $update_data );
 
+        if ( function_exists( 'update_field' ) ) {
+            update_field( 'gn_first_name', $first_name, 'user_' . $user_id );
+            update_field( 'gn_surname', $last_name, 'user_' . $user_id );
+        } else {
+            update_user_meta( $user_id, 'gn_first_name', $first_name );
+            update_user_meta( $user_id, 'gn_surname', $last_name );
+        }
+
         wc_add_notice( __( 'Το προφίλ ενημερώθηκε με επιτυχία.', 'pspa-membership-system' ) );
         $user = get_user_by( 'id', $user_id );
     }
@@ -520,11 +528,11 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
     <form method="post">
         <p class="form-row form-row-first">
             <label for="first_name"><?php esc_html_e( 'Όνομα', 'pspa-membership-system' ); ?></label>
-            <input type="text" name="first_name" id="first_name" value="<?php echo esc_attr( $user->first_name ); ?>" />
+            <input type="text" name="first_name" id="first_name" value="<?php echo esc_attr( function_exists( 'get_field' ) ? (string) get_field( 'gn_first_name', 'user_' . $user_id ) : $user->first_name ); ?>" />
         </p>
         <p class="form-row form-row-last">
             <label for="last_name"><?php esc_html_e( 'Επίθετο', 'pspa-membership-system' ); ?></label>
-            <input type="text" name="last_name" id="last_name" value="<?php echo esc_attr( $user->last_name ); ?>" />
+            <input type="text" name="last_name" id="last_name" value="<?php echo esc_attr( function_exists( 'get_field' ) ? (string) get_field( 'gn_surname', 'user_' . $user_id ) : $user->last_name ); ?>" />
         </p>
         <p class="form-row form-row-wide">
             <label for="email"><?php esc_html_e( 'Διεύθυνση email', 'pspa-membership-system' ); ?></label>
@@ -822,7 +830,9 @@ function pspa_ms_get_public_profile_url( $user_id ) {
 }
 
 function pspa_ms_render_graduate_card( $user_id ) {
-    $name       = get_the_author_meta( 'display_name', $user_id );
+    $first_name = function_exists( 'get_field' ) ? (string) get_field( 'gn_first_name', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_first_name', true );
+    $last_name  = function_exists( 'get_field' ) ? (string) get_field( 'gn_surname', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_surname', true );
+    $name       = trim( $first_name . ' ' . $last_name );
     $job        = function_exists( 'get_field' ) ? (string) get_field( 'gn_job_title', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_job_title', true );
     $company    = function_exists( 'get_field' ) ? (string) get_field( 'gn_position_company', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_position_company', true );
     $profession = function_exists( 'get_field' ) ? (string) get_field( 'gn_profession', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_profession', true );
@@ -1040,15 +1050,18 @@ function pspa_ms_ajax_user_autocomplete() {
     $users  = get_users(
         array(
             'include' => $ids,
-            'fields'  => array( 'ID', 'display_name' ),
+            'fields'  => array( 'ID' ),
         )
     );
     $result = array();
 
     foreach ( $users as $u ) {
+        $first = function_exists( 'get_field' ) ? (string) get_field( 'gn_first_name', 'user_' . $u->ID ) : get_user_meta( $u->ID, 'gn_first_name', true );
+        $last  = function_exists( 'get_field' ) ? (string) get_field( 'gn_surname', 'user_' . $u->ID ) : get_user_meta( $u->ID, 'gn_surname', true );
+        $name  = trim( $first . ' ' . $last );
         $result[] = array(
-            'label' => $u->display_name,
-            'value' => $u->display_name,
+            'label' => $name,
+            'value' => $name,
         );
     }
 
