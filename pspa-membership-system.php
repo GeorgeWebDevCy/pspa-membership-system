@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.33
+ * Version: 0.0.34
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.33' );
+define( 'PSPA_MS_VERSION', '0.0.34' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -338,7 +338,7 @@ function pspa_ms_simple_profile_form( $user_id ) {
             ) ); ?>
         <?php endif; ?>
         <p class="form-row form-row-wide">
-            <label for="email"><?php esc_html_e( 'Διεύθυνση email', 'pspa-membership-system' ); ?></label>
+            <label for="email"><?php esc_html_e( 'Διεύθυνση E-mail', 'pspa-membership-system' ); ?></label>
             <input type="email" name="email" id="email" value="<?php echo esc_attr( $user->user_email ); ?>" />
         </p>
         <p class="form-row form-row-wide">
@@ -467,7 +467,7 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
             <input type="text" name="last_name" id="last_name" value="<?php echo esc_attr( $user->last_name ); ?>" />
         </p>
         <p class="form-row form-row-wide">
-            <label for="email"><?php esc_html_e( 'Διεύθυνση email', 'pspa-membership-system' ); ?></label>
+            <label for="email"><?php esc_html_e( 'Διεύθυνση E-mail', 'pspa-membership-system' ); ?></label>
             <input type="email" name="email" id="email" value="<?php echo esc_attr( $user->user_email ); ?>" />
         </p>
         <p class="form-row form-row-wide">
