@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.35
+ * Version: 0.0.36
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.35' );
+define( 'PSPA_MS_VERSION', '0.0.36' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -325,6 +325,10 @@ function pspa_ms_simple_profile_form( $user_id ) {
             wp_update_user( $update_data );
         }
 
+        if ( function_exists( 'pspa_ms_sync_user_names' ) ) {
+            pspa_ms_sync_user_names( 'user_' . $user_id );
+        }
+
         wc_add_notice( __( 'Το προφίλ ενημερώθηκε με επιτυχία.', 'pspa-membership-system' ) );
         $user = wp_get_current_user();
     }
@@ -431,17 +435,12 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
         isset( $_POST['pspa_admin_edit_user_nonce'] ) &&
         wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['pspa_admin_edit_user_nonce'] ) ), 'pspa_admin_edit_user' )
     ) {
-        $first_name = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
-        $last_name  = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
-        $email      = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
-        $password   = isset( $_POST['password'] ) ? wp_unslash( $_POST['password'] ) : '';
+        $email    = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+        $password = isset( $_POST['password'] ) ? wp_unslash( $_POST['password'] ) : '';
 
         $update_data = array(
-            'ID'           => $user_id,
-            'first_name'   => $first_name,
-            'last_name'    => $last_name,
-            'user_email'   => $email,
-            'display_name' => trim( $first_name . ' ' . $last_name ),
+            'ID'         => $user_id,
+            'user_email' => $email,
         );
 
         if ( ! empty( $password ) ) {
@@ -449,6 +448,11 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
         }
 
         wp_update_user( $update_data );
+
+        // Ensure WordPress name fields mirror the ACF values.
+        if ( function_exists( 'pspa_ms_sync_user_names' ) ) {
+            pspa_ms_sync_user_names( 'user_' . $user_id );
+        }
 
         wc_add_notice( __( 'Το προφίλ ενημερώθηκε με επιτυχία.', 'pspa-membership-system' ) );
         $user = get_user_by( 'id', $user_id );
@@ -460,22 +464,6 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
 
     ?>
     <form method="post">
-        <p class="form-row form-row-first">
-            <label for="first_name"><?php esc_html_e( 'Όνομα', 'pspa-membership-system' ); ?></label>
-            <input type="text" name="first_name" id="first_name" value="<?php echo esc_attr( $user->first_name ); ?>" />
-        </p>
-        <p class="form-row form-row-last">
-            <label for="last_name"><?php esc_html_e( 'Επίθετο', 'pspa-membership-system' ); ?></label>
-            <input type="text" name="last_name" id="last_name" value="<?php echo esc_attr( $user->last_name ); ?>" />
-        </p>
-        <p class="form-row form-row-wide">
-            <label for="email"><?php esc_html_e( 'Διεύθυνση E-mail', 'pspa-membership-system' ); ?></label>
-            <input type="email" name="email" id="email" value="<?php echo esc_attr( $user->user_email ); ?>" />
-        </p>
-        <p class="form-row form-row-wide">
-            <label for="password"><?php esc_html_e( 'Νέος κωδικός', 'pspa-membership-system' ); ?></label>
-            <input type="password" name="password" id="password" autocomplete="new-password" />
-        </p>
         <?php if ( function_exists( 'acf_form' ) ) : ?>
             <div class="pspa-acf-fields">
                 <?php acf_form( array(
@@ -485,6 +473,14 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
                 ) ); ?>
             </div>
         <?php endif; ?>
+        <p class="form-row form-row-wide">
+            <label for="email"><?php esc_html_e( 'Διεύθυνση E-mail', 'pspa-membership-system' ); ?></label>
+            <input type="email" name="email" id="email" value="<?php echo esc_attr( $user->user_email ); ?>" />
+        </p>
+        <p class="form-row form-row-wide">
+            <label for="password"><?php esc_html_e( 'Νέος κωδικός', 'pspa-membership-system' ); ?></label>
+            <input type="password" name="password" id="password" autocomplete="new-password" />
+        </p>
         <?php wp_nonce_field( 'pspa_admin_edit_user', 'pspa_admin_edit_user_nonce' ); ?>
         <p>
             <button type="submit" class="woocommerce-Button button"><?php esc_html_e( 'Αποθήκευση αλλαγών', 'pspa-membership-system' ); ?></button>
@@ -752,7 +748,9 @@ function pspa_ms_get_public_profile_url( $user_id ) {
 }
 
 function pspa_ms_render_graduate_card( $user_id ) {
-    $name       = get_the_author_meta( 'display_name', $user_id );
+    $first      = function_exists( 'get_field' ) ? (string) get_field( 'gn_first_name', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_first_name', true );
+    $last       = function_exists( 'get_field' ) ? (string) get_field( 'gn_surname', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_surname', true );
+    $name       = trim( $first . ' ' . $last );
     $job        = function_exists( 'get_field' ) ? (string) get_field( 'gn_job_title', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_job_title', true );
     $company    = function_exists( 'get_field' ) ? (string) get_field( 'gn_position_company', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_position_company', true );
     $profession = function_exists( 'get_field' ) ? (string) get_field( 'gn_profession', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_profession', true );
