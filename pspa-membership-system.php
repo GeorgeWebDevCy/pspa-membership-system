@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.34
+ * Version: 0.0.35
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.34' );
+define( 'PSPA_MS_VERSION', '0.0.35' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -142,8 +142,10 @@ add_filter( 'query_vars', 'pspa_ms_graduate_profile_query_vars' );
  * @return array
  */
 function pspa_ms_add_graduate_profile_link( $items ) {
-    $items['graduate-profile'] = __( 'Προφίλ Απόφοιτου', 'pspa-membership-system' );
-    return $items;
+    $profile = array( 'graduate-profile' => __( 'Προφίλ Απόφοιτου', 'pspa-membership-system' ) );
+    $first  = array_slice( $items, 0, 1, true );
+    $rest   = array_slice( $items, 1, null, true );
+    return $first + $profile + $rest;
 }
 add_filter( 'woocommerce_account_menu_items', 'pspa_ms_add_graduate_profile_link' );
 
