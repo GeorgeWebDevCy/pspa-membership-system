@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.29
+ * Version: 0.0.30
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.29' );
+define( 'PSPA_MS_VERSION', '0.0.30' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -39,6 +39,23 @@ function pspa_ms_enqueue_dashboard_styles() {
         PSPA_MS_VERSION
     );
 }
+
+/**
+ * Enqueue styles for the WooCommerce account navigation.
+ */
+function pspa_ms_enqueue_woocommerce_nav_styles() {
+    if ( ! function_exists( 'is_account_page' ) || ! is_account_page() ) {
+        return;
+    }
+
+    wp_enqueue_style(
+        'pspa-ms-woocommerce-nav',
+        plugin_dir_url( __FILE__ ) . 'assets/css/woocommerce-navigation.css',
+        array(),
+        PSPA_MS_VERSION
+    );
+}
+add_action( 'wp_enqueue_scripts', 'pspa_ms_enqueue_woocommerce_nav_styles' );
 
 /**
  * Ensure required plugins are active.

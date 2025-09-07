@@ -1,0 +1,23 @@
+.woocommerce-account .woocommerce-MyAccount-navigation ul {
+    list-style: none;
+    margin: 0 0 20px;
+    padding: 0;
+}
+
+.woocommerce-account .woocommerce-MyAccount-navigation li {
+    background: #fffaf5;
+    border: 1px solid #e4d6c8;
+    border-radius: 10px;
+    margin-bottom: 8px;
+}
+
+.woocommerce-account .woocommerce-MyAccount-navigation li a {
+    display: block;
+    padding: 8px 12px;
+    color: #3b2b22;
+    text-decoration: none;
+}
+
+.woocommerce-account .woocommerce-MyAccount-navigation li.is-active a {
+    font-weight: 600;
+}
