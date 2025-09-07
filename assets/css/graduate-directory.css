@@ -10,7 +10,8 @@
     margin-bottom: 1em;
 }
 
-#pspa-graduate-filters select {
+#pspa-graduate-filters select,
+#pspa-graduate-filters input {
     min-width: 150px;
 }
 
