@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 1.0.7
+ * Version: 1.0.8
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '1.0.7' );
+define( 'PSPA_MS_VERSION', '1.0.8' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -114,6 +114,9 @@ $pspa_update_checker = PucFactory::buildUpdateChecker(
 
 // Optional: set the branch to check for updates.
 $pspa_update_checker->setBranch( 'main' );
+
+// Use release assets from the public GitHub repository for updates.
+$pspa_update_checker->getVcsApi()->enableReleaseAssets();
 
 /**
  * Register the Graduate Profile endpoint.
