@@ -39,7 +39,7 @@ The `[pspa_login_by_details]` shortcode renders a form asking for first name, la
 
 > **Note:** In versions prior to 0.0.25 the login logic ran inside the shortcode after page output had begun, so WordPress could not send the authentication cookie and the user remained logged out. The processing now runs on `template_redirect` before headers are sent, and extra logging records the user's status. Version 0.0.24 also ensured the cookie respects the current SSL state.
 
-Starting with version 0.0.44 names are compared case-insensitively and the authentication cookie is set before establishing the current user. Earlier versions queried user meta with case-sensitive comparisons and set the current user before the cookie, which caused valid submissions (e.g. with different letter casing) to fail or leave the user unauthenticated after a successful lookup.
+Starting with version 0.0.45 names are matched case- and accent-insensitively by combining the ACF first name and surname fields into a full name string. Earlier versions compared each field separately and only ignored casing, which caused valid submissions with tonal differences (e.g. Ιωάννης vs ΙΩΑΝΝΗΣ) to fail.
 
 ## Graduate Directory
 
