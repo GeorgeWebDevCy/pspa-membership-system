@@ -39,6 +39,8 @@ The `[pspa_login_by_details]` shortcode renders a form asking for first name, la
 
 > **Note:** In versions prior to 0.0.25 the login logic ran inside the shortcode after page output had begun, so WordPress could not send the authentication cookie and the user remained logged out. The processing now runs on `template_redirect` before headers are sent, and extra logging records the user's status. Version 0.0.24 also ensured the cookie respects the current SSL state.
 
+Starting with version 0.0.44 names are compared case-insensitively and the authentication cookie is set before establishing the current user. Earlier versions queried user meta with case-sensitive comparisons and set the current user before the cookie, which caused valid submissions (e.g. with different letter casing) to fail or leave the user unauthenticated after a successful lookup.
+
 ## Graduate Directory
 
 The `[pspa_graduate_directory]` shortcode outputs a grid of graduates showing their profile photo, full name and graduation year. Clicking "Δείτε Περισσότερο" opens the graduate's public, non-editable profile. When logged in as an administrator or System Admin, cards also show an "Επεξεργασία" link to jump directly to the editing interface. Public profiles are also accessible directly at `/graduate/<username>/`.

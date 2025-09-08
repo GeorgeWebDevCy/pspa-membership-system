@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.43
+ * Version: 0.0.44
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.43' );
+define( 'PSPA_MS_VERSION', '0.0.44' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -474,47 +474,50 @@ function pspa_ms_handle_login_by_details() {
 
     pspa_ms_log( sprintf( 'Login attempt: %s %s (%s)', $first, $last, $year ) );
 
-    $query = new WP_User_Query(
-        array(
-            'number'     => 1,
-            'meta_query' => array(
-                'relation' => 'AND',
-                array(
-                    'key'     => 'gn_first_name',
-                    'value'   => $first,
-                    'compare' => '=',
-                ),
-                array(
-                    'key'     => 'gn_surname',
-                    'value'   => $last,
-                    'compare' => '=',
-                ),
-                array(
-                    'key'     => 'gn_graduation_year',
-                    'value'   => $year,
-                    'compare' => '=',
-                ),
-            ),
+    $first_normalized = mb_strtoupper( $first, 'UTF-8' );
+    $last_normalized  = mb_strtoupper( $last, 'UTF-8' );
+    pspa_ms_log( sprintf( 'Normalized names: %s %s', $first_normalized, $last_normalized ) );
+
+    global $wpdb;
+    $user_id = $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT fn.user_id
+            FROM {$wpdb->usermeta} fn
+            INNER JOIN {$wpdb->usermeta} ln ON fn.user_id = ln.user_id
+            INNER JOIN {$wpdb->usermeta} gr ON fn.user_id = gr.user_id
+            WHERE fn.meta_key = 'gn_first_name'
+              AND ln.meta_key = 'gn_surname'
+              AND gr.meta_key = 'gn_graduation_year'
+              AND UPPER(fn.meta_value) = %s
+              AND UPPER(ln.meta_value) = %s
+              AND gr.meta_value = %s
+            LIMIT 1",
+            $first_normalized,
+            $last_normalized,
+            $year
         )
     );
 
-    $users = $query->get_results();
+    pspa_ms_log( 'User ID query result: ' . ( $user_id ? $user_id : 'none' ) );
 
-    if ( ! empty( $users ) ) {
-        $user = $users[0];
-        pspa_ms_log( 'Login success for user ID ' . $user->ID );
-        wp_clear_auth_cookie();
-        wp_set_current_user( $user->ID, $user->user_login );
-        // Ensure the auth cookie respects the current SSL state so that
-        // browsers do not reject it when the site forces HTTPS.
-        wp_set_auth_cookie( $user->ID, true, is_ssl() );
-        if ( function_exists( 'wc_set_customer_auth_cookie' ) ) {
-            wc_set_customer_auth_cookie( $user->ID );
+    if ( $user_id ) {
+        $user = get_user_by( 'id', $user_id );
+        if ( $user ) {
+            pspa_ms_log( 'Login success for user ID ' . $user->ID );
+            wp_clear_auth_cookie();
+            pspa_ms_log( 'User logged in before auth cookie: ' . ( is_user_logged_in() ? 'true' : 'false' ) );
+            // Ensure the auth cookie respects the current SSL state so that
+            // browsers do not reject it when the site forces HTTPS.
+            wp_set_auth_cookie( $user->ID, true, is_ssl() );
+            wp_set_current_user( $user->ID, $user->user_login );
+            if ( function_exists( 'wc_set_customer_auth_cookie' ) ) {
+                wc_set_customer_auth_cookie( $user->ID );
+            }
+            pspa_ms_log( 'User logged in status after auth cookie: ' . ( is_user_logged_in() ? 'true' : 'false' ) );
+            do_action( 'wp_login', $user->user_login, $user );
+            wp_safe_redirect( wc_get_account_endpoint_url( 'graduate-profile' ) );
+            exit;
         }
-        pspa_ms_log( 'User logged in status after auth cookie: ' . ( is_user_logged_in() ? 'true' : 'false' ) );
-        do_action( 'wp_login', $user->user_login, $user );
-        wp_safe_redirect( wc_get_account_endpoint_url( 'graduate-profile' ) );
-        exit;
     }
 
     pspa_ms_log( 'Login failed: no matching user' );
