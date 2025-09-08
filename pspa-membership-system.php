@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.44
+ * Version: 0.0.45
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.44' );
+define( 'PSPA_MS_VERSION', '0.0.45' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -27,6 +27,23 @@ function pspa_ms_log( $message ) {
     $entry = sprintf( "[%s] %s\n", gmdate( 'c' ), $message );
     // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_file_put_contents
     file_put_contents( PSPA_MS_LOG_FILE, $entry, FILE_APPEND );
+}
+
+/**
+ * Normalize Greek names for flexible matching.
+ *
+ * Converts the string to uppercase and strips common accent marks so
+ * comparisons can be made in a case-insensitive manner without being
+ * affected by tonal differences.
+ *
+ * @param string $name Name to normalize.
+ * @return string Normalized name.
+ */
+function pspa_ms_normalize_name( $name ) {
+    $name = mb_strtoupper( $name, 'UTF-8' );
+    $search  = array( 'Ά', 'Έ', 'Ή', 'Ί', 'Ό', 'Ύ', 'Ώ', 'Ϊ', 'Ϋ' );
+    $replace = array( 'Α', 'Ε', 'Η', 'Ι', 'Ο', 'Υ', 'Ω', 'Ι', 'Υ' );
+    return str_replace( $search, $replace, $name );
 }
 /**
  * Enqueue shared dashboard styles.
@@ -474,29 +491,30 @@ function pspa_ms_handle_login_by_details() {
 
     pspa_ms_log( sprintf( 'Login attempt: %s %s (%s)', $first, $last, $year ) );
 
-    $first_normalized = mb_strtoupper( $first, 'UTF-8' );
-    $last_normalized  = mb_strtoupper( $last, 'UTF-8' );
-    pspa_ms_log( sprintf( 'Normalized names: %s %s', $first_normalized, $last_normalized ) );
+    $full_name        = trim( $first . ' ' . $last );
+    $normalized_full  = pspa_ms_normalize_name( $full_name );
+    pspa_ms_log( 'Normalized full name: ' . $normalized_full );
 
     global $wpdb;
-    $user_id = $wpdb->get_var(
-        $wpdb->prepare(
-            "SELECT fn.user_id
+
+    $meta_expr = "UPPER(CONCAT(fn.meta_value, ' ', ln.meta_value))";
+    $replacements = array( 'Ά'=>'Α', 'Έ'=>'Ε', 'Ή'=>'Η', 'Ί'=>'Ι', 'Ό'=>'Ο', 'Ύ'=>'Υ', 'Ώ'=>'Ω', 'Ϊ'=>'Ι', 'Ϋ'=>'Υ' );
+    foreach ( $replacements as $search => $replace ) {
+        $meta_expr = "REPLACE({$meta_expr}, '{$search}', '{$replace}')";
+    }
+
+    $sql = "SELECT fn.user_id
             FROM {$wpdb->usermeta} fn
             INNER JOIN {$wpdb->usermeta} ln ON fn.user_id = ln.user_id
             INNER JOIN {$wpdb->usermeta} gr ON fn.user_id = gr.user_id
             WHERE fn.meta_key = 'gn_first_name'
               AND ln.meta_key = 'gn_surname'
               AND gr.meta_key = 'gn_graduation_year'
-              AND UPPER(fn.meta_value) = %s
-              AND UPPER(ln.meta_value) = %s
+              AND {$meta_expr} = %s
               AND gr.meta_value = %s
-            LIMIT 1",
-            $first_normalized,
-            $last_normalized,
-            $year
-        )
-    );
+            LIMIT 1";
+
+    $user_id = $wpdb->get_var( $wpdb->prepare( $sql, $normalized_full, $year ) );
 
     pspa_ms_log( 'User ID query result: ' . ( $user_id ? $user_id : 'none' ) );
 
