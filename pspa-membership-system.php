@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.51
+ * Version: 0.0.52
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.51' );
+define( 'PSPA_MS_VERSION', '0.0.52' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -633,7 +633,16 @@ function pspa_ms_handle_login_by_details() {
         if ( get_user_meta( $user_id, 'gn_login_verified_date', true ) ) {
             pspa_ms_log( 'Login blocked: user already verified' );
             $referer = wp_get_referer() ? wp_get_referer() : home_url();
-            wp_safe_redirect( add_query_arg( 'login-details', 'verified', $referer ) );
+            $user     = get_user_by( 'id', $user_id );
+            $email    = $user ? $user->user_email : '';
+            $redirect = add_query_arg(
+                array(
+                    'login-details' => 'verified',
+                    'email'         => rawurlencode( $email ),
+                ),
+                $referer
+            );
+            wp_safe_redirect( $redirect );
             exit;
         }
 
@@ -684,6 +693,19 @@ function pspa_ms_login_by_details_shortcode() {
         if ( 'failed' === $_GET['login-details'] ) {
             $output .= '<p>' . esc_html__( 'Δεν βρέθηκε αντίστοιχος χρήστης.', 'pspa-membership-system' ) . '</p>';
         } elseif ( 'verified' === $_GET['login-details'] ) {
+            $email      = isset( $_GET['email'] ) ? sanitize_email( wp_unslash( $_GET['email'] ) ) : '';
+            $login_url  = wp_login_url();
+            $reset_url  = wp_lostpassword_url();
+            wp_enqueue_script( 'sweetalert2', 'https://cdn.jsdelivr.net/npm/sweetalert2@11', array(), null, true );
+            $title   = esc_js( __( 'Ήδη επαληθευμένοι', 'pspa-membership-system' ) );
+            $message = sprintf(
+                'Ο λογαριασμός με email <strong>%s</strong> έχει ήδη επαληθευτεί. Παρακαλούμε <a href="%s">συνδεθείτε</a> ή <a href="%s">επαναφέρετε τον κωδικό σας</a> αν τον ξεχάσατε.',
+                esc_html( $email ),
+                esc_url( $login_url ),
+                esc_url( $reset_url )
+            );
+            $script = 'document.addEventListener("DOMContentLoaded", function(){Swal.fire({icon:"info",title:"' . $title . '",html:"' . esc_js( $message ) . '"});});';
+            wp_add_inline_script( 'sweetalert2', $script );
             $output .= '<p>' . esc_html__( 'Έχετε ήδη επαληθευτεί.', 'pspa-membership-system' ) . '</p>';
         }
     }
