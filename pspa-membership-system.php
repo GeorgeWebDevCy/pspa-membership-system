@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.47
+ * Version: 0.0.48
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.47' );
+define( 'PSPA_MS_VERSION', '0.0.48' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -385,11 +385,22 @@ function pspa_ms_admin_profile_interface() {
     pspa_ms_enqueue_dashboard_styles();
 
     $edit_user_id = isset( $_GET['edit_user'] ) ? absint( $_GET['edit_user'] ) : 0;
+    $add_user    = isset( $_GET['add_user'] );
 
     if ( $edit_user_id ) {
         pspa_ms_admin_edit_user_form( $edit_user_id );
         return;
     }
+
+    if ( $add_user ) {
+        pspa_ms_admin_add_user_form();
+        return;
+    }
+
+    $add_url = add_query_arg( 'add_user', 1, wc_get_account_endpoint_url( 'graduate-profile' ) );
+    echo '<div class="pspa-dashboard pspa-admin-dashboard">';
+    echo '<p><a class="button" href="' . esc_url( $add_url ) . '">' . esc_html__( 'Προσθήκη χρήστη', 'pspa-membership-system' ) . '</a></p>';
+    echo '</div>';
 
     echo pspa_ms_graduate_directory_shortcode();
 }
@@ -463,6 +474,82 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
         <?php wp_nonce_field( 'pspa_admin_edit_user', 'pspa_admin_edit_user_nonce' ); ?>
         <p>
             <button type="submit" class="woocommerce-Button button"><?php esc_html_e( 'Αποθήκευση αλλαγών', 'pspa-membership-system' ); ?></button>
+        </p>
+    </form>
+    <?php
+    echo '</div>';
+}
+
+/**
+ * Render admin add user form.
+ */
+function pspa_ms_admin_add_user_form() {
+    pspa_ms_enqueue_dashboard_styles();
+
+    if (
+        'POST' === $_SERVER['REQUEST_METHOD'] &&
+        isset( $_POST['pspa_admin_add_user_nonce'] ) &&
+        wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['pspa_admin_add_user_nonce'] ) ), 'pspa_admin_add_user' )
+    ) {
+        $email    = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+        $password = isset( $_POST['password'] ) ? wp_unslash( $_POST['password'] ) : wp_generate_password();
+
+        $first = isset( $_POST['acf']['field_gn_first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['acf']['field_gn_first_name'] ) ) : '';
+        $last  = isset( $_POST['acf']['field_gn_surname'] ) ? sanitize_text_field( wp_unslash( $_POST['acf']['field_gn_surname'] ) ) : '';
+        $login = sanitize_user( $first . '.' . $last, true );
+        if ( empty( $login ) ) {
+            $login = sanitize_user( $email, true );
+        }
+
+        $user_id = wp_insert_user( array(
+            'user_login' => $login,
+            'user_email' => $email,
+            'user_pass'  => $password,
+            'role'       => 'customer',
+        ) );
+
+        if ( ! is_wp_error( $user_id ) ) {
+            if ( function_exists( 'acf_save_post' ) ) {
+                acf_save_post( 'user_' . $user_id );
+            }
+            if ( function_exists( 'pspa_ms_sync_user_names' ) ) {
+                pspa_ms_sync_user_names( 'user_' . $user_id );
+            }
+            wc_add_notice( __( 'Ο χρήστης δημιουργήθηκε με επιτυχία.', 'pspa-membership-system' ) );
+
+            $edit_url = add_query_arg( 'edit_user', $user_id, wc_get_account_endpoint_url( 'graduate-profile' ) );
+            wp_safe_redirect( $edit_url );
+            exit;
+        } else {
+            wc_add_notice( $user_id->get_error_message(), 'error' );
+        }
+    }
+
+    echo '<div class="pspa-dashboard pspa-admin-add-user">';
+    $search_url = wc_get_account_endpoint_url( 'graduate-profile' );
+    echo '<p><a href="' . esc_url( $search_url ) . '">&larr; ' . esc_html__( 'Επιστροφή στην αναζήτηση', 'pspa-membership-system' ) . '</a></p>';
+    ?>
+    <form method="post">
+        <?php if ( function_exists( 'acf_form' ) ) : ?>
+            <div class="pspa-acf-fields">
+                <?php acf_form( array(
+                    'post_id'      => 'user_0',
+                    'form'         => false,
+                    'field_groups' => array( 'group_gn_graduate_profile' ),
+                ) ); ?>
+            </div>
+        <?php endif; ?>
+        <p class="form-row form-row-wide">
+            <label for="email"><?php esc_html_e( 'Διεύθυνση E-mail', 'pspa-membership-system' ); ?></label>
+            <input type="email" name="email" id="email" value="" />
+        </p>
+        <p class="form-row form-row-wide">
+            <label for="password"><?php esc_html_e( 'Κωδικός', 'pspa-membership-system' ); ?></label>
+            <input type="password" name="password" id="password" autocomplete="new-password" />
+        </p>
+        <?php wp_nonce_field( 'pspa_admin_add_user', 'pspa_admin_add_user_nonce' ); ?>
+        <p>
+            <button type="submit" class="woocommerce-Button button"><?php esc_html_e( 'Δημιουργία χρήστη', 'pspa-membership-system' ); ?></button>
         </p>
     </form>
     <?php
