@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.53
+ * Version: 0.0.54
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.53' );
+define( 'PSPA_MS_VERSION', '0.0.54' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -663,7 +663,7 @@ function pspa_ms_handle_login_by_details() {
             }
             pspa_ms_log( 'User logged in status after auth cookie: ' . ( is_user_logged_in() ? 'true' : 'false' ) );
             do_action( 'wp_login', $user->user_login, $user );
-            wp_safe_redirect( pspa_ms_get_graduate_profile_edit_url() );
+            wp_safe_redirect( add_query_arg( 'edit_user', $user->ID, pspa_ms_get_graduate_profile_edit_url() ) );
             exit;
         }
     }
@@ -951,7 +951,7 @@ function pspa_ms_login_redirect( $redirect_to, $request, $user ) {
             in_array( 'professionalcatalogue', (array) $user->roles, true )
         )
     ) {
-        return pspa_ms_get_graduate_profile_edit_url();
+        return add_query_arg( 'edit_user', $user->ID, pspa_ms_get_graduate_profile_edit_url() );
     }
     return $redirect_to;
 }
@@ -968,7 +968,7 @@ function pspa_ms_block_admin_access() {
             in_array( 'sysadmin', (array) $user->roles, true ) ||
             in_array( 'professionalcatalogue', (array) $user->roles, true )
         ) {
-            wp_safe_redirect( pspa_ms_get_graduate_profile_edit_url() );
+            wp_safe_redirect( add_query_arg( 'edit_user', $user->ID, pspa_ms_get_graduate_profile_edit_url() ) );
             exit;
         }
     }
