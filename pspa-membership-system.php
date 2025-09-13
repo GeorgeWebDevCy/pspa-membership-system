@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.50
+ * Version: 0.0.51
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.50' );
+define( 'PSPA_MS_VERSION', '0.0.51' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -421,7 +421,7 @@ function pspa_ms_admin_profile_interface() {
         return;
     }
 
-    $add_url = add_query_arg( 'add_user', 1, wc_get_account_endpoint_url( 'graduate-profile' ) );
+    $add_url = add_query_arg( 'add_user', 1, pspa_ms_get_graduate_profile_edit_url() );
     echo '<div class="pspa-dashboard pspa-admin-dashboard">';
     echo '<p><a class="button" href="' . esc_url( $add_url ) . '">' . esc_html__( 'Προσθήκη χρήστη', 'pspa-membership-system' ) . '</a></p>';
     echo '</div>';
@@ -473,7 +473,7 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
     }
 
     echo '<div class="pspa-dashboard pspa-admin-edit-user">';
-    $search_url = wc_get_account_endpoint_url( 'graduate-profile' );
+    $search_url = pspa_ms_get_graduate_profile_edit_url();
     echo '<p><a href="' . esc_url( $search_url ) . '">&larr; ' . esc_html__( 'Επιστροφή στην αναζήτηση', 'pspa-membership-system' ) . '</a></p>';
 
     ?>
@@ -541,7 +541,7 @@ function pspa_ms_admin_add_user_form() {
             }
             wc_add_notice( __( 'Ο χρήστης δημιουργήθηκε με επιτυχία.', 'pspa-membership-system' ) );
 
-            $edit_url = add_query_arg( 'edit_user', $user_id, wc_get_account_endpoint_url( 'graduate-profile' ) );
+            $edit_url = add_query_arg( 'edit_user', $user_id, pspa_ms_get_graduate_profile_edit_url() );
             wp_safe_redirect( $edit_url );
             exit;
         } else {
@@ -550,7 +550,7 @@ function pspa_ms_admin_add_user_form() {
     }
 
     echo '<div class="pspa-dashboard pspa-admin-add-user">';
-    $search_url = wc_get_account_endpoint_url( 'graduate-profile' );
+    $search_url = pspa_ms_get_graduate_profile_edit_url();
     echo '<p><a href="' . esc_url( $search_url ) . '">&larr; ' . esc_html__( 'Επιστροφή στην αναζήτηση', 'pspa-membership-system' ) . '</a></p>';
     ?>
     <form method="post">
@@ -654,7 +654,7 @@ function pspa_ms_handle_login_by_details() {
             }
             pspa_ms_log( 'User logged in status after auth cookie: ' . ( is_user_logged_in() ? 'true' : 'false' ) );
             do_action( 'wp_login', $user->user_login, $user );
-            wp_safe_redirect( wc_get_account_endpoint_url( 'graduate-profile' ) );
+            wp_safe_redirect( pspa_ms_get_graduate_profile_edit_url() );
             exit;
         }
     }
@@ -929,7 +929,7 @@ function pspa_ms_login_redirect( $redirect_to, $request, $user ) {
             in_array( 'professionalcatalogue', (array) $user->roles, true )
         )
     ) {
-        return wc_get_account_endpoint_url( 'graduate-profile' );
+        return pspa_ms_get_graduate_profile_edit_url();
     }
     return $redirect_to;
 }
@@ -946,7 +946,7 @@ function pspa_ms_block_admin_access() {
             in_array( 'sysadmin', (array) $user->roles, true ) ||
             in_array( 'professionalcatalogue', (array) $user->roles, true )
         ) {
-            wp_safe_redirect( wc_get_account_endpoint_url( 'graduate-profile' ) );
+            wp_safe_redirect( pspa_ms_get_graduate_profile_edit_url() );
             exit;
         }
     }
@@ -963,6 +963,33 @@ function pspa_ms_get_unique_user_meta_values( $meta_key ) {
     global $wpdb;
     $values = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT meta_value FROM {$wpdb->usermeta} WHERE meta_key = %s AND meta_value <> '' ORDER BY meta_value ASC", $meta_key ) );
     return $values;
+}
+
+/**
+ * Get the Graduate Profile dashboard URL.
+ *
+ * Builds the URL to the `graduate-profile` My Account endpoint. Falls back to
+ * a query-arg based URL when the endpoint matches the My Account page slug,
+ * avoiding canonical redirects that drop the endpoint.
+ *
+ * @return string
+ */
+function pspa_ms_get_graduate_profile_edit_url() {
+    $account_url = function_exists( 'wc_get_page_permalink' )
+        ? wc_get_page_permalink( 'myaccount' )
+        : home_url( '/my-account/' );
+
+    if ( function_exists( 'wc_get_endpoint_url' ) ) {
+        $url = wc_get_endpoint_url( 'graduate-profile', '', $account_url );
+    } else {
+        $url = trailingslashit( $account_url ) . 'graduate-profile/';
+    }
+
+    if ( untrailingslashit( $url ) === untrailingslashit( $account_url ) ) {
+        $url = add_query_arg( 'graduate-profile', '', $account_url );
+    }
+
+    return $url;
 }
 
 /**
@@ -996,7 +1023,7 @@ function pspa_ms_render_graduate_card( $user_id ) {
         in_array( 'sysadmin', (array) $current_user->roles, true );
 
     if ( $can_edit ) {
-        $edit_url = add_query_arg( 'edit_user', $user_id, wc_get_account_endpoint_url( 'graduate-profile' ) );
+        $edit_url = add_query_arg( 'edit_user', $user_id, pspa_ms_get_graduate_profile_edit_url() );
     }
 
     ob_start();
