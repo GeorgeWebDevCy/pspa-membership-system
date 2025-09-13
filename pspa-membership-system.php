@@ -827,6 +827,33 @@ function pspa_ms_preserve_login_verified_date( $value, $post_id, $field ) {
 add_filter( 'acf/update_value/name=gn_login_verified_date', 'pspa_ms_preserve_login_verified_date', 10, 3 );
 
 /**
+ * Determine the next available Initial DB ID.
+ *
+ * Ensures continuity with any IDs that may have been imported.
+ *
+ * @return int Next ID.
+ */
+function pspa_ms_get_next_initial_db_id() {
+    global $wpdb;
+
+    $next = (int) get_option( 'pspa_ms_next_initial_db_id', 1 );
+    $max  = (int) $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT MAX(meta_value+0) FROM {$wpdb->usermeta} WHERE meta_key = %s",
+            'gn_initial_db_id'
+        )
+    );
+
+    if ( $max >= $next ) {
+        $next = $max + 1;
+    }
+
+    update_option( 'pspa_ms_next_initial_db_id', $next + 1 );
+
+    return $next;
+}
+
+/**
  * Assign incremental Initial DB ID to new users.
  *
  * @param int $user_id New user ID.
@@ -836,9 +863,8 @@ function pspa_ms_assign_initial_db_id( $user_id ) {
         return;
     }
 
-    $next = (int) get_option( 'pspa_ms_next_initial_db_id', 1 );
+    $next = pspa_ms_get_next_initial_db_id();
     update_user_meta( $user_id, 'gn_initial_db_id', $next );
-    update_option( 'pspa_ms_next_initial_db_id', $next + 1 );
 }
 add_action( 'user_register', 'pspa_ms_assign_initial_db_id' );
 
