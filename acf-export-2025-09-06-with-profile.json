@@ -22,6 +22,30 @@
         "selected": 0
       },
       {
+        "key": "field_gn_initial_db_id",
+        "label": "Initial DB ID",
+        "name": "gn_initial_db_id",
+        "aria-label": "",
+        "type": "number",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "50",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "min": "",
+        "max": "",
+        "step": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": "",
+        "readonly": 1,
+        "disabled": 1
+      },
+      {
         "key": "field_gn_surname",
         "label": "Επώνυμο",
         "name": "gn_surname",
