@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.45
+ * Version: 0.0.46
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.45' );
+define( 'PSPA_MS_VERSION', '0.0.46' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -662,6 +662,53 @@ function pspa_ms_sync_user_names( $post_id ) {
     }
 }
 add_action( 'acf/save_post', 'pspa_ms_sync_user_names', 20 );
+
+/**
+ * Prevent editing of the Initial DB ID field.
+ *
+ * @param array $field Field settings.
+ * @return array
+ */
+function pspa_ms_lock_initial_db_id_field( $field ) {
+    $field['readonly'] = true;
+    $field['disabled'] = true;
+    return $field;
+}
+add_filter( 'acf/prepare_field/name=gn_initial_db_id', 'pspa_ms_lock_initial_db_id_field' );
+
+/**
+ * Preserve the Initial DB ID value once set.
+ *
+ * @param mixed $value   Proposed value.
+ * @param mixed $post_id Post ID.
+ * @param array $field   Field settings.
+ * @return mixed
+ */
+function pspa_ms_preserve_initial_db_id( $value, $post_id, $field ) {
+    $user_id = is_string( $post_id ) && 0 === strpos( $post_id, 'user_' )
+        ? (int) substr( $post_id, 5 )
+        : (int) $post_id;
+
+    $existing = get_user_meta( $user_id, 'gn_initial_db_id', true );
+    return '' === $existing ? $value : $existing;
+}
+add_filter( 'acf/update_value/name=gn_initial_db_id', 'pspa_ms_preserve_initial_db_id', 10, 3 );
+
+/**
+ * Assign incremental Initial DB ID to new users.
+ *
+ * @param int $user_id New user ID.
+ */
+function pspa_ms_assign_initial_db_id( $user_id ) {
+    if ( get_user_meta( $user_id, 'gn_initial_db_id', true ) ) {
+        return;
+    }
+
+    $next = (int) get_option( 'pspa_ms_next_initial_db_id', 1 );
+    update_user_meta( $user_id, 'gn_initial_db_id', $next );
+    update_option( 'pspa_ms_next_initial_db_id', $next + 1 );
+}
+add_action( 'user_register', 'pspa_ms_assign_initial_db_id' );
 
 /**
  * Force graduates and system admins to stay on the front end.
