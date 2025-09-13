@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.46
+ * Version: 0.0.47
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.46' );
+define( 'PSPA_MS_VERSION', '0.0.47' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -519,6 +519,13 @@ function pspa_ms_handle_login_by_details() {
     pspa_ms_log( 'User ID query result: ' . ( $user_id ? $user_id : 'none' ) );
 
     if ( $user_id ) {
+        if ( get_user_meta( $user_id, 'gn_login_verified_date', true ) ) {
+            pspa_ms_log( 'Login blocked: user already verified' );
+            $referer = wp_get_referer() ? wp_get_referer() : home_url();
+            wp_safe_redirect( add_query_arg( 'login-details', 'verified', $referer ) );
+            exit;
+        }
+
         $user = get_user_by( 'id', $user_id );
         if ( $user ) {
             pspa_ms_log( 'Login success for user ID ' . $user->ID );
@@ -530,6 +537,9 @@ function pspa_ms_handle_login_by_details() {
             wp_set_current_user( $user->ID, $user->user_login );
             if ( function_exists( 'wc_set_customer_auth_cookie' ) ) {
                 wc_set_customer_auth_cookie( $user->ID );
+            }
+            if ( ! get_user_meta( $user->ID, 'gn_login_verified_date', true ) ) {
+                update_user_meta( $user->ID, 'gn_login_verified_date', current_time( 'mysql' ) );
             }
             pspa_ms_log( 'User logged in status after auth cookie: ' . ( is_user_logged_in() ? 'true' : 'false' ) );
             do_action( 'wp_login', $user->user_login, $user );
@@ -559,8 +569,12 @@ function pspa_ms_login_by_details_shortcode() {
 
     $output = '';
 
-    if ( isset( $_GET['login-details'] ) && 'failed' === $_GET['login-details'] ) {
-        $output .= '<p>' . esc_html__( 'Δεν βρέθηκε αντίστοιχος χρήστης.', 'pspa-membership-system' ) . '</p>';
+    if ( isset( $_GET['login-details'] ) ) {
+        if ( 'failed' === $_GET['login-details'] ) {
+            $output .= '<p>' . esc_html__( 'Δεν βρέθηκε αντίστοιχος χρήστης.', 'pspa-membership-system' ) . '</p>';
+        } elseif ( 'verified' === $_GET['login-details'] ) {
+            $output .= '<p>' . esc_html__( 'Έχετε ήδη επαληθευτεί.', 'pspa-membership-system' ) . '</p>';
+        }
     }
 
     ob_start();
@@ -693,6 +707,37 @@ function pspa_ms_preserve_initial_db_id( $value, $post_id, $field ) {
     return '' === $existing ? $value : $existing;
 }
 add_filter( 'acf/update_value/name=gn_initial_db_id', 'pspa_ms_preserve_initial_db_id', 10, 3 );
+
+/**
+ * Prevent editing of the Login Verification Date field.
+ *
+ * @param array $field Field settings.
+ * @return array
+ */
+function pspa_ms_lock_login_verified_date_field( $field ) {
+    $field['readonly'] = true;
+    $field['disabled'] = true;
+    return $field;
+}
+add_filter( 'acf/prepare_field/name=gn_login_verified_date', 'pspa_ms_lock_login_verified_date_field' );
+
+/**
+ * Preserve the Login Verification Date once set.
+ *
+ * @param mixed $value   Proposed value.
+ * @param mixed $post_id Post ID.
+ * @param array $field   Field settings.
+ * @return mixed
+ */
+function pspa_ms_preserve_login_verified_date( $value, $post_id, $field ) {
+    $user_id = is_string( $post_id ) && 0 === strpos( $post_id, 'user_' )
+        ? (int) substr( $post_id, 5 )
+        : (int) $post_id;
+
+    $existing = get_user_meta( $user_id, 'gn_login_verified_date', true );
+    return '' === $existing ? $value : $existing;
+}
+add_filter( 'acf/update_value/name=gn_login_verified_date', 'pspa_ms_preserve_login_verified_date', 10, 3 );
 
 /**
  * Assign incremental Initial DB ID to new users.

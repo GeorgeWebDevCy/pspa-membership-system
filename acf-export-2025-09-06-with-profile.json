@@ -46,6 +46,28 @@
         "disabled": 1
       },
       {
+        "key": "field_gn_login_verified_date",
+        "label": "Ημερομηνία επαλήθευσης",
+        "name": "gn_login_verified_date",
+        "aria-label": "",
+        "type": "text",
+        "instructions": "",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "",
+          "class": "",
+          "id": ""
+        },
+        "default_value": "",
+        "maxlength": "",
+        "placeholder": "",
+        "prepend": "",
+        "append": "",
+        "readonly": 1,
+        "disabled": 1
+      },
+      {
         "key": "field_gn_surname",
         "label": "Επώνυμο",
         "name": "gn_surname",
