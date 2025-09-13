@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.48
+ * Version: 0.0.50
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.48' );
+define( 'PSPA_MS_VERSION', '0.0.50' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -27,6 +27,30 @@ function pspa_ms_log( $message ) {
     $entry = sprintf( "[%s] %s\n", gmdate( 'c' ), $message );
     // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_file_put_contents
     file_put_contents( PSPA_MS_LOG_FILE, $entry, FILE_APPEND );
+}
+
+/**
+ * Reset all plugin settings stored in the options table.
+ *
+ * Deletes any options that start with the `pspa_ms_` prefix, allowing the
+ * plugin to return to a clean state without manual database edits.
+ */
+function pspa_ms_reset_settings() {
+    global $wpdb;
+
+    $like = $wpdb->esc_like( 'pspa_ms_' ) . '%';
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+    $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like ) );
+}
+
+if ( defined( 'WP_CLI' ) && WP_CLI ) {
+    WP_CLI::add_command(
+        'pspa-ms reset',
+        static function () {
+            pspa_ms_reset_settings();
+            WP_CLI::success( 'PSPA Membership System settings reset.' );
+        }
+    );
 }
 
 /**
@@ -722,7 +746,27 @@ function pspa_ms_render_logs_page() {
         return;
     }
 
-    echo '<div class="wrap"><h1>' . esc_html__( 'PSPA Logs', 'pspa-membership-system' ) . '</h1><pre style="white-space:pre-wrap;">';
+    $reset = false;
+
+    if ( isset( $_POST['pspa_ms_reset_settings'] ) ) {
+        check_admin_referer( 'pspa_ms_reset_settings' );
+        pspa_ms_reset_settings();
+        $reset = true;
+    }
+
+    echo '<div class="wrap">';
+    echo '<h1>' . esc_html__( 'PSPA Logs', 'pspa-membership-system' ) . '</h1>';
+
+    if ( $reset ) {
+        echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'PSPA Membership System settings reset.', 'pspa-membership-system' ) . '</p></div>';
+    }
+
+    echo '<form method="post">';
+    wp_nonce_field( 'pspa_ms_reset_settings' );
+    submit_button( __( 'Reset PSPA Settings', 'pspa-membership-system' ), 'secondary', 'pspa_ms_reset_settings', false );
+    echo '</form>';
+
+    echo '<pre style="white-space:pre-wrap;">';
     if ( file_exists( PSPA_MS_LOG_FILE ) ) {
         echo esc_html( file_get_contents( PSPA_MS_LOG_FILE ) );
     } else {
