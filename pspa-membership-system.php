@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.80
+ * Version: 0.0.81
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.80' );
+define( 'PSPA_MS_VERSION', '0.0.81' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -139,6 +139,26 @@ function pspa_ms_enqueue_password_strength() {
     );
 }
 add_action( 'wp_enqueue_scripts', 'pspa_ms_enqueue_password_strength' );
+
+/**
+ * Enqueue script to customize WooCommerce edit account form.
+ */
+function pspa_ms_enqueue_edit_account_customizations() {
+    if ( ! function_exists( 'is_account_page' ) || ! is_account_page() ) {
+        return;
+    }
+
+    if ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url( 'graduate-profile' ) ) {
+        wp_enqueue_script(
+            'pspa-ms-edit-account-form',
+            plugin_dir_url( __FILE__ ) . 'assets/js/edit-account-form.js',
+            array( 'jquery' ),
+            PSPA_MS_VERSION,
+            true
+        );
+    }
+}
+add_action( 'wp_enqueue_scripts', 'pspa_ms_enqueue_edit_account_customizations' );
 
 /**
  * Estimate password strength for logging.
