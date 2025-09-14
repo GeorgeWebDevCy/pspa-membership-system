@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.61
+ * Version: 0.0.62
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.61' );
+define( 'PSPA_MS_VERSION', '0.0.62' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -616,24 +616,47 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
         $email    = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
         $password = isset( $_POST['password'] ) ? wp_unslash( $_POST['password'] ) : '';
 
-        $update_data = array(
-            'ID'         => $user_id,
-            'user_email' => $email,
-        );
+        pspa_ms_log( sprintf(
+            'Admin profile update attempt for user %d: email %s, password %s',
+            $user_id,
+            '' === $email ? 'missing' : 'provided',
+            '' === $password ? 'missing' : 'provided'
+        ) );
+
+        $update_data = array( 'ID' => $user_id );
+
+        if ( ! empty( $email ) ) {
+            $update_data['user_email'] = $email;
+        }
 
         if ( ! empty( $password ) ) {
             $update_data['user_pass'] = $password;
         }
 
-        wp_update_user( $update_data );
+        if ( count( $update_data ) > 1 ) {
+            $result = wp_update_user( $update_data );
+            if ( is_wp_error( $result ) ) {
+                pspa_ms_log( sprintf(
+                    'Admin profile update failed for user %d: %s (%s)',
+                    $user_id,
+                    $result->get_error_message(),
+                    $result->get_error_code()
+                ) );
+                wc_add_notice( $result->get_error_message(), 'error' );
+            } else {
+                pspa_ms_log( 'Admin profile updated for user ' . $user_id );
 
-        // Ensure WordPress name fields mirror the ACF values.
-        if ( function_exists( 'pspa_ms_sync_user_names' ) ) {
-            pspa_ms_sync_user_names( 'user_' . $user_id );
+                // Ensure WordPress name fields mirror the ACF values.
+                if ( function_exists( 'pspa_ms_sync_user_names' ) ) {
+                    pspa_ms_sync_user_names( 'user_' . $user_id );
+                }
+
+                wc_add_notice( __( 'Το προφίλ ενημερώθηκε με επιτυχία.', 'pspa-membership-system' ) );
+                $user = get_user_by( 'id', $user_id );
+            }
+        } else {
+            pspa_ms_log( 'No profile fields updated for admin user ' . $user_id );
         }
-
-        wc_add_notice( __( 'Το προφίλ ενημερώθηκε με επιτυχία.', 'pspa-membership-system' ) );
-        $user = get_user_by( 'id', $user_id );
     }
 
     echo '<div class="pspa-dashboard pspa-admin-edit-user">';
