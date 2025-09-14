@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.64
+ * Version: 0.0.65
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.64' );
+define( 'PSPA_MS_VERSION', '0.0.65' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -519,6 +519,34 @@ function pspa_ms_simple_profile_form( $user_id ) {
         }
 
         if ( ! empty( $password ) ) {
+            $result = wp_update_user( array(
+                'ID'        => $user_id,
+                'user_pass' => $password,
+            ) );
+
+            if ( is_wp_error( $result ) ) {
+                pspa_ms_log( sprintf(
+                    'Password update failed for user %d: %s (%s)',
+                    $user_id,
+                    $result->get_error_message(),
+                    $result->get_error_code()
+                ) );
+                wc_add_notice( $result->get_error_message(), 'error' );
+            } else {
+                $fresh_pass = get_user_by( 'id', $user_id );
+                pspa_ms_log( 'New password hash prefix for user ' . $user_id . ': ' . substr( $fresh_pass->user_pass, 0, 10 ) );
+                wp_set_auth_cookie( $user_id, true, is_ssl() );
+                pspa_ms_log( 'Auth cookie refreshed for user ' . $user_id );
+                wp_set_current_user( $user_id, $user->user_login );
+                pspa_ms_log( 'is_user_logged_in after password set: ' . ( is_user_logged_in() ? 'true' : 'false' ) );
+                if ( function_exists( 'wc_set_customer_auth_cookie' ) ) {
+                    wc_set_customer_auth_cookie( $user_id );
+                    pspa_ms_log( 'wc_set_customer_auth_cookie called for user ' . $user_id );
+                } else {
+                    pspa_ms_log( 'wc_set_customer_auth_cookie unavailable' );
+                }
+                pspa_ms_log( 'Password updated for user ' . $user_id );
+                $updated = true;
             wp_set_password( $password, $user_id );
             $fresh_pass = get_user_by( 'id', $user_id );
             pspa_ms_log( 'New password hash prefix for user ' . $user_id . ': ' . substr( $fresh_pass->user_pass, 0, 10 ) );
@@ -532,8 +560,6 @@ function pspa_ms_simple_profile_form( $user_id ) {
             } else {
                 pspa_ms_log( 'wc_set_customer_auth_cookie unavailable' );
             }
-            pspa_ms_log( 'Password updated for user ' . $user_id );
-            $updated = true;
         }
 
         if ( $updated ) {
@@ -805,6 +831,10 @@ function pspa_ms_admin_add_user_form() {
  * Handle login submissions before output is sent.
  */
 function pspa_ms_handle_login_by_details() {
+    if ( 'POST' !== $_SERVER['REQUEST_METHOD'] ) {
+        return;
+    }
+
     if ( is_user_logged_in() ) {
         pspa_ms_log( 'Login-by-details aborted: user already logged in' );
         return;
