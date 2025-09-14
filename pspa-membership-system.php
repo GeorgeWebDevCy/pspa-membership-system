@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.58
+ * Version: 0.0.59
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.58' );
+define( 'PSPA_MS_VERSION', '0.0.59' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -492,20 +492,29 @@ function pspa_ms_simple_profile_form( $user_id ) {
 
         $updated = false;
         if ( count( $update_data ) > 1 ) {
-            $result  = wp_update_user( $update_data );
-            $updated = ! is_wp_error( $result );
+            $result = wp_update_user( $update_data );
+            if ( is_wp_error( $result ) ) {
+                wc_add_notice( $result->get_error_message(), 'error' );
+            } else {
+                $updated = true;
+            }
         }
 
-        if ( $updated && ! get_user_meta( $user_id, 'gn_login_verified_date', true ) && ! empty( $email ) && ! empty( $password ) ) {
-            update_user_meta( $user_id, 'gn_login_verified_date', current_time( 'mysql' ) );
+        if ( $updated && ! get_user_meta( $user_id, 'gn_login_verified_date', true ) && '' !== $password ) {
+            $fresh = get_user_by( 'id', $user_id );
+            if ( $fresh && ! empty( $fresh->user_email ) ) {
+                update_user_meta( $user_id, 'gn_login_verified_date', current_time( 'mysql' ) );
+            }
         }
 
-        if ( function_exists( 'pspa_ms_sync_user_names' ) ) {
+        if ( $updated && function_exists( 'pspa_ms_sync_user_names' ) ) {
             pspa_ms_sync_user_names( 'user_' . $user_id );
         }
 
-        wc_add_notice( __( 'Το προφίλ ενημερώθηκε με επιτυχία.', 'pspa-membership-system' ) );
-        $user = wp_get_current_user();
+        if ( $updated ) {
+            wc_add_notice( __( 'Το προφίλ ενημερώθηκε με επιτυχία.', 'pspa-membership-system' ) );
+            $user = wp_get_current_user();
+        }
     }
 
     pspa_ms_enqueue_dashboard_styles();
