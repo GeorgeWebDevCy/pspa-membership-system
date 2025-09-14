@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.72
+ * Version: 0.0.73
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,27 +14,47 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.72' );
-
-define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
+define( 'PSPA_MS_VERSION', '0.0.73' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
 }
 
 /**
- * Log a message to the PSPA log file.
+ * Log a message using the legacy option-based logger.
  *
  * @param string $message Message to log.
+ * @param string $level   Log level.
+ * @param array  $context Additional context.
  */
-function pspa_ms_log( $message ) {
+function pspa_ms_log( $message, $level = 'info', $context = array() ) {
     if ( ! PSPA_MS_ENABLE_LOGGING ) {
         return;
     }
 
-    $entry = sprintf( "[%s] %s\n", gmdate( 'c' ), $message );
-    // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_file_put_contents
-    file_put_contents( PSPA_MS_LOG_FILE, $entry, FILE_APPEND );
+    if ( ! is_scalar( $message ) ) {
+        $message = wp_json_encode( $message );
+    }
+
+    $entry = array(
+        'time'    => current_time( 'mysql' ),
+        'level'   => $level,
+        'message' => (string) $message,
+        'context' => $context,
+    );
+
+    $logs   = get_option( 'pspa_ms_logs', array() );
+    $logs[] = $entry;
+
+    if ( count( $logs ) > 200 ) {
+        $logs = array_slice( $logs, -200 );
+    }
+
+    update_option( 'pspa_ms_logs', $logs );
+
+    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+        error_log( strtoupper( $level ) . ': ' . $entry['message'] . ( ! empty( $context ) ? ' ' . wp_json_encode( $context ) : '' ) );
+    }
 }
 
 /**
@@ -109,6 +129,21 @@ function pspa_ms_enqueue_woocommerce_nav_styles() {
     );
 }
 add_action( 'wp_enqueue_scripts', 'pspa_ms_enqueue_woocommerce_nav_styles' );
+
+/**
+ * Enqueue password strength meter.
+ */
+function pspa_ms_enqueue_password_strength() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
+    wp_enqueue_script(
+        'pspa-ms-password-strength',
+        plugin_dir_url( __FILE__ ) . 'assets/js/password-strength.js',
+        array( 'jquery', 'password-strength-meter' ),
+        PSPA_MS_VERSION,
+        true
+    );
+}
+add_action( 'wp_enqueue_scripts', 'pspa_ms_enqueue_password_strength' );
 
 /**
  * Ensure required plugins are active.
@@ -1080,7 +1115,14 @@ function pspa_ms_render_logs_page() {
         return;
     }
 
-    $reset = false;
+    $cleared = false;
+    $reset   = false;
+
+    if ( isset( $_POST['pspa_ms_clear_logs'] ) ) {
+        check_admin_referer( 'pspa_ms_clear_logs' );
+        delete_option( 'pspa_ms_logs' );
+        $cleared = true;
+    }
 
     if ( isset( $_POST['pspa_ms_reset_settings'] ) ) {
         check_admin_referer( 'pspa_ms_reset_settings' );
@@ -1088,25 +1130,41 @@ function pspa_ms_render_logs_page() {
         $reset = true;
     }
 
-    echo '<div class="wrap">';
-    echo '<h1>' . esc_html__( 'PSPA Logs', 'pspa-membership-system' ) . '</h1>';
+    $logs = get_option( 'pspa_ms_logs', array() );
+
+    echo '<div class="wrap"><h1>' . esc_html__( 'PSPA Logs', 'pspa-membership-system' ) . '</h1>';
+
+    if ( $cleared ) {
+        echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Logs cleared.', 'pspa-membership-system' ) . '</p></div>';
+    }
 
     if ( $reset ) {
         echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'PSPA Membership System settings reset.', 'pspa-membership-system' ) . '</p></div>';
     }
 
-    echo '<form method="post">';
+    echo '<form method="post" style="margin-bottom:1em;">';
+    wp_nonce_field( 'pspa_ms_clear_logs' );
     wp_nonce_field( 'pspa_ms_reset_settings' );
+    submit_button( __( 'Clear Logs', 'pspa-membership-system' ), 'secondary', 'pspa_ms_clear_logs', false );
     submit_button( __( 'Reset PSPA Settings', 'pspa-membership-system' ), 'secondary', 'pspa_ms_reset_settings', false );
     echo '</form>';
 
-    echo '<pre style="white-space:pre-wrap;">';
-    if ( file_exists( PSPA_MS_LOG_FILE ) ) {
-        echo esc_html( file_get_contents( PSPA_MS_LOG_FILE ) );
-    } else {
-        esc_html_e( 'Log file is empty.', 'pspa-membership-system' );
+    if ( empty( $logs ) ) {
+        echo '<p>' . esc_html__( 'No log entries found.', 'pspa-membership-system' ) . '</p></div>';
+        return;
     }
-    echo '</pre></div>';
+
+    echo '<table class="widefat"><thead><tr><th>' . esc_html__( 'Time', 'pspa-membership-system' ) . '</th><th>' . esc_html__( 'Level', 'pspa-membership-system' ) . '</th><th>' . esc_html__( 'Message', 'pspa-membership-system' ) . '</th></tr></thead><tbody>';
+
+    foreach ( $logs as $log ) {
+        $msg = $log['message'];
+        if ( ! empty( $log['context'] ) ) {
+            $msg .= ' ' . wp_json_encode( $log['context'] );
+        }
+        echo '<tr><td>' . esc_html( $log['time'] ) . '</td><td>' . esc_html( strtoupper( $log['level'] ) ) . '</td><td>' . esc_html( $msg ) . '</td></tr>';
+    }
+
+    echo '</tbody></table></div>';
 }
 
 /**
