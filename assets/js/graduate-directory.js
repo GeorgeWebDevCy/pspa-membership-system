@@ -1,7 +1,9 @@
 jQuery(function($){
+    console.log('graduate-directory ready', arguments);
     let currentPage = 1;
 
     function fetchGraduates(){
+        console.log('fetchGraduates', arguments);
         var data = {
             action: 'pspa_ms_filter_graduates',
             nonce: pspaMsDir.nonce,
@@ -14,6 +16,7 @@ jQuery(function($){
             page: currentPage
         };
         $.post(pspaMsDir.ajaxUrl, data, function(response){
+            console.log('fetchGraduates response', response);
             if(response.success){
                 $('#pspa-graduate-results').html(response.data.html);
             }
@@ -21,20 +24,24 @@ jQuery(function($){
     }
 
     $('#pspa-graduate-filters').on('change', 'select', function(){
+        console.log('filter change', this, arguments);
         currentPage = 1;
         fetchGraduates();
     });
 
     $('#pspa-graduate-filters [name="full_name"], #pspa-graduate-filters [name="graduation_year"]').on('input', function(){
+        console.log('filter input', this, arguments);
         currentPage = 1;
         fetchGraduates();
     });
 
     $('#pspa-graduate-results').on('click', '.pspa-dir-pagination a', function(e){
+        console.log('pagination click', this, arguments);
         e.preventDefault();
         currentPage = $(this).data('page');
         fetchGraduates();
     });
 
+    console.log('initial fetch');
     fetchGraduates();
 });
