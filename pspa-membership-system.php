@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.62
+ * Version: 0.0.63
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.62' );
+define( 'PSPA_MS_VERSION', '0.0.63' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -487,19 +487,14 @@ function pspa_ms_simple_profile_form( $user_id ) {
             '' === $password ? 'missing' : 'provided'
         ) );
 
-        $update_data = array( 'ID' => $user_id );
+        $updated = false;
 
         if ( ! empty( $email ) ) {
-            $update_data['user_email'] = $email;
-        }
+            $result = wp_update_user( array(
+                'ID'         => $user_id,
+                'user_email' => $email,
+            ) );
 
-        if ( ! empty( $password ) ) {
-            $update_data['user_pass'] = $password;
-        }
-
-        $updated = false;
-        if ( count( $update_data ) > 1 ) {
-            $result = wp_update_user( $update_data );
             if ( is_wp_error( $result ) ) {
                 pspa_ms_log( sprintf(
                     'Profile update failed for user %d: %s (%s)',
@@ -509,9 +504,23 @@ function pspa_ms_simple_profile_form( $user_id ) {
                 ) );
                 wc_add_notice( $result->get_error_message(), 'error' );
             } else {
-                pspa_ms_log( 'Profile updated for user ' . $user_id );
                 $updated = true;
             }
+        }
+
+        if ( ! empty( $password ) ) {
+            wp_set_password( $password, $user_id );
+            wp_set_auth_cookie( $user_id, true, is_ssl() );
+            wp_set_current_user( $user_id, $user->user_login );
+            if ( function_exists( 'wc_set_customer_auth_cookie' ) ) {
+                wc_set_customer_auth_cookie( $user_id );
+            }
+            pspa_ms_log( 'Password updated for user ' . $user_id );
+            $updated = true;
+        }
+
+        if ( $updated ) {
+            pspa_ms_log( 'Profile updated for user ' . $user_id );
         } else {
             pspa_ms_log( 'No profile fields updated for user ' . $user_id );
         }
@@ -623,18 +632,14 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
             '' === $password ? 'missing' : 'provided'
         ) );
 
-        $update_data = array( 'ID' => $user_id );
+        $updated = false;
 
         if ( ! empty( $email ) ) {
-            $update_data['user_email'] = $email;
-        }
+            $result = wp_update_user( array(
+                'ID'         => $user_id,
+                'user_email' => $email,
+            ) );
 
-        if ( ! empty( $password ) ) {
-            $update_data['user_pass'] = $password;
-        }
-
-        if ( count( $update_data ) > 1 ) {
-            $result = wp_update_user( $update_data );
             if ( is_wp_error( $result ) ) {
                 pspa_ms_log( sprintf(
                     'Admin profile update failed for user %d: %s (%s)',
@@ -644,16 +649,26 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
                 ) );
                 wc_add_notice( $result->get_error_message(), 'error' );
             } else {
-                pspa_ms_log( 'Admin profile updated for user ' . $user_id );
-
-                // Ensure WordPress name fields mirror the ACF values.
-                if ( function_exists( 'pspa_ms_sync_user_names' ) ) {
-                    pspa_ms_sync_user_names( 'user_' . $user_id );
-                }
-
-                wc_add_notice( __( 'Το προφίλ ενημερώθηκε με επιτυχία.', 'pspa-membership-system' ) );
-                $user = get_user_by( 'id', $user_id );
+                $updated = true;
             }
+        }
+
+        if ( ! empty( $password ) ) {
+            wp_set_password( $password, $user_id );
+            pspa_ms_log( 'Admin password updated for user ' . $user_id );
+            $updated = true;
+        }
+
+        if ( $updated ) {
+            pspa_ms_log( 'Admin profile updated for user ' . $user_id );
+
+            // Ensure WordPress name fields mirror the ACF values.
+            if ( function_exists( 'pspa_ms_sync_user_names' ) ) {
+                pspa_ms_sync_user_names( 'user_' . $user_id );
+            }
+
+            wc_add_notice( __( 'Το προφίλ ενημερώθηκε με επιτυχία.', 'pspa-membership-system' ) );
+            $user = get_user_by( 'id', $user_id );
         } else {
             pspa_ms_log( 'No profile fields updated for admin user ' . $user_id );
         }
