@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.63
+ * Version: 0.0.64
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.63' );
+define( 'PSPA_MS_VERSION', '0.0.64' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -471,12 +471,18 @@ add_action( 'woocommerce_account_graduate-profile_endpoint', 'pspa_ms_graduate_p
  */
 function pspa_ms_simple_profile_form( $user_id ) {
     $user = get_user_by( 'id', $user_id );
+    pspa_ms_log( sprintf( 'Rendering profile form for user %d with method %s', $user_id, $_SERVER['REQUEST_METHOD'] ) );
+
+    if ( 'POST' === $_SERVER['REQUEST_METHOD'] ) {
+        pspa_ms_log( sprintf( 'Profile form POST detected for user %d: nonce %s', $user_id, isset( $_POST['pspa_graduate_profile_nonce'] ) ? 'present' : 'missing' ) );
+    }
 
     if (
         'POST' === $_SERVER['REQUEST_METHOD'] &&
         isset( $_POST['pspa_graduate_profile_nonce'] ) &&
         wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['pspa_graduate_profile_nonce'] ) ), 'pspa_graduate_profile' )
     ) {
+        pspa_ms_log( 'Nonce verification passed for user ' . $user_id );
         $email    = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
         $password = isset( $_POST['password'] ) ? wp_unslash( $_POST['password'] ) : '';
 
@@ -486,6 +492,9 @@ function pspa_ms_simple_profile_form( $user_id ) {
             '' === $email ? 'missing' : 'provided',
             '' === $password ? 'missing' : 'provided'
         ) );
+        pspa_ms_log( 'Current email before update for user ' . $user_id . ': ' . $user->user_email );
+        pspa_ms_log( 'Password length: ' . strlen( $password ) );
+        pspa_ms_log( 'Current password hash prefix for user ' . $user_id . ': ' . substr( $user->user_pass, 0, 10 ) );
 
         $updated = false;
 
@@ -504,16 +513,24 @@ function pspa_ms_simple_profile_form( $user_id ) {
                 ) );
                 wc_add_notice( $result->get_error_message(), 'error' );
             } else {
+                pspa_ms_log( 'Email updated for user ' . $user_id );
                 $updated = true;
             }
         }
 
         if ( ! empty( $password ) ) {
             wp_set_password( $password, $user_id );
+            $fresh_pass = get_user_by( 'id', $user_id );
+            pspa_ms_log( 'New password hash prefix for user ' . $user_id . ': ' . substr( $fresh_pass->user_pass, 0, 10 ) );
             wp_set_auth_cookie( $user_id, true, is_ssl() );
+            pspa_ms_log( 'Auth cookie refreshed for user ' . $user_id );
             wp_set_current_user( $user_id, $user->user_login );
+            pspa_ms_log( 'is_user_logged_in after password set: ' . ( is_user_logged_in() ? 'true' : 'false' ) );
             if ( function_exists( 'wc_set_customer_auth_cookie' ) ) {
                 wc_set_customer_auth_cookie( $user_id );
+                pspa_ms_log( 'wc_set_customer_auth_cookie called for user ' . $user_id );
+            } else {
+                pspa_ms_log( 'wc_set_customer_auth_cookie unavailable' );
             }
             pspa_ms_log( 'Password updated for user ' . $user_id );
             $updated = true;
@@ -545,6 +562,8 @@ function pspa_ms_simple_profile_form( $user_id ) {
             wc_add_notice( __( 'Το προφίλ ενημερώθηκε με επιτυχία.', 'pspa-membership-system' ) );
             $user = wp_get_current_user();
         }
+
+        pspa_ms_log( 'Profile form processing complete for user ' . $user_id );
     }
 
     pspa_ms_enqueue_dashboard_styles();
@@ -787,14 +806,27 @@ function pspa_ms_admin_add_user_form() {
  */
 function pspa_ms_handle_login_by_details() {
     if ( is_user_logged_in() ) {
+        pspa_ms_log( 'Login-by-details aborted: user already logged in' );
         return;
     }
 
-    if (
-        'POST' !== $_SERVER['REQUEST_METHOD'] ||
-        empty( $_POST['pspa_login_details_nonce'] ) ||
-        ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['pspa_login_details_nonce'] ) ), 'pspa_login_details' )
-    ) {
+    if ( 'POST' !== $_SERVER['REQUEST_METHOD'] ) {
+        return;
+    }
+
+    pspa_ms_log( 'Login-by-details POST detected' );
+
+    $nonce = isset( $_POST['pspa_login_details_nonce'] )
+        ? sanitize_text_field( wp_unslash( $_POST['pspa_login_details_nonce'] ) )
+        : '';
+
+    if ( empty( $nonce ) ) {
+        pspa_ms_log( 'Login-by-details aborted: missing nonce' );
+        return;
+    }
+
+    if ( ! wp_verify_nonce( $nonce, 'pspa_login_details' ) ) {
+        pspa_ms_log( 'Login-by-details aborted: invalid nonce' );
         return;
     }
 
@@ -803,6 +835,7 @@ function pspa_ms_handle_login_by_details() {
     $year  = isset( $_POST['graduation_year'] ) ? sanitize_text_field( wp_unslash( $_POST['graduation_year'] ) ) : '';
 
     pspa_ms_log( sprintf( 'Login attempt: %s %s (%s)', $first, $last, $year ) );
+    pspa_ms_log( sprintf( 'Sanitized fields: first="%s", last="%s", year="%s"', $first, $last, $year ) );
 
     $full_name        = trim( $first . ' ' . $last );
     $normalized_full  = pspa_ms_normalize_name( $full_name );
@@ -827,12 +860,15 @@ function pspa_ms_handle_login_by_details() {
               AND gr.meta_value = %s
             LIMIT 1";
 
+    pspa_ms_log( 'Lookup SQL: ' . $sql );
     $user_id = $wpdb->get_var( $wpdb->prepare( $sql, $normalized_full, $year ) );
 
     pspa_ms_log( 'User ID query result: ' . ( $user_id ? $user_id : 'none' ) );
 
     if ( $user_id ) {
-        if ( get_user_meta( $user_id, 'gn_login_verified_date', true ) ) {
+        $verified = get_user_meta( $user_id, 'gn_login_verified_date', true );
+        pspa_ms_log( 'Existing verification date for user ' . $user_id . ': ' . ( $verified ? $verified : 'none' ) );
+        if ( $verified ) {
             pspa_ms_log( 'Login blocked: user already verified' );
             $referer = wp_get_referer() ? wp_get_referer() : home_url();
             $user     = get_user_by( 'id', $user_id );
@@ -850,20 +886,26 @@ function pspa_ms_handle_login_by_details() {
 
         $user = get_user_by( 'id', $user_id );
         if ( $user ) {
-            pspa_ms_log( 'Login success for user ID ' . $user->ID );
+            pspa_ms_log( 'Login success for user ID ' . $user->ID . ' (email: ' . $user->user_email . ')' );
             wp_clear_auth_cookie();
             pspa_ms_log( 'User logged in before auth cookie: ' . ( is_user_logged_in() ? 'true' : 'false' ) );
             // Ensure the auth cookie respects the current SSL state so that
             // browsers do not reject it when the site forces HTTPS.
             wp_set_auth_cookie( $user->ID, true, is_ssl() );
+            pspa_ms_log( 'Auth cookie set using SSL: ' . ( is_ssl() ? 'true' : 'false' ) );
             wp_set_current_user( $user->ID, $user->user_login );
             if ( function_exists( 'wc_set_customer_auth_cookie' ) ) {
                 wc_set_customer_auth_cookie( $user->ID );
+                pspa_ms_log( 'wc_set_customer_auth_cookie called for user ' . $user->ID );
+            } else {
+                pspa_ms_log( 'wc_set_customer_auth_cookie unavailable' );
             }
             pspa_ms_log( 'User logged in status after auth cookie: ' . ( is_user_logged_in() ? 'true' : 'false' ) );
             do_action( 'wp_login', $user->user_login, $user );
             wp_safe_redirect( add_query_arg( 'edit_user', $user->ID, pspa_ms_get_graduate_profile_edit_url() ) );
             exit;
+        } else {
+            pspa_ms_log( 'User lookup failed for ID ' . $user_id );
         }
     }
 
