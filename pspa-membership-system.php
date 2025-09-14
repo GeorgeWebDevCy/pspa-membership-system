@@ -547,6 +547,18 @@ function pspa_ms_simple_profile_form( $user_id ) {
                 }
                 pspa_ms_log( 'Password updated for user ' . $user_id );
                 $updated = true;
+            wp_set_password( $password, $user_id );
+            $fresh_pass = get_user_by( 'id', $user_id );
+            pspa_ms_log( 'New password hash prefix for user ' . $user_id . ': ' . substr( $fresh_pass->user_pass, 0, 10 ) );
+            wp_set_auth_cookie( $user_id, true, is_ssl() );
+            pspa_ms_log( 'Auth cookie refreshed for user ' . $user_id );
+            wp_set_current_user( $user_id, $user->user_login );
+            pspa_ms_log( 'is_user_logged_in after password set: ' . ( is_user_logged_in() ? 'true' : 'false' ) );
+            if ( function_exists( 'wc_set_customer_auth_cookie' ) ) {
+                wc_set_customer_auth_cookie( $user_id );
+                pspa_ms_log( 'wc_set_customer_auth_cookie called for user ' . $user_id );
+            } else {
+                pspa_ms_log( 'wc_set_customer_auth_cookie unavailable' );
             }
         }
 
@@ -825,6 +837,10 @@ function pspa_ms_handle_login_by_details() {
 
     if ( is_user_logged_in() ) {
         pspa_ms_log( 'Login-by-details aborted: user already logged in' );
+        return;
+    }
+
+    if ( 'POST' !== $_SERVER['REQUEST_METHOD'] ) {
         return;
     }
 
