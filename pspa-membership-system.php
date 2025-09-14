@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.70
+ * Version: 0.0.71
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.70' );
+define( 'PSPA_MS_VERSION', '0.0.71' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -36,6 +36,7 @@ function pspa_ms_log( $message ) {
  * plugin to return to a clean state without manual database edits.
  */
 function pspa_ms_reset_settings() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     global $wpdb;
 
     $like = $wpdb->esc_like( 'pspa_ms_' ) . '%';
@@ -64,6 +65,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
  * @return string Normalized name.
  */
 function pspa_ms_normalize_name( $name ) {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     $name = mb_strtoupper( $name, 'UTF-8' );
     $search  = array( 'Ά', 'Έ', 'Ή', 'Ί', 'Ό', 'Ύ', 'Ώ', 'Ϊ', 'Ϋ' );
     $replace = array( 'Α', 'Ε', 'Η', 'Ι', 'Ο', 'Υ', 'Ω', 'Ι', 'Υ' );
@@ -73,6 +75,7 @@ function pspa_ms_normalize_name( $name ) {
  * Enqueue shared dashboard styles.
  */
 function pspa_ms_enqueue_dashboard_styles() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     wp_enqueue_style(
         'pspa-ms-dashboard',
         plugin_dir_url( __FILE__ ) . 'assets/css/dashboard.css',
@@ -85,6 +88,7 @@ function pspa_ms_enqueue_dashboard_styles() {
  * Enqueue styles for the WooCommerce account navigation.
  */
 function pspa_ms_enqueue_woocommerce_nav_styles() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     if ( ! function_exists( 'is_account_page' ) || ! is_account_page() ) {
         return;
     }
@@ -102,6 +106,7 @@ add_action( 'wp_enqueue_scripts', 'pspa_ms_enqueue_woocommerce_nav_styles' );
  * Ensure required plugins are active.
  */
 function pspa_ms_check_dependencies() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     if ( ! is_admin() ) {
         return;
     }
@@ -160,6 +165,7 @@ $pspa_update_checker->setBranch( 'main' );
  * Register the Graduate Profile endpoint.
  */
 function pspa_ms_register_graduate_profile_endpoint() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     add_rewrite_endpoint( 'graduate-profile', EP_ROOT | EP_PAGES );
 }
 add_action( 'init', 'pspa_ms_register_graduate_profile_endpoint' );
@@ -171,6 +177,7 @@ add_action( 'init', 'pspa_ms_register_graduate_profile_endpoint' );
  * @return array
  */
 function pspa_ms_graduate_profile_query_vars( $vars ) {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     $vars[] = 'graduate-profile';
     return $vars;
 }
@@ -180,6 +187,7 @@ add_filter( 'query_vars', 'pspa_ms_graduate_profile_query_vars' );
  * Register endpoint for listing paid members.
  */
 function pspa_ms_register_paid_members_endpoint() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     add_rewrite_endpoint( 'paid-members', EP_ROOT | EP_PAGES );
 }
 add_action( 'init', 'pspa_ms_register_paid_members_endpoint' );
@@ -191,6 +199,7 @@ add_action( 'init', 'pspa_ms_register_paid_members_endpoint' );
  * @return array
  */
 function pspa_ms_paid_members_query_vars( $vars ) {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     $vars[] = 'paid-members';
     return $vars;
 }
@@ -203,6 +212,7 @@ add_filter( 'query_vars', 'pspa_ms_paid_members_query_vars' );
  * @return array
  */
 function pspa_ms_add_graduate_profile_link( $items ) {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     $profile = array( 'graduate-profile' => __( 'Προφίλ Απόφοιτου', 'pspa-membership-system' ) );
     $first   = array_slice( $items, 0, 1, true );
     $rest    = array_slice( $items, 1, null, true );
@@ -228,6 +238,7 @@ add_filter( 'woocommerce_account_menu_items', 'pspa_ms_add_graduate_profile_link
  * Output list of users who have paid their membership this year.
  */
 function pspa_ms_paid_members_content() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     if ( ! is_user_logged_in() ) {
         echo esc_html__( 'Πρέπει να είστε συνδεδεμένοι για να δείτε αυτή τη σελίδα.', 'pspa-membership-system' );
         return;
@@ -287,6 +298,7 @@ add_action( 'woocommerce_account_paid-members_endpoint', 'pspa_ms_paid_members_c
  * Register public graduate profile rewrite rule.
  */
 function pspa_ms_register_public_profile_route() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     add_rewrite_rule( '^graduate/([^/]+)/?$', 'index.php?pspa_graduate=$matches[1]', 'top' );
 }
 add_action( 'init', 'pspa_ms_register_public_profile_route' );
@@ -298,6 +310,7 @@ add_action( 'init', 'pspa_ms_register_public_profile_route' );
  * @return array
  */
 function pspa_ms_public_profile_query_vars( $vars ) {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     $vars[] = 'pspa_graduate';
     return $vars;
 }
@@ -310,6 +323,7 @@ add_filter( 'query_vars', 'pspa_ms_public_profile_query_vars' );
  * @return string
  */
 function pspa_ms_public_profile_template( $template ) {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     $slug = get_query_var( 'pspa_graduate' );
     if ( $slug ) {
         $user = get_user_by( 'slug', $slug );
@@ -330,6 +344,7 @@ add_filter( 'template_include', 'pspa_ms_public_profile_template' );
  * Prepare ACF for front-end forms when viewing the graduate profile endpoint.
  */
 function pspa_ms_maybe_acf_form_head() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     if ( ! function_exists( 'acf_form_head' ) ) {
         return;
     }
@@ -352,6 +367,7 @@ add_action( 'template_redirect', 'pspa_ms_maybe_acf_form_head' );
  * @return false
  */
 function pspa_ms_hide_visibility_fields( $field ) {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     return false;
 }
 add_filter( 'acf/prepare_field/key=tab_gn_visibility', 'pspa_ms_hide_visibility_fields' );
@@ -368,6 +384,7 @@ add_filter( 'acf/prepare_field/name=gn_visibility_mode', 'pspa_ms_hide_visibilit
  * @return array
  */
 function pspa_ms_unrestrict_acf_fields_for_admins( $field ) {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     if ( ! is_user_logged_in() ) {
         return $field;
     }
@@ -395,6 +412,7 @@ add_filter( 'acf/prepare_field', 'pspa_ms_unrestrict_acf_fields_for_admins', 5 )
  * @return array|false
  */
 function pspa_ms_hide_public_visibility_toggles( $field ) {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     if ( 0 === strpos( $field['name'], 'gn_show_' ) ) {
         if ( function_exists( 'is_account_page' ) && is_account_page() && false !== get_query_var( 'graduate-profile', false ) ) {
             return $field;
@@ -412,6 +430,7 @@ add_filter( 'acf/prepare_field', 'pspa_ms_hide_public_visibility_toggles', 20 );
  * @return array|false
  */
 function pspa_ms_hide_admin_only_fields( $field ) {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     if ( ! is_array( $field ) ) {
         return $field;
     }
@@ -444,6 +463,7 @@ add_filter( 'acf/prepare_field', 'pspa_ms_hide_admin_only_fields', 30 );
  * Render Graduate Profile endpoint content.
  */
 function pspa_ms_graduate_profile_content() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     if ( ! is_user_logged_in() ) {
         echo esc_html__( 'Πρέπει να είστε συνδεδεμένοι για να επεξεργαστείτε το προφίλ σας.', 'pspa-membership-system' );
         return;
@@ -470,6 +490,7 @@ add_action( 'woocommerce_account_graduate-profile_endpoint', 'pspa_ms_graduate_p
  * @param int $user_id User ID.
  */
 function pspa_ms_simple_profile_form( $user_id ) {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     $user = get_user_by( 'id', $user_id );
     pspa_ms_log( sprintf( 'Rendering profile form for user %d with method %s', $user_id, $_SERVER['REQUEST_METHOD'] ) );
 
@@ -610,6 +631,7 @@ function pspa_ms_simple_profile_form( $user_id ) {
  * Render admin interface allowing search and editing of users.
  */
 function pspa_ms_admin_profile_interface() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     pspa_ms_enqueue_dashboard_styles();
 
     $edit_user_id = isset( $_GET['edit_user'] ) ? absint( $_GET['edit_user'] ) : 0;
@@ -639,6 +661,7 @@ function pspa_ms_admin_profile_interface() {
  * @param int $user_id User ID being edited.
  */
 function pspa_ms_admin_edit_user_form( $user_id ) {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     pspa_ms_enqueue_dashboard_styles();
 
     $user = get_user_by( 'id', $user_id );
@@ -757,6 +780,7 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
  * Render admin add user form.
  */
 function pspa_ms_admin_add_user_form() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     pspa_ms_enqueue_dashboard_styles();
 
     if (
@@ -836,6 +860,7 @@ function pspa_ms_admin_add_user_form() {
  * Handle login submissions before output is sent.
  */
 function pspa_ms_handle_login_by_details() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     if ( 'POST' !== $_SERVER['REQUEST_METHOD'] ) {
         return;
     }
@@ -957,6 +982,7 @@ add_action( 'template_redirect', 'pspa_ms_handle_login_by_details' );
  * @return string
  */
 function pspa_ms_login_by_details_shortcode() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     if ( is_user_logged_in() ) {
         return '<p>' . esc_html__( 'Είστε ήδη επαληθευμένοι.', 'pspa-membership-system' ) . '</p>';
     }
@@ -1015,6 +1041,7 @@ function pspa_ms_login_by_details_shortcode() {
  * Register plugin shortcodes.
  */
 function pspa_ms_register_shortcodes() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     add_shortcode( 'pspa_login_by_details', 'pspa_ms_login_by_details_shortcode' );
     add_shortcode( 'pspa_graduate_directory', 'pspa_ms_graduate_directory_shortcode' );
 }
@@ -1024,6 +1051,7 @@ add_action( 'init', 'pspa_ms_register_shortcodes' );
  * Register the admin page for viewing PSPA logs.
  */
 function pspa_ms_register_logs_page() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     add_menu_page(
         __( 'PSPA Logs', 'pspa-membership-system' ),
         __( 'PSPA Logs', 'pspa-membership-system' ),
@@ -1040,6 +1068,7 @@ add_action( 'admin_menu', 'pspa_ms_register_logs_page' );
  * Render the logs page.
  */
 function pspa_ms_render_logs_page() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     if ( ! current_user_can( 'manage_options' ) ) {
         return;
     }
@@ -1079,6 +1108,7 @@ function pspa_ms_render_logs_page() {
  * @param string $post_id Post identifier.
  */
 function pspa_ms_sync_user_names( $post_id ) {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     if ( 0 !== strpos( $post_id, 'user_' ) ) {
         return;
     }
@@ -1113,6 +1143,7 @@ add_action( 'acf/save_post', 'pspa_ms_sync_user_names', 20 );
  * @return array
  */
 function pspa_ms_lock_initial_db_id_field( $field ) {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     $field['readonly'] = true;
     $field['disabled'] = true;
     return $field;
@@ -1128,6 +1159,7 @@ add_filter( 'acf/prepare_field/name=gn_initial_db_id', 'pspa_ms_lock_initial_db_
  * @return mixed
  */
 function pspa_ms_preserve_initial_db_id( $value, $post_id, $field ) {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     $user_id = is_string( $post_id ) && 0 === strpos( $post_id, 'user_' )
         ? (int) substr( $post_id, 5 )
         : (int) $post_id;
@@ -1144,6 +1176,7 @@ add_filter( 'acf/update_value/name=gn_initial_db_id', 'pspa_ms_preserve_initial_
  * @return array
  */
 function pspa_ms_lock_login_verified_date_field( $field ) {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     $field['readonly'] = true;
     $field['disabled'] = true;
     return $field;
@@ -1159,6 +1192,7 @@ add_filter( 'acf/prepare_field/name=gn_login_verified_date', 'pspa_ms_lock_login
  * @return mixed
  */
 function pspa_ms_preserve_login_verified_date( $value, $post_id, $field ) {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     $user_id = is_string( $post_id ) && 0 === strpos( $post_id, 'user_' )
         ? (int) substr( $post_id, 5 )
         : (int) $post_id;
@@ -1176,6 +1210,7 @@ add_filter( 'acf/update_value/name=gn_login_verified_date', 'pspa_ms_preserve_lo
  * @return int Next ID.
  */
 function pspa_ms_get_next_initial_db_id() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     global $wpdb;
 
     $next = (int) get_option( 'pspa_ms_next_initial_db_id', 1 );
@@ -1201,6 +1236,7 @@ function pspa_ms_get_next_initial_db_id() {
  * @param int $user_id New user ID.
  */
 function pspa_ms_assign_initial_db_id( $user_id ) {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     if ( get_user_meta( $user_id, 'gn_initial_db_id', true ) ) {
         return;
     }
@@ -1220,6 +1256,7 @@ add_action( 'user_register', 'pspa_ms_assign_initial_db_id' );
  * @return string
  */
 function pspa_ms_login_redirect( $redirect_to, $request, $user ) {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     if (
         isset( $user->ID ) && (
             in_array( 'system-admin', (array) $user->roles, true ) ||
@@ -1237,6 +1274,7 @@ add_filter( 'login_redirect', 'pspa_ms_login_redirect', 10, 3 );
  * Block backend access for graduates and system admins.
  */
 function pspa_ms_block_admin_access() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     if ( is_admin() && ! wp_doing_ajax() && is_user_logged_in() ) {
         $user = wp_get_current_user();
         if (
@@ -1258,6 +1296,7 @@ add_action( 'init', 'pspa_ms_block_admin_access' );
  * @return array
  */
 function pspa_ms_get_unique_user_meta_values( $meta_key ) {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     global $wpdb;
     $values = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT meta_value FROM {$wpdb->usermeta} WHERE meta_key = %s AND meta_value <> '' ORDER BY meta_value ASC", $meta_key ) );
     return $values;
@@ -1273,6 +1312,7 @@ function pspa_ms_get_unique_user_meta_values( $meta_key ) {
  * @return string
  */
 function pspa_ms_get_graduate_profile_edit_url() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     $account_url = function_exists( 'wc_get_page_permalink' )
         ? wc_get_page_permalink( 'myaccount' )
         : home_url( '/my-account/' );
@@ -1297,6 +1337,7 @@ function pspa_ms_get_graduate_profile_edit_url() {
  * @return string
  */
 function pspa_ms_get_public_profile_url( $user_id ) {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     $user = get_userdata( $user_id );
     if ( ! $user ) {
         return '';
@@ -1305,6 +1346,7 @@ function pspa_ms_get_public_profile_url( $user_id ) {
 }
 
 function pspa_ms_render_graduate_card( $user_id ) {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     $first      = function_exists( 'get_field' ) ? (string) get_field( 'gn_first_name', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_first_name', true );
     $last       = function_exists( 'get_field' ) ? (string) get_field( 'gn_surname', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_surname', true );
     $name       = trim( $first . ' ' . $last );
@@ -1357,6 +1399,7 @@ function pspa_ms_render_graduate_card( $user_id ) {
  * @return string
  */
 function pspa_ms_graduate_directory_shortcode() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     if ( ! is_user_logged_in() ) {
         return '<p>' . esc_html__( 'Πρέπει να είστε συνδεδεμένοι για να δείτε τον κατάλογο αποφοίτων.', 'pspa-membership-system' ) . '</p>';
     }
@@ -1416,6 +1459,7 @@ function pspa_ms_graduate_directory_shortcode() {
  * AJAX handler for filtering graduates.
  */
 function pspa_ms_ajax_filter_graduates() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     check_ajax_referer( 'pspa_ms_dir', 'nonce' );
 
     if ( ! is_user_logged_in() ) {
@@ -1524,6 +1568,7 @@ add_action( 'wp_ajax_pspa_ms_filter_graduates', 'pspa_ms_ajax_filter_graduates' 
  * Flush rewrite rules on activation and deactivation.
  */
 function pspa_ms_flush_rewrite_rules() {
+    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     pspa_ms_register_graduate_profile_endpoint();
     pspa_ms_register_public_profile_route();
     flush_rewrite_rules();
