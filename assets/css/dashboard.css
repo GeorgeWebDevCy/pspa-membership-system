@@ -14,3 +14,7 @@
 .pspa-dashboard .woocommerce-Button.button{background:var(--ink);color:#fff;border-radius:10px;padding:10px 15px}
 .pspa-dashboard .password-input{position:relative;display:block}
 .pspa-dashboard .password-input .show-password-input{color:var(--ink)}
+.pspa-dashboard .password-strength{margin-top:4px;padding:5px;border:1px solid var(--line);border-radius:10px;text-align:center;background:#eee;color:var(--ink)}
+.pspa-dashboard .password-strength.short,.pspa-dashboard .password-strength.bad{background:#ffb78c;border-color:#ff853c}
+.pspa-dashboard .password-strength.good{background:#ffec8b;border-color:#e6db55}
+.pspa-dashboard .password-strength.strong{background:#c1e1b9;border-color:#83c373}
