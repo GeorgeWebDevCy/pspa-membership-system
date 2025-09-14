@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.67
+ * Version: 0.0.68
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.67' );
+define( 'PSPA_MS_VERSION', '0.0.68' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -589,7 +589,10 @@ function pspa_ms_simple_profile_form( $user_id ) {
         </p>
         <p class="form-row form-row-wide">
             <label for="password"><?php esc_html_e( 'Νέος κωδικός', 'pspa-membership-system' ); ?></label>
-            <input type="password" name="password" id="password" autocomplete="new-password" />
+            <span class="password-input">
+                <input class="woocommerce-Input woocommerce-Input--text input-text" type="password" name="password" id="password" autocomplete="new-password" />
+                <button type="button" class="show-password-input" aria-label="<?php esc_attr_e( 'Εμφάνιση συνθηματικού', 'pspa-membership-system' ); ?>" aria-describedby="password"></button>
+            </span>
         </p>
         <?php wp_nonce_field( 'pspa_graduate_profile', 'pspa_graduate_profile_nonce' ); ?>
         <p>
@@ -721,7 +724,10 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
         </p>
         <p class="form-row form-row-wide">
             <label for="password"><?php esc_html_e( 'Νέος κωδικός', 'pspa-membership-system' ); ?></label>
-            <input type="password" name="password" id="password" autocomplete="new-password" />
+            <span class="password-input">
+                <input class="woocommerce-Input woocommerce-Input--text input-text" type="password" name="password" id="password" autocomplete="new-password" />
+                <button type="button" class="show-password-input" aria-label="<?php esc_attr_e( 'Εμφάνιση συνθηματικού', 'pspa-membership-system' ); ?>" aria-describedby="password"></button>
+            </span>
         </p>
         <?php wp_nonce_field( 'pspa_admin_edit_user', 'pspa_admin_edit_user_nonce' ); ?>
         <p>
@@ -797,7 +803,10 @@ function pspa_ms_admin_add_user_form() {
         </p>
         <p class="form-row form-row-wide">
             <label for="password"><?php esc_html_e( 'Κωδικός', 'pspa-membership-system' ); ?></label>
-            <input type="password" name="password" id="password" autocomplete="new-password" />
+            <span class="password-input">
+                <input class="woocommerce-Input woocommerce-Input--text input-text" type="password" name="password" id="password" autocomplete="new-password" />
+                <button type="button" class="show-password-input" aria-label="<?php esc_attr_e( 'Εμφάνιση συνθηματικού', 'pspa-membership-system' ); ?>" aria-describedby="password"></button>
+            </span>
         </p>
         <?php wp_nonce_field( 'pspa_admin_add_user', 'pspa_admin_add_user_nonce' ); ?>
         <p>
