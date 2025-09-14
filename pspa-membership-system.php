@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.57
+ * Version: 0.0.58
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.57' );
+define( 'PSPA_MS_VERSION', '0.0.58' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -490,8 +490,14 @@ function pspa_ms_simple_profile_form( $user_id ) {
             $update_data['user_pass'] = $password;
         }
 
+        $updated = false;
         if ( count( $update_data ) > 1 ) {
-            wp_update_user( $update_data );
+            $result  = wp_update_user( $update_data );
+            $updated = ! is_wp_error( $result );
+        }
+
+        if ( $updated && ! get_user_meta( $user_id, 'gn_login_verified_date', true ) && ! empty( $email ) && ! empty( $password ) ) {
+            update_user_meta( $user_id, 'gn_login_verified_date', current_time( 'mysql' ) );
         }
 
         if ( function_exists( 'pspa_ms_sync_user_names' ) ) {
@@ -785,9 +791,6 @@ function pspa_ms_handle_login_by_details() {
             wp_set_current_user( $user->ID, $user->user_login );
             if ( function_exists( 'wc_set_customer_auth_cookie' ) ) {
                 wc_set_customer_auth_cookie( $user->ID );
-            }
-            if ( ! get_user_meta( $user->ID, 'gn_login_verified_date', true ) ) {
-                update_user_meta( $user->ID, 'gn_login_verified_date', current_time( 'mysql' ) );
             }
             pspa_ms_log( 'User logged in status after auth cookie: ' . ( is_user_logged_in() ? 'true' : 'false' ) );
             do_action( 'wp_login', $user->user_login, $user );
