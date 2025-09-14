@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.59
+ * Version: 0.0.60
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.59' );
+define( 'PSPA_MS_VERSION', '0.0.60' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -480,6 +480,13 @@ function pspa_ms_simple_profile_form( $user_id ) {
         $email    = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
         $password = isset( $_POST['password'] ) ? wp_unslash( $_POST['password'] ) : '';
 
+        pspa_ms_log( sprintf(
+            'Profile update attempt for user %d: email %s, password %s',
+            $user_id,
+            '' === $email ? 'missing' : 'provided',
+            '' === $password ? 'missing' : 'provided'
+        ) );
+
         $update_data = array( 'ID' => $user_id );
 
         if ( ! empty( $email ) ) {
@@ -494,17 +501,31 @@ function pspa_ms_simple_profile_form( $user_id ) {
         if ( count( $update_data ) > 1 ) {
             $result = wp_update_user( $update_data );
             if ( is_wp_error( $result ) ) {
+                pspa_ms_log( sprintf(
+                    'Profile update failed for user %d: %s (%s)',
+                    $user_id,
+                    $result->get_error_message(),
+                    $result->get_error_code()
+                ) );
                 wc_add_notice( $result->get_error_message(), 'error' );
             } else {
+                pspa_ms_log( 'Profile updated for user ' . $user_id );
                 $updated = true;
             }
+        } else {
+            pspa_ms_log( 'No profile fields updated for user ' . $user_id );
         }
 
         if ( $updated && ! get_user_meta( $user_id, 'gn_login_verified_date', true ) && '' !== $password ) {
             $fresh = get_user_by( 'id', $user_id );
             if ( $fresh && ! empty( $fresh->user_email ) ) {
                 update_user_meta( $user_id, 'gn_login_verified_date', current_time( 'mysql' ) );
+                pspa_ms_log( 'Verification date recorded for user ' . $user_id );
+            } else {
+                pspa_ms_log( 'Verification date not set for user ' . $user_id . ': missing email after update' );
             }
+        } elseif ( '' === $password ) {
+            pspa_ms_log( 'Verification date not set for user ' . $user_id . ': password missing' );
         }
 
         if ( $updated && function_exists( 'pspa_ms_sync_user_names' ) ) {

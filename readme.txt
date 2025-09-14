@@ -4,7 +4,7 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.0.59
+Stable tag: 0.0.60
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,11 @@ The plugin registers two custom user roles:
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
+
+= 0.0.60 =
+* Add detailed logging for profile updates to troubleshoot password update failures.
+* Ensure verification date records only after email and password saved.
+* Bump version to 0.0.60.
 
 = 0.0.59 =
 * Require both email and password before recording verification date.
