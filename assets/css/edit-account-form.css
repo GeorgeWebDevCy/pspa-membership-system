@@ -1,0 +1,32 @@
+.woocommerce-EditAccountForm fieldset p.woocommerce-form-row:first-of-type {
+    display: none !important;
+}
+
+input#account_first_name {
+    display: none !important;
+}
+
+p.woocommerce-form-row.woocommerce-form-row--first.form-row.form-row-first {
+    display: none !important;
+}
+
+input#account_last_name {
+    display: none !important;
+}
+
+p.woocommerce-form-row.woocommerce-form-row--last.form-row.form-row-last {
+    display: none !important;
+}
+
+input#account_display_name {
+    display: none !important;
+}
+
+span#account_display_name_description {
+    display: none !important;
+}
+
+label[for="account_display_name"] {
+    display: none !important;
+}
+
