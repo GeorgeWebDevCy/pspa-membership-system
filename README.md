@@ -35,7 +35,7 @@ System Admins and site administrators can search for graduates and edit any user
 
 ## Login by Details
 
-The `[pspa_login_by_details]` shortcode renders a form asking for first name, last name and graduation year. When the details match a graduate record the user is logged in and redirected to the dashboard. The first successful login records the date in a read-only `gn_login_verified_date` field and subsequent attempts are blocked.
+The `[pspa_login_by_details]` shortcode renders a form asking for first name, last name and graduation year. When the details match a graduate record the user is logged in and redirected to the dashboard. The verification date is stored in the read-only `gn_login_verified_date` field only after the user sets an email and password via the profile form; once saved, subsequent login-by-details attempts are blocked.
 
 > **Note:** In versions prior to 0.0.25 the login logic ran inside the shortcode after page output had begun, so WordPress could not send the authentication cookie and the user remained logged out. The processing now runs on `template_redirect` before headers are sent, and extra logging records the user's status. Version 0.0.24 also ensured the cookie respects the current SSL state.
 
