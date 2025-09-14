@@ -9,5 +9,6 @@
 .pspa-dashboard textarea{width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .pspa-admin-dashboard{max-width:600px;margin:0 auto}
 .pspa-user-search-results{margin:0;padding:0}
-.pspa-admin-edit-user .form-row{margin-bottom:12px}
-.pspa-admin-edit-user label{display:block;margin-bottom:4px;color:var(--ink);font-weight:600}
+.pspa-dashboard .form-row{margin-bottom:12px}
+.pspa-dashboard label{display:block;margin-bottom:4px;color:var(--ink);font-weight:600}
+.pspa-dashboard .woocommerce-Button.button{background:var(--ink);color:#fff;border-radius:10px;padding:10px 15px}
