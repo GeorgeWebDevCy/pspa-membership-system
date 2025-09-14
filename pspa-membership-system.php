@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.74
+ * Version: 0.0.75
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.74' );
+define( 'PSPA_MS_VERSION', '0.0.75' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -446,7 +446,6 @@ add_action( 'template_redirect', 'pspa_ms_maybe_acf_form_head' );
  * @return false
  */
 function pspa_ms_hide_visibility_fields( $field ) {
-    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     return false;
 }
 add_filter( 'acf/prepare_field/key=tab_gn_visibility', 'pspa_ms_hide_visibility_fields' );
@@ -463,7 +462,6 @@ add_filter( 'acf/prepare_field/name=gn_visibility_mode', 'pspa_ms_hide_visibilit
  * @return array
  */
 function pspa_ms_unrestrict_acf_fields_for_admins( $field ) {
-    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     if ( ! is_user_logged_in() ) {
         return $field;
     }
@@ -491,7 +489,6 @@ add_filter( 'acf/prepare_field', 'pspa_ms_unrestrict_acf_fields_for_admins', 5 )
  * @return array|false
  */
 function pspa_ms_hide_public_visibility_toggles( $field ) {
-    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     if ( 0 === strpos( $field['name'], 'gn_show_' ) ) {
         if ( function_exists( 'is_account_page' ) && is_account_page() && false !== get_query_var( 'graduate-profile', false ) ) {
             return $field;
@@ -509,7 +506,6 @@ add_filter( 'acf/prepare_field', 'pspa_ms_hide_public_visibility_toggles', 20 );
  * @return array|false
  */
 function pspa_ms_hide_admin_only_fields( $field ) {
-    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     if ( ! is_array( $field ) ) {
         return $field;
     }
@@ -1214,7 +1210,6 @@ add_action( 'acf/save_post', 'pspa_ms_sync_user_names', 20 );
  * @return array
  */
 function pspa_ms_lock_initial_db_id_field( $field ) {
-    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     $field['readonly'] = true;
     $field['disabled'] = true;
     return $field;
@@ -1230,7 +1225,6 @@ add_filter( 'acf/prepare_field/name=gn_initial_db_id', 'pspa_ms_lock_initial_db_
  * @return mixed
  */
 function pspa_ms_preserve_initial_db_id( $value, $post_id, $field ) {
-    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     $user_id = is_string( $post_id ) && 0 === strpos( $post_id, 'user_' )
         ? (int) substr( $post_id, 5 )
         : (int) $post_id;
@@ -1247,7 +1241,6 @@ add_filter( 'acf/update_value/name=gn_initial_db_id', 'pspa_ms_preserve_initial_
  * @return array
  */
 function pspa_ms_lock_login_verified_date_field( $field ) {
-    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     $field['readonly'] = true;
     $field['disabled'] = true;
     return $field;
@@ -1263,7 +1256,6 @@ add_filter( 'acf/prepare_field/name=gn_login_verified_date', 'pspa_ms_lock_login
  * @return mixed
  */
 function pspa_ms_preserve_login_verified_date( $value, $post_id, $field ) {
-    pspa_ms_log(__FUNCTION__ . " args: " . json_encode(func_get_args()));
     $user_id = is_string( $post_id ) && 0 === strpos( $post_id, 'user_' )
         ? (int) substr( $post_id, 5 )
         : (int) $post_id;
