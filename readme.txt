@@ -31,6 +31,7 @@ The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access
 
 == Changelog ==
 
+
 = 0.0.81 =
 * Hide personal name fields from WooCommerce's edit account form.
 * Rename and style the form's submit button for consistency.
