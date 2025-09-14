@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.75
+ * Version: 0.0.76
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.75' );
+define( 'PSPA_MS_VERSION', '0.0.76' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -1121,13 +1121,13 @@ function pspa_ms_render_logs_page() {
     $reset   = false;
 
     if ( isset( $_POST['pspa_ms_clear_logs'] ) ) {
-        check_admin_referer( 'pspa_ms_clear_logs' );
+        check_admin_referer( 'pspa_ms_clear_logs', 'pspa_ms_clear_logs_nonce' );
         delete_option( 'pspa_ms_logs' );
         $cleared = true;
     }
 
     if ( isset( $_POST['pspa_ms_reset_settings'] ) ) {
-        check_admin_referer( 'pspa_ms_reset_settings' );
+        check_admin_referer( 'pspa_ms_reset_settings', 'pspa_ms_reset_settings_nonce' );
         pspa_ms_reset_settings();
         $reset = true;
     }
@@ -1145,8 +1145,8 @@ function pspa_ms_render_logs_page() {
     }
 
     echo '<form method="post" style="margin-bottom:1em;">';
-    wp_nonce_field( 'pspa_ms_clear_logs' );
-    wp_nonce_field( 'pspa_ms_reset_settings' );
+    wp_nonce_field( 'pspa_ms_clear_logs', 'pspa_ms_clear_logs_nonce' );
+    wp_nonce_field( 'pspa_ms_reset_settings', 'pspa_ms_reset_settings_nonce' );
     submit_button( __( 'Clear Logs', 'pspa-membership-system' ), 'secondary', 'pspa_ms_clear_logs', false );
     submit_button( __( 'Reset PSPA Settings', 'pspa-membership-system' ), 'secondary', 'pspa_ms_reset_settings', false );
     echo '</form>';
