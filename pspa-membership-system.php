@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.71
+ * Version: 0.0.72
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,9 +14,13 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.71' );
+define( 'PSPA_MS_VERSION', '0.0.72' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
+
+if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
+    define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
+}
 
 /**
  * Log a message to the PSPA log file.
@@ -24,6 +28,10 @@ define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
  * @param string $message Message to log.
  */
 function pspa_ms_log( $message ) {
+    if ( ! PSPA_MS_ENABLE_LOGGING ) {
+        return;
+    }
+
     $entry = sprintf( "[%s] %s\n", gmdate( 'c' ), $message );
     // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_file_put_contents
     file_put_contents( PSPA_MS_LOG_FILE, $entry, FILE_APPEND );
@@ -556,10 +564,9 @@ function pspa_ms_simple_profile_form( $user_id ) {
                 ) );
                 wc_add_notice( __( 'Δεν ήταν δυνατή η ενημέρωση του κωδικού.', 'pspa-membership-system' ), 'error' );
             } else {
+                wp_set_current_user( $user_id, $user->user_login );
                 wp_set_auth_cookie( $user_id, true, is_ssl() );
                 pspa_ms_log( 'Auth cookie refreshed for user ' . $user_id );
-                wp_set_current_user( $user_id, $user->user_login );
-                pspa_ms_log( 'is_user_logged_in after password set: ' . ( is_user_logged_in() ? 'true' : 'false' ) );
                 if ( function_exists( 'wc_set_customer_auth_cookie' ) ) {
                     wc_set_customer_auth_cookie( $user_id );
                     pspa_ms_log( 'wc_set_customer_auth_cookie called for user ' . $user_id );
