@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.54
+ * Version: 0.0.55
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.54' );
+define( 'PSPA_MS_VERSION', '0.0.55' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -177,6 +177,26 @@ function pspa_ms_graduate_profile_query_vars( $vars ) {
 add_filter( 'query_vars', 'pspa_ms_graduate_profile_query_vars' );
 
 /**
+ * Register endpoint for listing paid members.
+ */
+function pspa_ms_register_paid_members_endpoint() {
+    add_rewrite_endpoint( 'paid-members', EP_ROOT | EP_PAGES );
+}
+add_action( 'init', 'pspa_ms_register_paid_members_endpoint' );
+
+/**
+ * Add query var for the paid members endpoint.
+ *
+ * @param array $vars Query vars.
+ * @return array
+ */
+function pspa_ms_paid_members_query_vars( $vars ) {
+    $vars[] = 'paid-members';
+    return $vars;
+}
+add_filter( 'query_vars', 'pspa_ms_paid_members_query_vars' );
+
+/**
  * Add Graduate Profile item to the My Account menu.
  *
  * @param array $items Menu items.
@@ -184,11 +204,84 @@ add_filter( 'query_vars', 'pspa_ms_graduate_profile_query_vars' );
  */
 function pspa_ms_add_graduate_profile_link( $items ) {
     $profile = array( 'graduate-profile' => __( 'Προφίλ Απόφοιτου', 'pspa-membership-system' ) );
-    $first  = array_slice( $items, 0, 1, true );
-    $rest   = array_slice( $items, 1, null, true );
-    return $first + $profile + $rest;
+    $first   = array_slice( $items, 0, 1, true );
+    $rest    = array_slice( $items, 1, null, true );
+    $items   = $first + $profile + $rest;
+
+    $current_user = wp_get_current_user();
+    if (
+        current_user_can( 'manage_options' ) ||
+        in_array( 'system-admin', (array) $current_user->roles, true ) ||
+        in_array( 'sysadmin', (array) $current_user->roles, true )
+    ) {
+        $paid_members = array( 'paid-members' => __( 'Πληρωμένες Συνδρομές', 'pspa-membership-system' ) );
+        $first_two    = array_slice( $items, 0, 2, true );
+        $rest_items   = array_slice( $items, 2, null, true );
+        $items        = $first_two + $paid_members + $rest_items;
+    }
+
+    return $items;
 }
 add_filter( 'woocommerce_account_menu_items', 'pspa_ms_add_graduate_profile_link' );
+
+/**
+ * Output list of users who have paid their membership this year.
+ */
+function pspa_ms_paid_members_content() {
+    if ( ! is_user_logged_in() ) {
+        echo esc_html__( 'Πρέπει να είστε συνδεδεμένοι για να δείτε αυτή τη σελίδα.', 'pspa-membership-system' );
+        return;
+    }
+
+    $current_user = wp_get_current_user();
+    if (
+        ! current_user_can( 'manage_options' ) &&
+        ! in_array( 'system-admin', (array) $current_user->roles, true ) &&
+        ! in_array( 'sysadmin', (array) $current_user->roles, true )
+    ) {
+        echo esc_html__( 'Δεν έχετε δικαίωμα πρόσβασης σε αυτή τη σελίδα.', 'pspa-membership-system' );
+        return;
+    }
+
+    pspa_ms_enqueue_dashboard_styles();
+
+    $year  = gmdate( 'Y' );
+    $start = $year . '-01-01 00:00:00';
+    $end   = $year . '-12-31 23:59:59';
+
+    $orders = wc_get_orders(
+        array(
+            'status'    => array( 'completed', 'processing', 'on-hold' ),
+            'limit'     => -1,
+            'date_paid' => $start . '...' . $end,
+        )
+    );
+
+    $user_ids = array();
+    foreach ( $orders as $order ) {
+        $uid = $order->get_user_id();
+        if ( $uid ) {
+            $user_ids[ $uid ] = true;
+        }
+    }
+
+    echo '<div class="pspa-dashboard pspa-paid-members">';
+    if ( empty( $user_ids ) ) {
+        echo '<p>' . esc_html__( 'Δεν βρέθηκαν πληρωμένες συνδρομές για φέτος.', 'pspa-membership-system' ) . '</p>';
+    } else {
+        echo '<ul>';
+        foreach ( array_keys( $user_ids ) as $uid ) {
+            $user = get_user_by( 'id', $uid );
+            if ( ! $user ) {
+                continue;
+            }
+            echo '<li>' . esc_html( $user->display_name ) . '</li>';
+        }
+        echo '</ul>';
+    }
+    echo '</div>';
+}
+add_action( 'woocommerce_account_paid-members_endpoint', 'pspa_ms_paid_members_content' );
 
 /**
  * Register public graduate profile rewrite rule.
