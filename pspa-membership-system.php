@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.56
+ * Version: 0.0.57
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.56' );
+define( 'PSPA_MS_VERSION', '0.0.57' );
 
 define( 'PSPA_MS_LOG_FILE', plugin_dir_path( __FILE__ ) . 'pspa-ms.log' );
 
@@ -404,6 +404,41 @@ function pspa_ms_hide_public_visibility_toggles( $field ) {
     return $field;
 }
 add_filter( 'acf/prepare_field', 'pspa_ms_hide_public_visibility_toggles', 20 );
+
+/**
+ * Hide admin-only fields from catalogue editors and graduate profile forms.
+ *
+ * @param array|false $field Field settings.
+ * @return array|false
+ */
+function pspa_ms_hide_admin_only_fields( $field ) {
+    if ( ! is_array( $field ) ) {
+        return $field;
+    }
+
+    $admin_only = array(
+        'gn_initial_db_id',
+        'gn_login_verified_date',
+        'gn_deceased',
+        'gn_show_deceased',
+    );
+
+    if ( ! in_array( $field['name'], $admin_only, true ) ) {
+        return $field;
+    }
+
+    $current_user = wp_get_current_user();
+    $roles        = (array) $current_user->roles;
+    $is_catalogue = in_array( 'professionalcatalogue', $roles, true );
+    $is_grad_form = function_exists( 'is_account_page' ) && is_account_page() && false !== get_query_var( 'graduate-profile', false );
+
+    if ( $is_catalogue || $is_grad_form ) {
+        return false;
+    }
+
+    return $field;
+}
+add_filter( 'acf/prepare_field', 'pspa_ms_hide_admin_only_fields', 30 );
 
 /**
  * Render Graduate Profile endpoint content.
