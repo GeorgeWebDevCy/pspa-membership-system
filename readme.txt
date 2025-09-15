@@ -4,7 +4,7 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.0.82
+Stable tag: 0.0.83
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -31,22 +31,8 @@ The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access
 
 == Changelog ==
 
-
-= 0.0.82 =
-* Hide edit account fields using CSS to prevent a brief flash of content.
-
-= 0.0.81 =
-* Hide personal name fields from WooCommerce's edit account form.
-* Rename and style the form's submit button for consistency.
-
-= 0.0.80 =
-* Display WooCommerce's account edit form to handle email and password updates.
-
-= 0.0.79 =
-* Refresh current user data after email changes so updates appear immediately.
-
-= 0.0.78 =
-* Bypass capability checks when updating passwords by using `wp_set_password` and keep graduates logged in.
+= 0.0.83 =
+* Revert to code base 0.0.77.
 
 = 0.0.77 =
 * Remove verbose function argument logging.
