@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.83
+ * Version: 0.0.84
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.83' );
+define( 'PSPA_MS_VERSION', '0.0.84' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -174,6 +174,40 @@ function pspa_ms_password_strength( $password ) {
     }
 
     return 'strong';
+}
+
+/**
+ * Update a user's password by ID, email, or username.
+ *
+ * @param int|string $identifier   User ID, email address, or username.
+ * @param string     $new_password Plaintext new password.
+ * @return int|\WP_Error User ID on success, or WP_Error on failure.
+ */
+function pspa_ms_update_user_password( $identifier, $new_password ) {
+    pspa_ms_log( sprintf( 'Password update attempt for identifier "%s"', $identifier ) );
+
+    if ( empty( $new_password ) ) {
+        pspa_ms_log( 'Password update failed: empty password.' );
+        return new WP_Error( 'empty_password', 'Password cannot be empty.' );
+    }
+
+    if ( is_numeric( $identifier ) ) {
+        $user = get_user_by( 'id', absint( $identifier ) );
+    } elseif ( is_email( $identifier ) ) {
+        $user = get_user_by( 'email', $identifier );
+    } else {
+        $user = get_user_by( 'login', $identifier );
+    }
+
+    if ( ! $user || ! $user->ID ) {
+        pspa_ms_log( 'Password update failed: user not found for identifier ' . $identifier );
+        return new WP_Error( 'user_not_found', 'No matching user found.' );
+    }
+
+    wp_set_password( $new_password, $user->ID );
+    pspa_ms_log( 'Password updated for user ' . $user->ID );
+
+    return (int) $user->ID;
 }
 
 /**
@@ -567,7 +601,6 @@ function pspa_ms_simple_profile_form( $user_id ) {
         ) );
 
         $updated          = false;
-        $email_updated    = false;
         $password_updated = false;
 
         if ( ! empty( $email ) ) {
@@ -580,20 +613,15 @@ function pspa_ms_simple_profile_form( $user_id ) {
                 pspa_ms_log( 'Email update failed for user ' . $user_id . ': ' . $result->get_error_message() );
                 wc_add_notice( $result->get_error_message(), 'error' );
             } else {
-                $email_updated = true;
                 $updated       = true;
                 pspa_ms_log( 'Email updated for user ' . $user_id );
             }
         }
 
         if ( ! empty( $password ) ) {
-            $result = wp_update_user( array(
-                'ID'        => $user_id,
-                'user_pass' => $password,
-            ) );
+            $result = pspa_ms_update_user_password( $user_id, $password );
 
             if ( is_wp_error( $result ) ) {
-                pspa_ms_log( 'Password update failed for user ' . $user_id . ': ' . implode( '; ', $result->get_error_messages() ) );
                 wc_add_notice( __( 'Δεν ήταν δυνατή η ενημέρωση του κωδικού.', 'pspa-membership-system' ), 'error' );
             } else {
                 wp_set_current_user( $user_id, $user->user_login );
@@ -601,14 +629,17 @@ function pspa_ms_simple_profile_form( $user_id ) {
                 if ( function_exists( 'wc_set_customer_auth_cookie' ) ) {
                     wc_set_customer_auth_cookie( $user_id );
                 }
-                pspa_ms_log( 'Password updated for user ' . $user_id );
                 $password_updated = true;
                 $updated          = true;
             }
         }
 
-        if ( $email_updated || $password_updated ) {
-            update_user_meta( $user_id, 'gn_login_verified_date', current_time( 'mysql' ) );
+        if ( $password_updated ) {
+            $verify_user = get_user_by( 'id', $user_id );
+            if ( $verify_user && ! empty( $verify_user->user_email ) ) {
+                update_user_meta( $user_id, 'gn_login_verified_date', current_time( 'mysql' ) );
+                pspa_ms_log( 'Verification date updated for user ' . $user_id );
+            }
         }
 
         if ( $updated && function_exists( 'pspa_ms_sync_user_names' ) ) {
@@ -730,16 +761,11 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
         }
 
         if ( ! empty( $password ) ) {
-            $result = wp_update_user( array(
-                'ID'        => $user_id,
-                'user_pass' => $password,
-            ) );
+            $result = pspa_ms_update_user_password( $user_id, $password );
 
             if ( is_wp_error( $result ) ) {
-                pspa_ms_log( 'Admin password update failed for user ' . $user_id . ': ' . implode( '; ', $result->get_error_messages() ) );
                 wc_add_notice( __( 'Δεν ήταν δυνατή η ενημέρωση του κωδικού.', 'pspa-membership-system' ), 'error' );
             } else {
-                pspa_ms_log( 'Admin password updated for user ' . $user_id );
                 $updated = true;
             }
         }
