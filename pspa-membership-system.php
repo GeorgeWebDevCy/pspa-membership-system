@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.83
+ * Version: 0.0.85
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.83' );
+define( 'PSPA_MS_VERSION', '0.0.85' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -174,6 +174,64 @@ function pspa_ms_password_strength( $password ) {
     }
 
     return 'strong';
+}
+
+/**
+ * Retrieve a password value from common POST field names.
+ *
+ * Looks for several typical password keys so custom endpoints and forms
+ * can submit passwords without needing a specific field name.
+ *
+ * @param string $source Optional. Receives the name of the field detected.
+ * @return string Raw password or empty string if none found.
+ */
+function pspa_ms_get_post_password( &$source = '' ) {
+    $fields = array( 'password', 'password_1', 'pass1', 'new_password', 'user_pass' );
+
+    foreach ( $fields as $field ) {
+        if ( isset( $_POST[ $field ] ) && '' !== $_POST[ $field ] ) {
+            $source = $field;
+            pspa_ms_log( '[password] Field "' . $field . '" detected' );
+            return wp_unslash( $_POST[ $field ] );
+        }
+    }
+
+    pspa_ms_log( '[password] No password field detected in POST' );
+    return '';
+}
+
+/**
+ * Update a user's password by ID, email, or username.
+ *
+ * @param int|string $identifier   User ID, email address, or username.
+ * @param string     $new_password Plaintext new password.
+ * @return int|\WP_Error User ID on success, or WP_Error on failure.
+ */
+function pspa_ms_update_user_password( $identifier, $new_password ) {
+    pspa_ms_log( sprintf( '[password] Update attempt for identifier "%s"', $identifier ) );
+
+    if ( empty( $new_password ) ) {
+        pspa_ms_log( '[password] Update failed: empty password' );
+        return new WP_Error( 'empty_password', 'Password cannot be empty.' );
+    }
+
+    if ( is_numeric( $identifier ) ) {
+        $user = get_user_by( 'id', absint( $identifier ) );
+    } elseif ( is_email( $identifier ) ) {
+        $user = get_user_by( 'email', $identifier );
+    } else {
+        $user = get_user_by( 'login', $identifier );
+    }
+
+    if ( ! $user || ! $user->ID ) {
+        pspa_ms_log( '[password] Update failed: user not found for identifier ' . $identifier );
+        return new WP_Error( 'user_not_found', 'No matching user found.' );
+    }
+
+    wp_set_password( $new_password, $user->ID );
+    pspa_ms_log( '[password] Updated for user ' . $user->ID );
+
+    return (int) $user->ID;
 }
 
 /**
@@ -555,19 +613,20 @@ function pspa_ms_simple_profile_form( $user_id ) {
         isset( $_POST['pspa_graduate_profile_nonce'] ) &&
         wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['pspa_graduate_profile_nonce'] ) ), 'pspa_graduate_profile' )
     ) {
-        $email    = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
-        $password = isset( $_POST['password'] ) ? wp_unslash( $_POST['password'] ) : '';
-        $strength = $password ? pspa_ms_password_strength( $password ) : 'none';
+        $email           = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+        $password_source = '';
+        $password        = pspa_ms_get_post_password( $password_source );
+        $strength        = $password ? pspa_ms_password_strength( $password ) : 'none';
 
         pspa_ms_log( sprintf(
-            'Graduate profile update for user %d: email="%s", password_strength="%s"',
+            '[profile] Graduate update for user %d: email="%s", password_strength="%s", password_field="%s"',
             $user_id,
             $email ? $email : 'none',
-            $strength
+            $strength,
+            $password ? $password_source : 'none'
         ) );
 
         $updated          = false;
-        $email_updated    = false;
         $password_updated = false;
 
         if ( ! empty( $email ) ) {
@@ -577,23 +636,18 @@ function pspa_ms_simple_profile_form( $user_id ) {
             ) );
 
             if ( is_wp_error( $result ) ) {
-                pspa_ms_log( 'Email update failed for user ' . $user_id . ': ' . $result->get_error_message() );
+                pspa_ms_log( '[profile] Email update failed for user ' . $user_id . ': ' . $result->get_error_message() );
                 wc_add_notice( $result->get_error_message(), 'error' );
             } else {
-                $email_updated = true;
-                $updated       = true;
-                pspa_ms_log( 'Email updated for user ' . $user_id );
+                $updated = true;
+                pspa_ms_log( '[profile] Email updated for user ' . $user_id );
             }
         }
 
         if ( ! empty( $password ) ) {
-            $result = wp_update_user( array(
-                'ID'        => $user_id,
-                'user_pass' => $password,
-            ) );
+            $result = pspa_ms_update_user_password( $user_id, $password );
 
             if ( is_wp_error( $result ) ) {
-                pspa_ms_log( 'Password update failed for user ' . $user_id . ': ' . implode( '; ', $result->get_error_messages() ) );
                 wc_add_notice( __( 'Δεν ήταν δυνατή η ενημέρωση του κωδικού.', 'pspa-membership-system' ), 'error' );
             } else {
                 wp_set_current_user( $user_id, $user->user_login );
@@ -601,14 +655,17 @@ function pspa_ms_simple_profile_form( $user_id ) {
                 if ( function_exists( 'wc_set_customer_auth_cookie' ) ) {
                     wc_set_customer_auth_cookie( $user_id );
                 }
-                pspa_ms_log( 'Password updated for user ' . $user_id );
                 $password_updated = true;
                 $updated          = true;
             }
         }
 
-        if ( $email_updated || $password_updated ) {
-            update_user_meta( $user_id, 'gn_login_verified_date', current_time( 'mysql' ) );
+        if ( $password_updated ) {
+            $verify_user = get_user_by( 'id', $user_id );
+            if ( $verify_user && ! empty( $verify_user->user_email ) ) {
+                update_user_meta( $user_id, 'gn_login_verified_date', current_time( 'mysql' ) );
+                pspa_ms_log( '[profile] Verification date updated for user ' . $user_id );
+            }
         }
 
         if ( $updated && function_exists( 'pspa_ms_sync_user_names' ) ) {
@@ -618,9 +675,9 @@ function pspa_ms_simple_profile_form( $user_id ) {
         if ( $updated ) {
             wc_add_notice( __( 'Το προφίλ ενημερώθηκε με επιτυχία.', 'pspa-membership-system' ) );
             $user = wp_get_current_user();
-            pspa_ms_log( 'Profile updated for user ' . $user_id );
+            pspa_ms_log( '[profile] Profile updated for user ' . $user_id );
         } else {
-            pspa_ms_log( 'No profile fields updated for user ' . $user_id );
+            pspa_ms_log( '[profile] No profile fields updated for user ' . $user_id );
         }
     }
 
@@ -701,15 +758,17 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
         isset( $_POST['pspa_admin_edit_user_nonce'] ) &&
         wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['pspa_admin_edit_user_nonce'] ) ), 'pspa_admin_edit_user' )
     ) {
-        $email    = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
-        $password = isset( $_POST['password'] ) ? wp_unslash( $_POST['password'] ) : '';
-        $strength = $password ? pspa_ms_password_strength( $password ) : 'none';
+        $email           = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+        $password_source = '';
+        $password        = pspa_ms_get_post_password( $password_source );
+        $strength        = $password ? pspa_ms_password_strength( $password ) : 'none';
 
         pspa_ms_log( sprintf(
-            'Admin profile update for user %d: email="%s", password_strength="%s"',
+            '[admin-profile] Update for user %d: email="%s", password_strength="%s", password_field="%s"',
             $user_id,
             $email ? $email : 'none',
-            $strength
+            $strength,
+            $password ? $password_source : 'none'
         ) );
 
         $updated = false;
@@ -721,31 +780,26 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
             ) );
 
             if ( is_wp_error( $result ) ) {
-                pspa_ms_log( 'Admin email update failed for user ' . $user_id . ': ' . $result->get_error_message() );
+                pspa_ms_log( '[admin-profile] Email update failed for user ' . $user_id . ': ' . $result->get_error_message() );
                 wc_add_notice( $result->get_error_message(), 'error' );
             } else {
                 $updated = true;
-                pspa_ms_log( 'Admin email updated for user ' . $user_id );
+                pspa_ms_log( '[admin-profile] Email updated for user ' . $user_id );
             }
         }
 
         if ( ! empty( $password ) ) {
-            $result = wp_update_user( array(
-                'ID'        => $user_id,
-                'user_pass' => $password,
-            ) );
+            $result = pspa_ms_update_user_password( $user_id, $password );
 
             if ( is_wp_error( $result ) ) {
-                pspa_ms_log( 'Admin password update failed for user ' . $user_id . ': ' . implode( '; ', $result->get_error_messages() ) );
                 wc_add_notice( __( 'Δεν ήταν δυνατή η ενημέρωση του κωδικού.', 'pspa-membership-system' ), 'error' );
             } else {
-                pspa_ms_log( 'Admin password updated for user ' . $user_id );
                 $updated = true;
             }
         }
 
         if ( $updated ) {
-            pspa_ms_log( 'Admin profile updated for user ' . $user_id );
+            pspa_ms_log( '[admin-profile] Profile updated for user ' . $user_id );
 
             // Ensure WordPress name fields mirror the ACF values.
             if ( function_exists( 'pspa_ms_sync_user_names' ) ) {
@@ -755,7 +809,7 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
             wc_add_notice( __( 'Το προφίλ ενημερώθηκε με επιτυχία.', 'pspa-membership-system' ) );
             $user = get_user_by( 'id', $user_id );
         } else {
-            pspa_ms_log( 'No profile fields updated for admin user ' . $user_id );
+            pspa_ms_log( '[admin-profile] No profile fields updated for user ' . $user_id );
         }
     }
 
@@ -804,14 +858,20 @@ function pspa_ms_admin_add_user_form() {
         isset( $_POST['pspa_admin_add_user_nonce'] ) &&
         wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['pspa_admin_add_user_nonce'] ) ), 'pspa_admin_add_user' )
     ) {
-        $email    = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
-        $password = isset( $_POST['password'] ) ? wp_unslash( $_POST['password'] ) : wp_generate_password();
+        $email           = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+        $password_source = '';
+        $password        = pspa_ms_get_post_password( $password_source );
+        if ( empty( $password ) ) {
+            $password        = wp_generate_password();
+            $password_source = 'generated';
+        }
         $strength = $password ? pspa_ms_password_strength( $password ) : 'none';
 
         pspa_ms_log( sprintf(
-            'Admin add user: email="%s", password_strength="%s"',
+            '[admin-add-user] email="%s", password_strength="%s", password_field="%s"',
             $email ? $email : 'none',
-            $strength
+            $strength,
+            $password_source
         ) );
 
         $first = isset( $_POST['acf']['field_gn_first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['acf']['field_gn_first_name'] ) ) : '';
@@ -841,7 +901,7 @@ function pspa_ms_admin_add_user_form() {
             wp_safe_redirect( $edit_url );
             exit;
         } else {
-            pspa_ms_log( 'Admin add user failed: ' . $user_id->get_error_message() );
+            pspa_ms_log( '[admin-add-user] Failed: ' . $user_id->get_error_message() );
             wc_add_notice( $user_id->get_error_message(), 'error' );
         }
     }
@@ -887,8 +947,10 @@ function pspa_ms_handle_login_by_details() {
         return;
     }
 
+    $prefix = '[login-by-details] ';
+
     if ( is_user_logged_in() ) {
-        pspa_ms_log( 'Login-by-details aborted: user already logged in' );
+        pspa_ms_log( $prefix . 'aborted: user already logged in' );
         return;
     }
 
@@ -896,19 +958,19 @@ function pspa_ms_handle_login_by_details() {
         return;
     }
 
-    pspa_ms_log( 'Login-by-details POST detected' );
+    pspa_ms_log( $prefix . 'POST detected' );
 
     $nonce = isset( $_POST['pspa_login_details_nonce'] )
         ? sanitize_text_field( wp_unslash( $_POST['pspa_login_details_nonce'] ) )
         : '';
 
     if ( empty( $nonce ) ) {
-        pspa_ms_log( 'Login-by-details aborted: missing nonce' );
+        pspa_ms_log( $prefix . 'aborted: missing nonce' );
         return;
     }
 
     if ( ! wp_verify_nonce( $nonce, 'pspa_login_details' ) ) {
-        pspa_ms_log( 'Login-by-details aborted: invalid nonce' );
+        pspa_ms_log( $prefix . 'aborted: invalid nonce' );
         return;
     }
 
@@ -916,12 +978,12 @@ function pspa_ms_handle_login_by_details() {
     $last  = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
     $year  = isset( $_POST['graduation_year'] ) ? sanitize_text_field( wp_unslash( $_POST['graduation_year'] ) ) : '';
 
-    pspa_ms_log( sprintf( 'Login attempt: %s %s (%s)', $first, $last, $year ) );
-    pspa_ms_log( sprintf( 'Sanitized fields: first="%s", last="%s", year="%s"', $first, $last, $year ) );
+    pspa_ms_log( $prefix . sprintf( 'Login attempt: %s %s (%s)', $first, $last, $year ) );
+    pspa_ms_log( $prefix . sprintf( 'Sanitized fields: first="%s", last="%s", year="%s"', $first, $last, $year ) );
 
     $full_name        = trim( $first . ' ' . $last );
     $normalized_full  = pspa_ms_normalize_name( $full_name );
-    pspa_ms_log( 'Normalized full name: ' . $normalized_full );
+    pspa_ms_log( $prefix . 'Normalized full name: ' . $normalized_full );
 
     global $wpdb;
 
@@ -942,16 +1004,16 @@ function pspa_ms_handle_login_by_details() {
               AND gr.meta_value = %s
             LIMIT 1";
 
-    pspa_ms_log( 'Lookup SQL: ' . $sql );
+    pspa_ms_log( $prefix . 'Lookup SQL: ' . $sql );
     $user_id = $wpdb->get_var( $wpdb->prepare( $sql, $normalized_full, $year ) );
 
-    pspa_ms_log( 'User ID query result: ' . ( $user_id ? $user_id : 'none' ) );
+    pspa_ms_log( $prefix . 'User ID query result: ' . ( $user_id ? $user_id : 'none' ) );
 
     if ( $user_id ) {
         $verified = get_user_meta( $user_id, 'gn_login_verified_date', true );
-        pspa_ms_log( 'Existing verification date for user ' . $user_id . ': ' . ( $verified ? $verified : 'none' ) );
+        pspa_ms_log( $prefix . 'Existing verification date for user ' . $user_id . ': ' . ( $verified ? $verified : 'none' ) );
         if ( $verified ) {
-            pspa_ms_log( 'Login blocked: user already verified' );
+            pspa_ms_log( $prefix . 'Login blocked: user already verified' );
             $referer = wp_get_referer() ? wp_get_referer() : home_url();
             $user     = get_user_by( 'id', $user_id );
             $email    = $user ? $user->user_email : '';
@@ -968,30 +1030,30 @@ function pspa_ms_handle_login_by_details() {
 
         $user = get_user_by( 'id', $user_id );
         if ( $user ) {
-            pspa_ms_log( 'Login success for user ID ' . $user->ID . ' (email: ' . $user->user_email . ')' );
+            pspa_ms_log( $prefix . 'Login success for user ID ' . $user->ID . ' (email: ' . $user->user_email . ')' );
             wp_clear_auth_cookie();
-            pspa_ms_log( 'User logged in before auth cookie: ' . ( is_user_logged_in() ? 'true' : 'false' ) );
+            pspa_ms_log( $prefix . 'User logged in before auth cookie: ' . ( is_user_logged_in() ? 'true' : 'false' ) );
             // Ensure the auth cookie respects the current SSL state so that
             // browsers do not reject it when the site forces HTTPS.
             wp_set_auth_cookie( $user->ID, true, is_ssl() );
-            pspa_ms_log( 'Auth cookie set using SSL: ' . ( is_ssl() ? 'true' : 'false' ) );
+            pspa_ms_log( $prefix . 'Auth cookie set using SSL: ' . ( is_ssl() ? 'true' : 'false' ) );
             wp_set_current_user( $user->ID, $user->user_login );
             if ( function_exists( 'wc_set_customer_auth_cookie' ) ) {
                 wc_set_customer_auth_cookie( $user->ID );
-                pspa_ms_log( 'wc_set_customer_auth_cookie called for user ' . $user->ID );
+                pspa_ms_log( $prefix . 'wc_set_customer_auth_cookie called for user ' . $user->ID );
             } else {
-                pspa_ms_log( 'wc_set_customer_auth_cookie unavailable' );
+                pspa_ms_log( $prefix . 'wc_set_customer_auth_cookie unavailable' );
             }
-            pspa_ms_log( 'User logged in status after auth cookie: ' . ( is_user_logged_in() ? 'true' : 'false' ) );
+            pspa_ms_log( $prefix . 'User logged in status after auth cookie: ' . ( is_user_logged_in() ? 'true' : 'false' ) );
             do_action( 'wp_login', $user->user_login, $user );
             wp_safe_redirect( add_query_arg( 'edit_user', $user->ID, pspa_ms_get_graduate_profile_edit_url() ) );
             exit;
         } else {
-            pspa_ms_log( 'User lookup failed for ID ' . $user_id );
+            pspa_ms_log( $prefix . 'User lookup failed for ID ' . $user_id );
         }
     }
 
-    pspa_ms_log( 'Login failed: no matching user' );
+    pspa_ms_log( $prefix . 'Login failed: no matching user' );
     $referer = wp_get_referer() ? wp_get_referer() : home_url();
     wp_safe_redirect( add_query_arg( 'login-details', 'failed', $referer ) );
     exit;
