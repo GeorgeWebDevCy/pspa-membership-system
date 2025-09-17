@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.100
+ * Version: 0.0.101
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.100' );
+define( 'PSPA_MS_VERSION', '0.0.101' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -1990,6 +1990,7 @@ function pspa_ms_ajax_filter_graduate_finder() {
         'count_total' => true,
         'orderby'     => 'display_name',
         'order'       => 'ASC',
+        'role__in'    => array( 'professionalcatalogue' ),
     );
 
     $users_query = new WP_User_Query( $query_args );
