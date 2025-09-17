@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.99
+ * Version: 0.0.100
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.99' );
+define( 'PSPA_MS_VERSION', '0.0.100' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -1257,7 +1257,7 @@ function pspa_ms_login_by_details_shortcode() {
             <input type="text" name="first_name" id="first_name" required />
         </p>
         <p class="form-row form-row-wide">
-            <label for="last_name"><?php esc_html_e( 'Επίθετο', 'pspa-membership-system' ); ?></label>
+            <label for="last_name"><?php esc_html_e( 'Επώνυμο', 'pspa-membership-system' ); ?></label>
             <input type="text" name="last_name" id="last_name" required />
         </p>
         <p class="form-row form-row-wide">
@@ -1748,8 +1748,8 @@ function pspa_ms_graduate_finder_shortcode() {
                 <input type="text" id="<?php echo esc_attr( $form_id ); ?>-first" name="first_name" placeholder="<?php esc_attr_e( 'Όνομα', 'pspa-membership-system' ); ?>" autocomplete="off" />
             </label>
             <label class="pspa-graduate-finder__field" for="<?php echo esc_attr( $form_id ); ?>-last">
-                <span class="pspa-graduate-finder__label"><?php esc_html_e( 'Επίθετο', 'pspa-membership-system' ); ?></span>
-                <input type="text" id="<?php echo esc_attr( $form_id ); ?>-last" name="last_name" placeholder="<?php esc_attr_e( 'Επίθετο', 'pspa-membership-system' ); ?>" autocomplete="off" />
+                <span class="pspa-graduate-finder__label"><?php esc_html_e( 'Επώνυμο', 'pspa-membership-system' ); ?></span>
+                <input type="text" id="<?php echo esc_attr( $form_id ); ?>-last" name="last_name" placeholder="<?php esc_attr_e( 'Επώνυμο', 'pspa-membership-system' ); ?>" autocomplete="off" />
             </label>
             <label class="pspa-graduate-finder__field" for="<?php echo esc_attr( $form_id ); ?>-year">
                 <span class="pspa-graduate-finder__label"><?php esc_html_e( 'Έτος Αποφοίτησης', 'pspa-membership-system' ); ?></span>
