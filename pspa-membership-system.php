@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.88
+ * Version: 0.0.89
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.88' );
+define( 'PSPA_MS_VERSION', '0.0.89' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -889,6 +889,55 @@ function pspa_ms_admin_add_user_form() {
     <?php
     echo '</div>';
 }
+
+/**
+ * Prevent canonical redirects from stripping the login details status flag.
+ *
+ * WordPress canonical redirects can drop unknown query parameters, causing the
+ * `login-details` flag to disappear and the SweetAlert popup to never render.
+ * When the flag is present and the redirect target omits it we cancel the
+ * redirect so the original URL loads intact.
+ *
+ * @param string|false $redirect_url  Canonical URL or false to abort redirect.
+ * @param string       $requested_url Requested URL.
+ * @return string|false
+ */
+function pspa_ms_preserve_login_details_query( $redirect_url, $requested_url ) {
+    if ( false === $redirect_url || ! isset( $_GET['login-details'] ) ) {
+        return $redirect_url;
+    }
+
+    $requested_parts = wp_parse_url( $requested_url );
+    if ( empty( $requested_parts['query'] ) ) {
+        return $redirect_url;
+    }
+
+    $requested_query = array();
+    parse_str( $requested_parts['query'], $requested_query );
+
+    if ( ! array_key_exists( 'login-details', $requested_query ) ) {
+        return $redirect_url;
+    }
+
+    $login_status = $requested_query['login-details'];
+    if ( ! in_array( $login_status, array( 'failed', 'verified' ), true ) ) {
+        return $redirect_url;
+    }
+
+    $redirect_parts = wp_parse_url( $redirect_url );
+    $redirect_query = array();
+
+    if ( isset( $redirect_parts['query'] ) ) {
+        parse_str( $redirect_parts['query'], $redirect_query );
+    }
+
+    if ( ! array_key_exists( 'login-details', $redirect_query ) || $redirect_query['login-details'] !== $login_status ) {
+        return false;
+    }
+
+    return $redirect_url;
+}
+add_filter( 'redirect_canonical', 'pspa_ms_preserve_login_details_query', 10, 2 );
 
 /**
  * Handle login submissions before output is sent.
