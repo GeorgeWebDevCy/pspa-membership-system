@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.90
+ * Version: 0.0.91
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.90' );
+define( 'PSPA_MS_VERSION', '0.0.91' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -333,10 +333,24 @@ add_filter( 'query_vars', 'pspa_ms_paid_members_query_vars' );
  * @return array
  */
 function pspa_ms_add_graduate_profile_link( $items ) {
-    $profile = array( 'graduate-profile' => __( 'Προφίλ Απόφοιτου', 'pspa-membership-system' ) );
-    $first   = array_slice( $items, 0, 1, true );
-    $rest    = array_slice( $items, 1, null, true );
-    $items   = $first + $profile + $rest;
+    $ordered_items = array();
+
+    $first_key = array_key_first( $items );
+    if ( null !== $first_key ) {
+        $ordered_items[ $first_key ] = $items[ $first_key ];
+        unset( $items[ $first_key ] );
+    }
+
+    if ( isset( $items['edit-account'] ) ) {
+        $ordered_items['edit-account'] = $items['edit-account'];
+        unset( $items['edit-account'] );
+    }
+
+    $ordered_items['graduate-profile'] = __( 'Προφίλ Απόφοιτου', 'pspa-membership-system' );
+
+    foreach ( $items as $key => $label ) {
+        $ordered_items[ $key ] = $label;
+    }
 
     $current_user = wp_get_current_user();
     if (
@@ -344,13 +358,20 @@ function pspa_ms_add_graduate_profile_link( $items ) {
         in_array( 'system-admin', (array) $current_user->roles, true ) ||
         in_array( 'sysadmin', (array) $current_user->roles, true )
     ) {
-        $paid_members = array( 'paid-members' => __( 'Πληρωμένες Συνδρομές', 'pspa-membership-system' ) );
-        $first_two    = array_slice( $items, 0, 2, true );
-        $rest_items   = array_slice( $items, 2, null, true );
-        $items        = $first_two + $paid_members + $rest_items;
+        $admin_items = array();
+
+        foreach ( $ordered_items as $key => $label ) {
+            $admin_items[ $key ] = $label;
+
+            if ( 'graduate-profile' === $key ) {
+                $admin_items['paid-members'] = __( 'Πληρωμένες Συνδρομές', 'pspa-membership-system' );
+            }
+        }
+
+        return $admin_items;
     }
 
-    return $items;
+    return $ordered_items;
 }
 add_filter( 'woocommerce_account_menu_items', 'pspa_ms_add_graduate_profile_link' );
 
