@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.107
+ * Version: 0.0.108
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.107' );
+define( 'PSPA_MS_VERSION', '0.0.108' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -786,7 +786,7 @@ function pspa_ms_simple_profile_form( $user_id ) {
         echo '<p>' . $message . '</p>';
 
         if ( $edit_account_url ) {
-            echo '<p><a class="button" href="' . esc_url( $edit_account_url ) . '">';
+            echo '<p><a class="woocommerce-Button button" href="' . esc_url( $edit_account_url ) . '">';
             esc_html_e( 'Μετάβαση στα στοιχεία λογαριασμού', 'pspa-membership-system' );
             echo '</a></p>';
         }
@@ -918,7 +918,7 @@ function pspa_ms_admin_profile_interface() {
 
     $add_url = add_query_arg( 'add_user', 1, pspa_ms_get_graduate_profile_edit_url() );
     echo '<div class="pspa-dashboard pspa-admin-dashboard">';
-    echo '<p><a class="button" href="' . esc_url( $add_url ) . '">' . esc_html__( 'Προσθήκη χρήστη', 'pspa-membership-system' ) . '</a></p>';
+    echo '<p><a class="woocommerce-Button button" href="' . esc_url( $add_url ) . '">' . esc_html__( 'Προσθήκη χρήστη', 'pspa-membership-system' ) . '</a></p>';
     echo '</div>';
 
     echo pspa_ms_graduate_directory_shortcode();
