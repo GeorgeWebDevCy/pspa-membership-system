@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.94
+ * Version: 0.0.95
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.94' );
+define( 'PSPA_MS_VERSION', '0.0.95' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -1576,7 +1576,7 @@ function pspa_ms_render_graduate_card( $user_id ) {
                 <p class="pspa-graduate-location"><?php echo esc_html( trim( $city . ( $country ? ', ' . $country : '' ) ) ); ?></p>
             <?php endif; ?>
             <div class="pspa-graduate-actions">
-                <a class="pspa-graduate-more" href="<?php echo esc_url( $profile_url ); ?>"><?php esc_html_e( 'Δείτε Περισσότερο', 'pspa-membership-system' ); ?></a>
+                <a class="pspa-graduate-more" href="<?php echo esc_url( $profile_url ); ?>"><?php esc_html_e( 'Δείτε Περισσότερα', 'pspa-membership-system' ); ?></a>
                 <?php if ( $can_edit ) : ?>
                     <a class="pspa-graduate-edit" href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( 'Επεξεργασία', 'pspa-membership-system' ); ?></a>
                 <?php endif; ?>
