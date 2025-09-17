@@ -31,3 +31,5 @@
 .pspa-dashboard .acf-tab-group .acf-tab-button{display:block;padding:8px 12px;color:var(--ink);text-decoration:none}
 .pspa-dashboard .acf-tab-group>li.active .acf-tab-button{font-weight:600}
 .pspa-dashboard .acf-tab-group .acf-tab-button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.acf-tab-wrap.-left .acf-tab-group li a{border:1px solid #fffaf5;font-size:13px;line-height:18px;color:#0073aa;padding:10px;margin:0;font-weight:400;border-width:1px 0;border-radius:0;background:#fffaf5!important}
+.acf-fields>.acf-tab-wrap .acf-tab-group li a{background:#f1f1f1;border:1px solid #e4d6c8!important;color:var(--ink,#3b2b22)!important}
