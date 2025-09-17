@@ -11,7 +11,6 @@
 .pspa-user-search-results{margin:0;padding:0}
 .pspa-dashboard .form-row{margin-bottom:12px}
 .pspa-dashboard label{display:block;margin-bottom:4px;color:var(--ink);font-weight:600}
-.pspa-dashboard .woocommerce-Button.button{background:var(--ink);color:#fff;border-radius:10px;padding:10px 15px}
 .pspa-dashboard .password-input{position:relative;display:block}
 .pspa-dashboard .password-input .show-password-input{color:var(--ink)}
 .pspa-dashboard .password-strength{margin-top:4px;padding:5px;border:1px solid var(--line);border-radius:10px;text-align:center;background:#eee;color:var(--ink)}
