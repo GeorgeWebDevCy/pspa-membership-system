@@ -18,10 +18,12 @@
 .pspa-dashboard .password-strength.good{background:#ffec8b;border-color:#e6db55}
 .pspa-dashboard .password-strength.strong{background:#c1e1b9;border-color:#83c373}
 .pspa-dashboard .pspa-graduate-profile-note{margin-bottom:30px}
-.pspa-dashboard .acf-tab-group{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 24px;padding:0;list-style:none}
-.pspa-dashboard .acf-tab-group>li{margin:0}
-.pspa-dashboard .acf-tab-group .acf-tab-button{display:inline-flex;align-items:center;justify-content:center;padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:600;text-decoration:none;transition:background-color .2s ease,border-color .2s ease,color .2s ease}
-.pspa-dashboard .acf-tab-group .acf-tab-button:hover,.pspa-dashboard .acf-tab-group .acf-tab-button:focus{background:#fff;border-color:var(--ink);color:var(--ink)}
-.pspa-dashboard .acf-tab-group>li.active .acf-tab-button{background:var(--ink);border-color:var(--ink);color:#fff}
-.pspa-dashboard .acf-tab-group>li.active .acf-tab-button:hover,.pspa-dashboard .acf-tab-group>li.active .acf-tab-button:focus{color:#fff}
+.pspa-dashboard .acf-tab-group{list-style:none;margin:0 0 20px;padding:0}
+.pspa-dashboard .acf-tab-group>li{margin:0 0 8px;background:var(--card);border:1px solid var(--line);border-radius:10px;transition:border-color .2s ease,background-color .2s ease}
+.pspa-dashboard .acf-tab-group>li:last-child{margin-bottom:0}
+.pspa-dashboard .acf-tab-group .acf-tab-button{display:block;padding:8px 12px;color:var(--ink);text-decoration:none;border-radius:10px;transition:color .2s ease,background-color .2s ease}
+.pspa-dashboard .acf-tab-group .acf-tab-button:hover,.pspa-dashboard .acf-tab-group .acf-tab-button:focus{background:#fff;color:var(--ink)}
+.pspa-dashboard .acf-tab-group>li.active{background:var(--ink);border-color:var(--ink)}
+.pspa-dashboard .acf-tab-group>li.active .acf-tab-button{background:transparent;color:#fff;font-weight:600}
+.pspa-dashboard .acf-tab-group>li.active .acf-tab-button:hover,.pspa-dashboard .acf-tab-group>li.active .acf-tab-button:focus{background:transparent;color:#fff}
 .pspa-dashboard .acf-tab-group .acf-tab-button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}

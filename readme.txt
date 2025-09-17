@@ -4,7 +4,7 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.0.111
+Stable tag: 0.0.113
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,14 @@ The plugin registers two custom user roles:
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
+
+= 0.0.113 =
+* Restore the graduate profile tab color treatment while keeping the WooCommerce navigation layout.
+* Bump version to 0.0.113.
+
+= 0.0.112 =
+* Match the graduate profile tab styling to the WooCommerce account navigation.
+* Bump version to 0.0.112.
 
 = 0.0.111 =
 * Require new profile photo uploads on front-end forms by switching the image field to the basic uploader.
