@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.108
+ * Version: 0.0.109
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.108' );
+define( 'PSPA_MS_VERSION', '0.0.109' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -786,7 +786,7 @@ function pspa_ms_simple_profile_form( $user_id ) {
         echo '<p>' . $message . '</p>';
 
         if ( $edit_account_url ) {
-            echo '<p><a class="woocommerce-Button button" href="' . esc_url( $edit_account_url ) . '">';
+            echo '<p><a class="woocommerce-Button button et_pb_button" href="' . esc_url( $edit_account_url ) . '">';
             esc_html_e( 'Μετάβαση στα στοιχεία λογαριασμού', 'pspa-membership-system' );
             echo '</a></p>';
         }
@@ -814,7 +814,7 @@ function pspa_ms_simple_profile_form( $user_id ) {
         <?php endif; ?>
         <?php wp_nonce_field( 'pspa_graduate_profile', 'pspa_graduate_profile_nonce' ); ?>
         <p>
-            <button type="submit" class="woocommerce-Button button" name="save_account_details" value="<?php esc_attr_e( 'Αποθήκευση αλλαγών', 'pspa-membership-system' ); ?>">
+            <button type="submit" class="woocommerce-Button button et_pb_button" name="save_account_details" value="<?php esc_attr_e( 'Αποθήκευση αλλαγών', 'pspa-membership-system' ); ?>">
                 <?php esc_html_e( 'Αποθήκευση αλλαγών', 'pspa-membership-system' ); ?>
             </button>
         </p>
@@ -918,7 +918,7 @@ function pspa_ms_admin_profile_interface() {
 
     $add_url = add_query_arg( 'add_user', 1, pspa_ms_get_graduate_profile_edit_url() );
     echo '<div class="pspa-dashboard pspa-admin-dashboard">';
-    echo '<p><a class="woocommerce-Button button" href="' . esc_url( $add_url ) . '">' . esc_html__( 'Προσθήκη χρήστη', 'pspa-membership-system' ) . '</a></p>';
+    echo '<p><a class="woocommerce-Button button et_pb_button" href="' . esc_url( $add_url ) . '">' . esc_html__( 'Προσθήκη χρήστη', 'pspa-membership-system' ) . '</a></p>';
     echo '</div>';
 
     echo pspa_ms_graduate_directory_shortcode();
@@ -956,7 +956,7 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
         <?php endif; ?>
         <?php wp_nonce_field( 'pspa_admin_edit_user', 'pspa_admin_edit_user_nonce' ); ?>
         <p>
-            <button type="submit" class="woocommerce-Button button"><?php esc_html_e( 'Αποθήκευση αλλαγών', 'pspa-membership-system' ); ?></button>
+            <button type="submit" class="woocommerce-Button button et_pb_button"><?php esc_html_e( 'Αποθήκευση αλλαγών', 'pspa-membership-system' ); ?></button>
         </p>
     </form>
     <?php
@@ -1042,7 +1042,7 @@ function pspa_ms_admin_add_user_form() {
         </p>
         <?php wp_nonce_field( 'pspa_admin_add_user', 'pspa_admin_add_user_nonce' ); ?>
         <p>
-            <button type="submit" class="woocommerce-Button button"><?php esc_html_e( 'Δημιουργία χρήστη', 'pspa-membership-system' ); ?></button>
+            <button type="submit" class="woocommerce-Button button et_pb_button"><?php esc_html_e( 'Δημιουργία χρήστη', 'pspa-membership-system' ); ?></button>
         </p>
     </form>
     <?php
@@ -1316,7 +1316,7 @@ function pspa_ms_login_by_details_shortcode() {
         </p>
         <?php wp_nonce_field( 'pspa_login_details', 'pspa_login_details_nonce' ); ?>
         <p>
-            <button type="submit" class="woocommerce-Button button"><?php esc_html_e( 'Σύνδεση', 'pspa-membership-system' ); ?></button>
+            <button type="submit" class="woocommerce-Button button et_pb_button"><?php esc_html_e( 'Σύνδεση', 'pspa-membership-system' ); ?></button>
         </p>
     </form>
     <?php
@@ -1742,9 +1742,9 @@ function pspa_ms_render_graduate_card( $user_id, $args = array() ) {
                 <p class="pspa-graduate-location"><?php echo esc_html( trim( $city . ( $country ? ', ' . $country : '' ) ) ); ?></p>
             <?php endif; ?>
             <div class="pspa-graduate-actions">
-                <a class="pspa-graduate-more" href="<?php echo esc_url( $profile_url ); ?>"><?php esc_html_e( 'Δείτε Περισσότερα', 'pspa-membership-system' ); ?></a>
+                <a class="pspa-graduate-more et_pb_button" href="<?php echo esc_url( $profile_url ); ?>"><?php esc_html_e( 'Δείτε Περισσότερα', 'pspa-membership-system' ); ?></a>
                 <?php if ( $can_edit ) : ?>
-                    <a class="pspa-graduate-edit" href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( 'Επεξεργασία', 'pspa-membership-system' ); ?></a>
+                    <a class="pspa-graduate-edit et_pb_button" href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( 'Επεξεργασία', 'pspa-membership-system' ); ?></a>
                 <?php endif; ?>
             </div>
         </div>
@@ -1975,11 +1975,11 @@ function pspa_ms_ajax_filter_graduates() {
         if ( $total_pages > 1 ) {
             $html .= '<nav class="pspa-dir-pagination">';
             if ( $page > 1 ) {
-                $html .= '<a href="#" class="prev" data-page="' . ( $page - 1 ) . '">&laquo; ' . esc_html__( 'Προηγούμενη', 'pspa-membership-system' ) . '</a>';
+                $html .= '<a href="#" class="prev et_pb_button" data-page="' . ( $page - 1 ) . '">&laquo; ' . esc_html__( 'Προηγούμενη', 'pspa-membership-system' ) . '</a>';
             }
             $html .= '<span class="current">' . sprintf( esc_html__( 'Σελίδα %1$d από %2$d', 'pspa-membership-system' ), $page, $total_pages ) . '</span>';
             if ( $page < $total_pages ) {
-                $html .= '<a href="#" class="next" data-page="' . ( $page + 1 ) . '">' . esc_html__( 'Επόμενη', 'pspa-membership-system' ) . ' &raquo;</a>';
+                $html .= '<a href="#" class="next et_pb_button" data-page="' . ( $page + 1 ) . '">' . esc_html__( 'Επόμενη', 'pspa-membership-system' ) . ' &raquo;</a>';
             }
             $html .= '</nav>';
         }
@@ -2067,11 +2067,11 @@ function pspa_ms_ajax_filter_graduate_finder() {
         } elseif ( $total_pages > 1 ) {
             $html .= '<nav class="pspa-finder-pagination" aria-label="' . esc_attr__( 'Σελιδοποίηση αποφοίτων', 'pspa-membership-system' ) . '">';
             if ( $page > 1 ) {
-                $html .= '<a href="#" class="prev" data-page="' . ( $page - 1 ) . '">&laquo; ' . esc_html__( 'Προηγούμενη', 'pspa-membership-system' ) . '</a>';
+                $html .= '<a href="#" class="prev et_pb_button" data-page="' . ( $page - 1 ) . '">&laquo; ' . esc_html__( 'Προηγούμενη', 'pspa-membership-system' ) . '</a>';
             }
             $html .= '<span class="current">' . sprintf( esc_html__( 'Σελίδα %1$d από %2$d', 'pspa-membership-system' ), $page, $total_pages ) . '</span>';
             if ( $page < $total_pages ) {
-                $html .= '<a href="#" class="next" data-page="' . ( $page + 1 ) . '">' . esc_html__( 'Επόμενη', 'pspa-membership-system' ) . ' &raquo;</a>';
+                $html .= '<a href="#" class="next et_pb_button" data-page="' . ( $page + 1 ) . '">' . esc_html__( 'Επόμενη', 'pspa-membership-system' ) . ' &raquo;</a>';
             }
             $html .= '</nav>';
         }
