@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.92
+ * Version: 0.0.93
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.92' );
+define( 'PSPA_MS_VERSION', '0.0.93' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -616,36 +616,9 @@ function pspa_ms_graduate_profile_content() {
         return;
     }
 
-    pspa_ms_render_edit_account_section( $current_user );
     pspa_ms_simple_profile_form( $current_user->ID );
 }
 add_action( 'woocommerce_account_graduate-profile_endpoint', 'pspa_ms_graduate_profile_content' );
-
-/**
- * Display the WooCommerce edit account form ahead of the graduate profile.
- *
- * @param WP_User $user Current user.
- */
-function pspa_ms_render_edit_account_section( $user ) {
-    if ( ! $user instanceof WP_User ) {
-        return;
-    }
-
-    pspa_ms_enqueue_dashboard_styles();
-
-    echo '<div class="pspa-dashboard pspa-account-details">';
-    echo '<h2>' . esc_html__( 'Στοιχεία λογαριασμού', 'pspa-membership-system' ) . '</h2>';
-
-    if ( class_exists( 'WC_Shortcode_My_Account' ) && method_exists( 'WC_Shortcode_My_Account', 'edit_account' ) ) {
-        WC_Shortcode_My_Account::edit_account();
-    } elseif ( function_exists( 'wc_get_template' ) ) {
-        wc_get_template( 'myaccount/form-edit-account.php', array( 'user' => $user ) );
-    } else {
-        do_action( 'woocommerce_account_edit-account_endpoint', 'edit-account' );
-    }
-
-    echo '</div>';
-}
 
 /**
  * Render the simple profile form for graduates.
@@ -674,12 +647,25 @@ function pspa_ms_simple_profile_form( $user_id ) {
             $requirement_text = esc_html__( 'έναν κωδικό πρόσβασης', 'pspa-membership-system' );
         }
 
+        $edit_account_url = function_exists( 'wc_get_account_endpoint_url' )
+            ? wc_get_account_endpoint_url( 'edit-account' )
+            : '';
+
         $message = sprintf(
-            esc_html__( 'Για να συνεχίσετε, προσθέστε %s χρησιμοποιώντας τη φόρμα «Στοιχεία λογαριασμού» που εμφανίζεται παραπάνω. Αφού αποθηκεύσετε τις αλλαγές, θα μπορείτε να ενημερώσετε το προφίλ σας.', 'pspa-membership-system' ),
+            esc_html__( 'Για να συνεχίσετε, προσθέστε %s από την ενότητα «Στοιχεία λογαριασμού» του λογαριασμού σας. Αφού αποθηκεύσετε τις αλλαγές, θα μπορείτε να ενημερώσετε το προφίλ σας.', 'pspa-membership-system' ),
             $requirement_text
         );
 
-        echo '<div class="pspa-dashboard pspa-profile-requirements"><p>' . $message . '</p></div>';
+        echo '<div class="pspa-dashboard pspa-profile-requirements">';
+        echo '<p>' . $message . '</p>';
+
+        if ( $edit_account_url ) {
+            echo '<p><a class="button" href="' . esc_url( $edit_account_url ) . '">';
+            esc_html_e( 'Μετάβαση στα στοιχεία λογαριασμού', 'pspa-membership-system' );
+            echo '</a></p>';
+        }
+
+        echo '</div>';
         return;
     }
 
