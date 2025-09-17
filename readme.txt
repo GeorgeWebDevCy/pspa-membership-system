@@ -4,7 +4,7 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.0.85
+Stable tag: 0.0.86
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,10 @@ The plugin registers two custom user roles:
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
+
+= 0.0.86 =
+* Display the WooCommerce "Account details" form before the graduate profile and block profile editing until an email and password are saved.
+* Record the login verification date when the password changes via the WooCommerce account form.
 
 = 0.0.85 =
 * Prevent warnings when visibility filters receive a hidden field.
