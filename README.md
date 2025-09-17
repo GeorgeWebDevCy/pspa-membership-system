@@ -45,7 +45,7 @@ Starting with version 0.0.45 names are matched case- and accent-insensitively by
 
 ## Graduate Directory
 
-The `[pspa_graduate_directory]` shortcode outputs a grid of graduates showing their profile photo, full name and graduation year. Clicking "Δείτε Περισσότερα" opens the graduate's public, non-editable profile. When logged in as an administrator or System Admin, cards also show an "Επεξεργασία" link to jump directly to the editing interface. Public profiles are also accessible directly at `/graduate/<username>/`.
+The `[pspa_graduate_directory]` shortcode outputs a grid of graduates showing their profile photo, full name and graduation year. Clicking "Δείτε Περισσότερα" opens the graduate's public, non-editable profile. When logged in as an administrator or System Admin, cards also show an "Επεξεργασία" link to jump directly to the editing interface. Public profiles are also accessible directly at `/graduate/<username>/`. Professional Catalogue users only see graduates approved for the directory, so hidden profiles remain private.
 
 ## Role-based Redirection
 
