@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.86
+ * Version: 0.0.87
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.86' );
+define( 'PSPA_MS_VERSION', '0.0.87' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -644,77 +644,6 @@ function pspa_ms_simple_profile_form( $user_id ) {
         return;
     }
 
-    if (
-        'POST' === $_SERVER['REQUEST_METHOD'] &&
-        isset( $_POST['pspa_graduate_profile_nonce'] ) &&
-        wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['pspa_graduate_profile_nonce'] ) ), 'pspa_graduate_profile' )
-    ) {
-        $email    = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
-        $password = isset( $_POST['password'] ) ? wp_unslash( $_POST['password'] ) : '';
-        $strength = $password ? pspa_ms_password_strength( $password ) : 'none';
-
-        pspa_ms_log( sprintf(
-            'Graduate profile update for user %d: email="%s", password_strength="%s"',
-            $user_id,
-            $email ? $email : 'none',
-            $strength
-        ) );
-
-        $updated          = false;
-        $password_updated = false;
-
-        if ( ! empty( $email ) ) {
-            $result = wp_update_user( array(
-                'ID'         => $user_id,
-                'user_email' => $email,
-            ) );
-
-            if ( is_wp_error( $result ) ) {
-                pspa_ms_log( 'Email update failed for user ' . $user_id . ': ' . $result->get_error_message() );
-                wc_add_notice( $result->get_error_message(), 'error' );
-            } else {
-                $updated       = true;
-                pspa_ms_log( 'Email updated for user ' . $user_id );
-            }
-        }
-
-        if ( ! empty( $password ) ) {
-            $result = pspa_ms_update_user_password( $user_id, $password );
-
-            if ( is_wp_error( $result ) ) {
-                wc_add_notice( __( 'Δεν ήταν δυνατή η ενημέρωση του κωδικού.', 'pspa-membership-system' ), 'error' );
-            } else {
-                wp_set_current_user( $user_id, $user->user_login );
-                wp_set_auth_cookie( $user_id, true, is_ssl() );
-                if ( function_exists( 'wc_set_customer_auth_cookie' ) ) {
-                    wc_set_customer_auth_cookie( $user_id );
-                }
-                $password_updated = true;
-                $updated          = true;
-            }
-        }
-
-        if ( $password_updated ) {
-            $verify_user = get_user_by( 'id', $user_id );
-            if ( $verify_user && ! empty( $verify_user->user_email ) ) {
-                update_user_meta( $user_id, 'gn_login_verified_date', current_time( 'mysql' ) );
-                pspa_ms_log( 'Verification date updated for user ' . $user_id );
-            }
-        }
-
-        if ( $updated && function_exists( 'pspa_ms_sync_user_names' ) ) {
-            pspa_ms_sync_user_names( 'user_' . $user_id );
-        }
-
-        if ( $updated ) {
-            wc_add_notice( __( 'Το προφίλ ενημερώθηκε με επιτυχία.', 'pspa-membership-system' ) );
-            $user = wp_get_current_user();
-            pspa_ms_log( 'Profile updated for user ' . $user_id );
-        } else {
-            pspa_ms_log( 'No profile fields updated for user ' . $user_id );
-        }
-    }
-
     ?>
     <form class="woocommerce-EditAccountForm edit-account pspa-dashboard" method="post">
         <?php if ( function_exists( 'acf_form' ) ) : ?>
@@ -724,16 +653,6 @@ function pspa_ms_simple_profile_form( $user_id ) {
                 'field_groups' => array( 'group_gn_graduate_profile' ),
             ) ); ?>
         <?php endif; ?>
-        <p class="form-row form-row-wide">
-            <label for="email"><?php esc_html_e( 'Διεύθυνση E-mail', 'pspa-membership-system' ); ?></label>
-            <input type="email" name="email" id="email" value="<?php echo esc_attr( $user->user_email ); ?>" />
-        </p>
-        <p class="form-row form-row-wide">
-            <label for="password"><?php esc_html_e( 'Νέος κωδικός', 'pspa-membership-system' ); ?></label>
-            <span class="password-input">
-                <input class="woocommerce-Input woocommerce-Input--text input-text" type="password" name="password" id="password" autocomplete="new-password" />
-            </span>
-        </p>
         <?php wp_nonce_field( 'pspa_graduate_profile', 'pspa_graduate_profile_nonce' ); ?>
         <p>
             <button type="submit" class="woocommerce-Button button">
@@ -743,6 +662,49 @@ function pspa_ms_simple_profile_form( $user_id ) {
     </form>
     <?php
 }
+
+/**
+ * Add a success notice when graduate profile fields are saved via ACF.
+ *
+ * @param string $post_id Post identifier.
+ */
+function pspa_ms_handle_profile_form_save_notice( $post_id ) {
+    $graduate_nonce = isset( $_POST['pspa_graduate_profile_nonce'] )
+        ? sanitize_text_field( wp_unslash( $_POST['pspa_graduate_profile_nonce'] ) )
+        : '';
+    $admin_nonce    = isset( $_POST['pspa_admin_edit_user_nonce'] )
+        ? sanitize_text_field( wp_unslash( $_POST['pspa_admin_edit_user_nonce'] ) )
+        : '';
+
+    $context = '';
+
+    if ( $graduate_nonce && wp_verify_nonce( $graduate_nonce, 'pspa_graduate_profile' ) ) {
+        $context = 'graduate';
+    } elseif ( $admin_nonce && wp_verify_nonce( $admin_nonce, 'pspa_admin_edit_user' ) ) {
+        $context = 'admin';
+    } else {
+        return;
+    }
+
+    if ( 0 !== strpos( $post_id, 'user_' ) ) {
+        return;
+    }
+
+    $user_id = (int) substr( $post_id, 5 );
+
+    if ( $user_id <= 0 ) {
+        return;
+    }
+
+    if ( 'graduate' === $context ) {
+        pspa_ms_log( 'Graduate profile fields updated for user ' . $user_id );
+    } else {
+        pspa_ms_log( 'Admin updated graduate profile fields for user ' . $user_id );
+    }
+
+    wc_add_notice( __( 'Το προφίλ ενημερώθηκε με επιτυχία.', 'pspa-membership-system' ) );
+}
+add_action( 'acf/save_post', 'pspa_ms_handle_profile_form_save_notice', 25 );
 
 /**
  * Set the login verification date when the WooCommerce account form updates the password.
@@ -818,64 +780,6 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
         return;
     }
 
-    if (
-        'POST' === $_SERVER['REQUEST_METHOD'] &&
-        isset( $_POST['pspa_admin_edit_user_nonce'] ) &&
-        wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['pspa_admin_edit_user_nonce'] ) ), 'pspa_admin_edit_user' )
-    ) {
-        $email    = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
-        $password = isset( $_POST['password'] ) ? wp_unslash( $_POST['password'] ) : '';
-        $strength = $password ? pspa_ms_password_strength( $password ) : 'none';
-
-        pspa_ms_log( sprintf(
-            'Admin profile update for user %d: email="%s", password_strength="%s"',
-            $user_id,
-            $email ? $email : 'none',
-            $strength
-        ) );
-
-        $updated = false;
-
-        if ( ! empty( $email ) ) {
-            $result = wp_update_user( array(
-                'ID'         => $user_id,
-                'user_email' => $email,
-            ) );
-
-            if ( is_wp_error( $result ) ) {
-                pspa_ms_log( 'Admin email update failed for user ' . $user_id . ': ' . $result->get_error_message() );
-                wc_add_notice( $result->get_error_message(), 'error' );
-            } else {
-                $updated = true;
-                pspa_ms_log( 'Admin email updated for user ' . $user_id );
-            }
-        }
-
-        if ( ! empty( $password ) ) {
-            $result = pspa_ms_update_user_password( $user_id, $password );
-
-            if ( is_wp_error( $result ) ) {
-                wc_add_notice( __( 'Δεν ήταν δυνατή η ενημέρωση του κωδικού.', 'pspa-membership-system' ), 'error' );
-            } else {
-                $updated = true;
-            }
-        }
-
-        if ( $updated ) {
-            pspa_ms_log( 'Admin profile updated for user ' . $user_id );
-
-            // Ensure WordPress name fields mirror the ACF values.
-            if ( function_exists( 'pspa_ms_sync_user_names' ) ) {
-                pspa_ms_sync_user_names( 'user_' . $user_id );
-            }
-
-            wc_add_notice( __( 'Το προφίλ ενημερώθηκε με επιτυχία.', 'pspa-membership-system' ) );
-            $user = get_user_by( 'id', $user_id );
-        } else {
-            pspa_ms_log( 'No profile fields updated for admin user ' . $user_id );
-        }
-    }
-
     echo '<div class="pspa-dashboard pspa-admin-edit-user">';
     $search_url = pspa_ms_get_graduate_profile_edit_url();
     echo '<p><a href="' . esc_url( $search_url ) . '">&larr; ' . esc_html__( 'Επιστροφή στην αναζήτηση', 'pspa-membership-system' ) . '</a></p>';
@@ -891,16 +795,6 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
                 ) ); ?>
             </div>
         <?php endif; ?>
-        <p class="form-row form-row-wide">
-            <label for="email"><?php esc_html_e( 'Διεύθυνση E-mail', 'pspa-membership-system' ); ?></label>
-            <input type="email" name="email" id="email" value="<?php echo esc_attr( $user->user_email ); ?>" />
-        </p>
-        <p class="form-row form-row-wide">
-            <label for="password"><?php esc_html_e( 'Νέος κωδικός', 'pspa-membership-system' ); ?></label>
-            <span class="password-input">
-                <input class="woocommerce-Input woocommerce-Input--text input-text" type="password" name="password" id="password" autocomplete="new-password" />
-            </span>
-        </p>
         <?php wp_nonce_field( 'pspa_admin_edit_user', 'pspa_admin_edit_user_nonce' ); ?>
         <p>
             <button type="submit" class="woocommerce-Button button"><?php esc_html_e( 'Αποθήκευση αλλαγών', 'pspa-membership-system' ); ?></button>
