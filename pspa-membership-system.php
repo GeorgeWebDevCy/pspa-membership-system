@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.93
+ * Version: 0.0.94
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.93' );
+define( 'PSPA_MS_VERSION', '0.0.94' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -562,6 +562,47 @@ function pspa_ms_hide_public_visibility_toggles( $field ) {
 add_filter( 'acf/prepare_field', 'pspa_ms_hide_public_visibility_toggles', 20 );
 
 /**
+ * Get the list of graduate profile fields reserved for administrators.
+ *
+ * @return string[]
+ */
+function pspa_ms_get_admin_only_field_names() {
+    return array(
+        'gn_initial_db_id',
+        'gn_login_verified_date',
+        'gn_deceased',
+        'gn_show_deceased',
+    );
+}
+
+/**
+ * Fields hidden from Professional Catalogue users on the front end.
+ *
+ * @return string[]
+ */
+function pspa_ms_get_professional_catalogue_hidden_fields() {
+    return array(
+        'gn_initial_db_id',
+        'gn_login_verified_date',
+    );
+}
+
+/**
+ * Determine if the current user has the Professional Catalogue role.
+ *
+ * @return bool
+ */
+function pspa_ms_current_user_is_professional_catalogue() {
+    if ( ! is_user_logged_in() ) {
+        return false;
+    }
+
+    $current_user = wp_get_current_user();
+
+    return in_array( 'professionalcatalogue', (array) $current_user->roles, true );
+}
+
+/**
  * Hide admin-only fields from catalogue editors and graduate profile forms.
  *
  * @param array|false $field Field settings.
@@ -572,20 +613,13 @@ function pspa_ms_hide_admin_only_fields( $field ) {
         return $field;
     }
 
-    $admin_only = array(
-        'gn_initial_db_id',
-        'gn_login_verified_date',
-        'gn_deceased',
-        'gn_show_deceased',
-    );
+    $admin_only = pspa_ms_get_admin_only_field_names();
 
     if ( ! in_array( $field['name'], $admin_only, true ) ) {
         return $field;
     }
 
-    $current_user = wp_get_current_user();
-    $roles        = (array) $current_user->roles;
-    $is_catalogue = in_array( 'professionalcatalogue', $roles, true );
+    $is_catalogue = pspa_ms_current_user_is_professional_catalogue();
     $is_grad_form = function_exists( 'is_account_page' ) && is_account_page() && false !== get_query_var( 'graduate-profile', false );
 
     if ( $is_catalogue || $is_grad_form ) {
