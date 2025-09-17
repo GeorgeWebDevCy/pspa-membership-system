@@ -679,7 +679,7 @@
         "required": false,
         "conditional_logic": false,
         "wrapper": {
-          "width": "60",
+          "width": "50",
           "class": "",
           "id": ""
         },
@@ -699,7 +699,7 @@
         "required": false,
         "conditional_logic": false,
         "wrapper": {
-          "width": "60",
+          "width": "50",
           "class": "",
           "id": ""
         },
@@ -719,7 +719,7 @@
         "required": false,
         "conditional_logic": false,
         "wrapper": {
-          "width": "20",
+          "width": "50",
           "class": "",
           "id": ""
         },
@@ -739,7 +739,7 @@
         "required": false,
         "conditional_logic": false,
         "wrapper": {
-          "width": "20",
+          "width": "50",
           "class": "",
           "id": ""
         },
@@ -759,7 +759,7 @@
         "required": false,
         "conditional_logic": false,
         "wrapper": {
-          "width": "20",
+          "width": "50",
           "class": "",
           "id": ""
         },
@@ -779,7 +779,7 @@
         "required": false,
         "conditional_logic": false,
         "wrapper": {
-          "width": "20",
+          "width": "50",
           "class": "",
           "id": ""
         },
