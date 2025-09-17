@@ -48,6 +48,12 @@ $hide_catalogue_fields = function_exists( 'pspa_ms_current_user_is_professional_
 $catalogue_hidden_fields = $hide_catalogue_fields && function_exists( 'pspa_ms_get_professional_catalogue_hidden_fields' )
     ? pspa_ms_get_professional_catalogue_hidden_fields()
     : array();
+$admin_hidden_fields = array();
+if ( ! $can_view_hidden ) {
+    $admin_hidden_fields = function_exists( 'pspa_ms_get_admin_only_field_names' )
+        ? pspa_ms_get_admin_only_field_names()
+        : array( 'gn_initial_db_id', 'gn_login_verified_date', 'gn_directory_visible', 'gn_deceased', 'gn_show_deceased' );
+}
 
 $should_show_field = static function ( $field_name ) use ( $uid, $user_key, $visibility ) {
     if ( 'hide_all' === $visibility ) {
@@ -72,6 +78,10 @@ $should_show_field = static function ( $field_name ) use ( $uid, $user_key, $vis
 
 foreach ( $header_field_names as $name ) {
     if ( ! $should_show_field( $name ) ) {
+        continue;
+    }
+
+    if ( $admin_hidden_fields && in_array( $name, $admin_hidden_fields, true ) ) {
         continue;
     }
     if ( $hide_catalogue_fields && in_array( $name, $catalogue_hidden_fields, true ) ) {
@@ -149,6 +159,10 @@ foreach ( $header_field_names as $name ) {
         }
 
         if ( empty( $field['name'] ) ) {
+            continue;
+        }
+
+        if ( $admin_hidden_fields && in_array( $field['name'], $admin_hidden_fields, true ) ) {
             continue;
         }
 
