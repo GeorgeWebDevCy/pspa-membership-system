@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.104
+ * Version: 0.0.105
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.104' );
+define( 'PSPA_MS_VERSION', '0.0.105' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -759,8 +759,8 @@ function pspa_ms_simple_profile_form( $user_id ) {
         <p>
             <?php esc_html_e( 'Επεξεργαστείτε τα στοιχεία σας, που θα φαίνονται στην αναζήτηση αποφοίτων (ονοματεπώνυμο, έτος αποφοίτησης, τηλέφωνο επικοινωνίας) και επιλέξτε αν θέλετε να εμφανίζεστε στον Επαγγελματικό Κατάλογο των αποφοίτων του ΠΣΠΑ και ποια στοιχεία σας θα είναι ορατά.', 'pspa-membership-system' ); ?>
         </p>
-        <p>
-            <?php esc_html_e( '(Απαραίτητη προϋπόθεση για τη συμμετοχή σας στο Επαγγελματικό Κατάλογο αποτελεί να είστε ταμειακώς εντάξει).', 'pspa-membership-system' ); ?>
+        <p class="pspa-graduate-profile-note">
+            <em><?php esc_html_e( '(Απαραίτητη προϋπόθεση για τη συμμετοχή σας στο Επαγγελματικό Κατάλογο αποτελεί να είστε ταμειακώς εντάξει).', 'pspa-membership-system' ); ?></em>
         </p>
     </div>
     <form class="woocommerce-EditAccountForm edit-account pspa-dashboard" method="post">
