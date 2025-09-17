@@ -776,8 +776,8 @@ function pspa_ms_simple_profile_form( $user_id ) {
         <p>
             <?php esc_html_e( 'Επεξεργαστείτε τα στοιχεία σας, που θα φαίνονται στην αναζήτηση αποφοίτων (ονοματεπώνυμο, έτος αποφοίτησης, τηλέφωνο επικοινωνίας) και επιλέξτε αν θέλετε να εμφανίζεστε στον Επαγγελματικό Κατάλογο των αποφοίτων του ΠΣΠΑ και ποια στοιχεία σας θα είναι ορατά.', 'pspa-membership-system' ); ?>
         </p>
-        <p>
-            <?php esc_html_e( '(Απαραίτητη προϋπόθεση για τη συμμετοχή σας στο Επαγγελματικό Κατάλογο αποτελεί να είστε ταμειακώς εντάξει).', 'pspa-membership-system' ); ?>
+        <p class="pspa-graduate-profile-note">
+            <em><?php esc_html_e( '(Απαραίτητη προϋπόθεση για τη συμμετοχή σας στο Επαγγελματικό Κατάλογο αποτελεί να είστε ταμειακώς εντάξει).', 'pspa-membership-system' ); ?></em>
         </p>
     </div>
     <form class="woocommerce-EditAccountForm edit-account pspa-dashboard" method="post">

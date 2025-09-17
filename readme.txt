@@ -33,6 +33,7 @@ The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access
 
 = 0.0.105 =
 * Hide the Initial DB ID and login verification date fields for Professional Catalogue users on the graduate profile endpoint.
+* Style the Professional Catalogue eligibility note with italics and additional spacing.
 * Bump version to 0.0.105.
 
 = 0.0.104 =
