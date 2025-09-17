@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.97
+ * Version: 0.0.98
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.97' );
+define( 'PSPA_MS_VERSION', '0.0.98' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -1279,6 +1279,7 @@ function pspa_ms_login_by_details_shortcode() {
  */
 function pspa_ms_register_shortcodes() {
     add_shortcode( 'pspa_login_by_details', 'pspa_ms_login_by_details_shortcode' );
+    add_shortcode( 'pspa_graduate_finder', 'pspa_ms_graduate_finder_shortcode' );
     add_shortcode( 'pspa_graduate_directory', 'pspa_ms_graduate_directory_shortcode' );
 }
 add_action( 'init', 'pspa_ms_register_shortcodes' );
@@ -1658,6 +1659,85 @@ function pspa_ms_render_graduate_card( $user_id ) {
 }
 
 /**
+ * Render a compact graduate card for the graduate finder.
+ *
+ * @param int $user_id User ID.
+ * @return string
+ */
+function pspa_ms_render_graduate_finder_card( $user_id ) {
+    if ( ! pspa_ms_current_user_can_manage_directory_visibility() && ! pspa_ms_user_is_visible_in_directory( $user_id ) ) {
+        return '';
+    }
+
+    $first = function_exists( 'get_field' ) ? (string) get_field( 'gn_first_name', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_first_name', true );
+    $last  = function_exists( 'get_field' ) ? (string) get_field( 'gn_surname', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_surname', true );
+    $year  = function_exists( 'get_field' ) ? (string) get_field( 'gn_graduation_year', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_graduation_year', true );
+
+    ob_start();
+    ?>
+    <div class="pspa-graduate-finder-card">
+        <p class="pspa-graduate-finder-card__item"><span class="pspa-graduate-finder-card__label"><?php esc_html_e( 'Όνομα', 'pspa-membership-system' ); ?>:</span> <span class="pspa-graduate-finder-card__value"><?php echo '' !== $first ? esc_html( $first ) : '&mdash;'; ?></span></p>
+        <p class="pspa-graduate-finder-card__item"><span class="pspa-graduate-finder-card__label"><?php esc_html_e( 'Επίθετο', 'pspa-membership-system' ); ?>:</span> <span class="pspa-graduate-finder-card__value"><?php echo '' !== $last ? esc_html( $last ) : '&mdash;'; ?></span></p>
+        <p class="pspa-graduate-finder-card__item"><span class="pspa-graduate-finder-card__label"><?php esc_html_e( 'Έτος Αποφοίτησης', 'pspa-membership-system' ); ?>:</span> <span class="pspa-graduate-finder-card__value"><?php echo '' !== $year ? esc_html( $year ) : '&mdash;'; ?></span></p>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+
+/**
+ * Shortcode callback for the graduate finder.
+ *
+ * @return string
+ */
+function pspa_ms_graduate_finder_shortcode() {
+    if ( ! is_user_logged_in() ) {
+        return '<p>' . esc_html__( 'Πρέπει να είστε συνδεδεμένοι για να αναζητήσετε αποφοίτους.', 'pspa-membership-system' ) . '</p>';
+    }
+
+    pspa_ms_enqueue_dashboard_styles();
+
+    wp_enqueue_style( 'pspa-ms-graduate-finder', plugin_dir_url( __FILE__ ) . 'assets/css/graduate-finder.css', array(), PSPA_MS_VERSION );
+    wp_enqueue_script( 'pspa-ms-graduate-finder', plugin_dir_url( __FILE__ ) . 'assets/js/graduate-finder.js', array( 'jquery' ), PSPA_MS_VERSION, true );
+
+    wp_localize_script(
+        'pspa-ms-graduate-finder',
+        'pspaMsFinder',
+        array(
+            'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
+            'nonce'        => wp_create_nonce( 'pspa_ms_finder' ),
+            'errorMessage' => esc_html__( 'Παρουσιάστηκε σφάλμα κατά τη φόρτωση των αποφοίτων.', 'pspa-membership-system' ),
+        )
+    );
+
+    $form_id    = wp_unique_id( 'pspa-graduate-finder-form-' );
+    $results_id = wp_unique_id( 'pspa-graduate-finder-results-' );
+
+    ob_start();
+    ?>
+    <div class="pspa-graduate-finder pspa-dashboard">
+        <form id="<?php echo esc_attr( $form_id ); ?>" class="pspa-graduate-finder__filters" novalidate>
+            <label class="pspa-graduate-finder__field" for="<?php echo esc_attr( $form_id ); ?>-first">
+                <span class="pspa-graduate-finder__label"><?php esc_html_e( 'Όνομα', 'pspa-membership-system' ); ?></span>
+                <input type="text" id="<?php echo esc_attr( $form_id ); ?>-first" name="first_name" placeholder="<?php esc_attr_e( 'Όνομα', 'pspa-membership-system' ); ?>" autocomplete="off" />
+            </label>
+            <label class="pspa-graduate-finder__field" for="<?php echo esc_attr( $form_id ); ?>-last">
+                <span class="pspa-graduate-finder__label"><?php esc_html_e( 'Επίθετο', 'pspa-membership-system' ); ?></span>
+                <input type="text" id="<?php echo esc_attr( $form_id ); ?>-last" name="last_name" placeholder="<?php esc_attr_e( 'Επίθετο', 'pspa-membership-system' ); ?>" autocomplete="off" />
+            </label>
+            <label class="pspa-graduate-finder__field" for="<?php echo esc_attr( $form_id ); ?>-year">
+                <span class="pspa-graduate-finder__label"><?php esc_html_e( 'Έτος Αποφοίτησης', 'pspa-membership-system' ); ?></span>
+                <input type="text" id="<?php echo esc_attr( $form_id ); ?>-year" name="graduation_year" placeholder="<?php esc_attr_e( 'Έτος Αποφοίτησης', 'pspa-membership-system' ); ?>" inputmode="numeric" autocomplete="off" />
+            </label>
+        </form>
+        <div id="<?php echo esc_attr( $results_id ); ?>" class="pspa-graduate-finder__results">
+            <p class="pspa-graduate-finder__status"><?php esc_html_e( 'Φόρτωση...', 'pspa-membership-system' ); ?></p>
+        </div>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+
+/**
  * Shortcode callback for the graduate directory.
  *
  * @return string
@@ -1825,6 +1905,97 @@ function pspa_ms_ajax_filter_graduates() {
     wp_send_json_success( array( 'html' => $html ) );
 }
 add_action( 'wp_ajax_pspa_ms_filter_graduates', 'pspa_ms_ajax_filter_graduates' );
+
+/**
+ * AJAX handler for graduate finder searches.
+ */
+function pspa_ms_ajax_filter_graduate_finder() {
+    check_ajax_referer( 'pspa_ms_finder', 'nonce' );
+
+    if ( ! is_user_logged_in() ) {
+        wp_send_json_error();
+    }
+
+    $meta_query      = array( 'relation' => 'AND' );
+    $can_view_hidden = pspa_ms_current_user_can_manage_directory_visibility();
+
+    if ( ! $can_view_hidden ) {
+        $meta_query[] = array(
+            'key'   => 'gn_directory_visible',
+            'value' => '1',
+        );
+    }
+
+    $first_name = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
+    if ( '' !== $first_name ) {
+        $meta_query[] = array(
+            'key'     => 'gn_first_name',
+            'value'   => $first_name,
+            'compare' => 'LIKE',
+        );
+    }
+
+    $last_name = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
+    if ( '' !== $last_name ) {
+        $meta_query[] = array(
+            'key'     => 'gn_surname',
+            'value'   => $last_name,
+            'compare' => 'LIKE',
+        );
+    }
+
+    $graduation_year = isset( $_POST['graduation_year'] ) ? sanitize_text_field( wp_unslash( $_POST['graduation_year'] ) ) : '';
+    if ( '' !== $graduation_year ) {
+        $meta_query[] = array(
+            'key'     => 'gn_graduation_year',
+            'value'   => $graduation_year,
+            'compare' => 'LIKE',
+        );
+    }
+
+    $page     = isset( $_POST['page'] ) ? max( 1, absint( $_POST['page'] ) ) : 1;
+    $per_page = 12;
+
+    $query_args = array(
+        'number'      => $per_page,
+        'offset'      => ( $page - 1 ) * $per_page,
+        'meta_query'  => $meta_query,
+        'count_total' => true,
+        'orderby'     => 'display_name',
+        'order'       => 'ASC',
+    );
+
+    $users_query = new WP_User_Query( $query_args );
+    $results     = $users_query->get_results();
+    $total_users = (int) $users_query->get_total();
+    $total_pages = (int) ceil( $total_users / $per_page );
+    $html        = '';
+
+    if ( ! empty( $results ) ) {
+        foreach ( $results as $user ) {
+            $html .= pspa_ms_render_graduate_finder_card( $user->ID );
+        }
+
+        if ( '' === trim( $html ) ) {
+            $html = '<p>' . esc_html__( 'Δεν βρέθηκαν απόφοιτοι.', 'pspa-membership-system' ) . '</p>';
+        } elseif ( $total_pages > 1 ) {
+            $html .= '<nav class="pspa-finder-pagination" aria-label="' . esc_attr__( 'Σελιδοποίηση αποφοίτων', 'pspa-membership-system' ) . '">';
+            if ( $page > 1 ) {
+                $html .= '<a href="#" class="prev" data-page="' . ( $page - 1 ) . '">&laquo; ' . esc_html__( 'Προηγούμενη', 'pspa-membership-system' ) . '</a>';
+            }
+            $html .= '<span class="current">' . sprintf( esc_html__( 'Σελίδα %1$d από %2$d', 'pspa-membership-system' ), $page, $total_pages ) . '</span>';
+            if ( $page < $total_pages ) {
+                $html .= '<a href="#" class="next" data-page="' . ( $page + 1 ) . '">' . esc_html__( 'Επόμενη', 'pspa-membership-system' ) . ' &raquo;</a>';
+            }
+            $html .= '</nav>';
+        }
+    } else {
+        $html = '<p>' . esc_html__( 'Δεν βρέθηκαν απόφοιτοι.', 'pspa-membership-system' ) . '</p>';
+    }
+
+    wp_send_json_success( array( 'html' => $html ) );
+}
+add_action( 'wp_ajax_pspa_ms_filter_graduate_finder', 'pspa_ms_ajax_filter_graduate_finder' );
 
 /**
  * Flush rewrite rules on activation and deactivation.

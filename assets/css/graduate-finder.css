@@ -1,0 +1,93 @@
+.pspa-graduate-finder {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.pspa-graduate-finder__filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.pspa-graduate-finder__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-weight: 600;
+}
+
+.pspa-graduate-finder__label {
+    font-size: 0.95rem;
+    color: #333;
+}
+
+.pspa-graduate-finder__field input {
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #d6d6d6;
+    border-radius: 4px;
+    font: inherit;
+}
+
+.pspa-graduate-finder__field input:focus {
+    outline: 2px solid var(--ink, #3b2b22);
+    outline-offset: 1px;
+}
+
+.pspa-graduate-finder__results {
+    display: grid;
+    gap: 1rem;
+}
+
+.pspa-graduate-finder__results.is-loading {
+    opacity: 0.6;
+}
+
+.pspa-graduate-finder-card {
+    background: #fff;
+    border: 1px solid #e2e2e2;
+    border-radius: 6px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.pspa-graduate-finder-card__item {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.pspa-graduate-finder-card__label {
+    font-weight: 600;
+    color: #222;
+}
+
+.pspa-graduate-finder-card__value {
+    color: #444;
+}
+
+.pspa-finder-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.pspa-finder-pagination a {
+    padding: 0.45rem 0.85rem;
+    background: var(--ink, #3b2b22);
+    color: #fff;
+    border-radius: 4px;
+    text-decoration: none;
+}
+
+.pspa-finder-pagination .current {
+    font-weight: 600;
+}
