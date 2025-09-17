@@ -4,7 +4,7 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.0.95
+Stable tag: 0.0.96
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,11 @@ The plugin registers two custom user roles:
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
+
+= 0.0.96 =
+* Add an administrator-only ACF toggle to control graduate directory visibility and default new users to hidden.
+* Hide public profiles for graduates marked as invisible unless viewed by an administrator.
+* Bump version to 0.0.96.
 
 = 0.0.95 =
 * Update graduate directory buttons to read "Δείτε Περισσότερα".

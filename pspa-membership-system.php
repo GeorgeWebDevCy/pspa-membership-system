@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.95
+ * Version: 0.0.96
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.95' );
+define( 'PSPA_MS_VERSION', '0.0.96' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -467,6 +467,9 @@ function pspa_ms_public_profile_template( $template ) {
         if ( ! $user ) {
             return get_404_template();
         }
+        if ( ! pspa_ms_user_is_visible_in_directory( $user->ID ) && ! pspa_ms_current_user_can_manage_directory_visibility() ) {
+            return get_404_template();
+        }
         set_query_var( 'pspa_graduate_user', $user );
         $new_template = plugin_dir_path( __FILE__ ) . 'templates/graduate-public-profile.php';
         if ( file_exists( $new_template ) ) {
@@ -572,6 +575,7 @@ function pspa_ms_get_admin_only_field_names() {
         'gn_login_verified_date',
         'gn_deceased',
         'gn_show_deceased',
+        'gn_directory_visible',
     );
 }
 
@@ -603,6 +607,48 @@ function pspa_ms_current_user_is_professional_catalogue() {
 }
 
 /**
+ * Determine if the current user can manage graduate directory visibility.
+ *
+ * Administrators and System Admins can override visibility restrictions.
+ *
+ * @return bool
+ */
+function pspa_ms_current_user_can_manage_directory_visibility() {
+    if ( current_user_can( 'manage_options' ) ) {
+        return true;
+    }
+
+    if ( ! is_user_logged_in() ) {
+        return false;
+    }
+
+    $current_user = wp_get_current_user();
+    $roles        = (array) $current_user->roles;
+
+    return in_array( 'system-admin', $roles, true ) || in_array( 'sysadmin', $roles, true );
+}
+
+/**
+ * Check if a graduate is visible in the directory.
+ *
+ * @param int $user_id User ID.
+ * @return bool
+ */
+function pspa_ms_user_is_visible_in_directory( $user_id ) {
+    if ( empty( $user_id ) ) {
+        return false;
+    }
+
+    if ( function_exists( 'get_field' ) ) {
+        $value = get_field( 'gn_directory_visible', 'user_' . $user_id );
+    } else {
+        $value = get_user_meta( $user_id, 'gn_directory_visible', true );
+    }
+
+    return (bool) $value;
+}
+
+/**
  * Hide admin-only fields from catalogue editors and graduate profile forms.
  *
  * @param array|false $field Field settings.
@@ -616,6 +662,10 @@ function pspa_ms_hide_admin_only_fields( $field ) {
     $admin_only = pspa_ms_get_admin_only_field_names();
 
     if ( ! in_array( $field['name'], $admin_only, true ) ) {
+        return $field;
+    }
+
+    if ( pspa_ms_current_user_can_manage_directory_visibility() ) {
         return $field;
     }
 
@@ -1541,6 +1591,10 @@ function pspa_ms_get_public_profile_url( $user_id ) {
 }
 
 function pspa_ms_render_graduate_card( $user_id ) {
+    if ( ! pspa_ms_current_user_can_manage_directory_visibility() && ! pspa_ms_user_is_visible_in_directory( $user_id ) ) {
+        return '';
+    }
+
     $first      = function_exists( 'get_field' ) ? (string) get_field( 'gn_first_name', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_first_name', true );
     $last       = function_exists( 'get_field' ) ? (string) get_field( 'gn_surname', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_surname', true );
     $name       = trim( $first . ' ' . $last );
@@ -1667,6 +1721,14 @@ function pspa_ms_ajax_filter_graduates() {
     );
 
     $meta_query = array( 'relation' => 'AND' );
+    $can_view_hidden = pspa_ms_current_user_can_manage_directory_visibility();
+
+    if ( ! $can_view_hidden ) {
+        $meta_query[] = array(
+            'key'   => 'gn_directory_visible',
+            'value' => '1',
+        );
+    }
 
     foreach ( $fields as $request => $key ) {
         if ( ! empty( $_POST[ $request ] ) ) {
@@ -1681,15 +1743,7 @@ function pspa_ms_ajax_filter_graduates() {
         $full_name = sanitize_text_field( wp_unslash( $_POST['full_name'] ) );
         $parts     = preg_split( '/\s+/u', $full_name );
 
-        $compare      = 'LIKE';
-        $current_user = wp_get_current_user();
-        if (
-            current_user_can( 'manage_options' ) ||
-            in_array( 'system-admin', (array) $current_user->roles, true ) ||
-            in_array( 'sysadmin', (array) $current_user->roles, true )
-        ) {
-            $compare = '=';
-        }
+        $compare = $can_view_hidden ? '=' : 'LIKE';
 
         $name_query = array( 'relation' => 'AND' );
 

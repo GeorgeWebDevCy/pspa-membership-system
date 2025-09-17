@@ -11,7 +11,17 @@
 
 $pspa_user = get_query_var( 'pspa_graduate_user' );
 
-if ( ! $pspa_user instanceof WP_User ) {
+$can_view_hidden = function_exists( 'pspa_ms_current_user_can_manage_directory_visibility' )
+    ? pspa_ms_current_user_can_manage_directory_visibility()
+    : current_user_can( 'manage_options' );
+
+if (
+    ! $pspa_user instanceof WP_User ||
+    ( ! $can_view_hidden && function_exists( 'pspa_ms_user_is_visible_in_directory' ) && ! pspa_ms_user_is_visible_in_directory( $pspa_user->ID ) )
+) {
+    if ( ! headers_sent() ) {
+        status_header( 404 );
+    }
     get_header();
     echo '<div class="pspa-dashboard"><p>' . esc_html__( 'Ο απόφοιτος δεν βρέθηκε.', 'pspa-membership-system' ) . '</p></div>';
     get_footer();
