@@ -18,7 +18,7 @@ Key features:
  - **Per-field visibility toggles** – graduates can decide which profile fields are publicly visible.
  - **ACF-based form** – all profile fields are rendered using ACF Pro, with tabs hidden to keep the form on one page.
  - **Profile image uploads** – graduates are granted the `upload_files` capability to change their profile photo.
- - **Password updates** – graduates can change their account password.
+ - **Password updates** – the WooCommerce account details form appears above the profile so graduates can manage their credentials.
  - **Name synchronization** – the user's WordPress first name, last name and display name are updated after saving the form.
 - **WooCommerce integration** – registers a custom endpoint and navigation item under "My Account" so graduates can access the dashboard.
 - **Global visibility mode lock** – the `gn_visibility_mode` field is hidden on the front end and cannot be changed by graduates.
@@ -31,7 +31,7 @@ Dependencies:
 
 ## Administrator Tools
 
-System Admins and site administrators can search for graduates and edit any user profile directly from the `Προφίλ Απόφοιτου` endpoint. The search covers all graduate fields and opens an editable form with ACF data, E-mail and password controls. Search results are displayed using the same card layout as the Graduate Directory, and cards include an edit button for administrators. The interface uses the same `pspa-dashboard` styles as the graduate profile for a consistent appearance.
+System Admins and site administrators can search for graduates and edit any user profile directly from the `Προφίλ Απόφοιτου` endpoint. The search covers all graduate fields and opens an editable form that mirrors the ACF data graduates see. Search results are displayed using the same card layout as the Graduate Directory, and cards include an edit button for administrators. Credential changes should be handled via the WooCommerce account form or the WordPress user editor.
 
 ## Login by Details
 
