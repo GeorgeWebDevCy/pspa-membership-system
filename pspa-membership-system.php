@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.87
+ * Version: 0.0.88
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.87' );
+define( 'PSPA_MS_VERSION', '0.0.88' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -963,16 +963,8 @@ function pspa_ms_handle_login_by_details() {
         pspa_ms_log( 'Existing verification date for user ' . $user_id . ': ' . ( $verified ? $verified : 'none' ) );
         if ( $verified ) {
             pspa_ms_log( 'Login blocked: user already verified' );
-            $referer = wp_get_referer() ? wp_get_referer() : home_url();
-            $user     = get_user_by( 'id', $user_id );
-            $email    = $user ? $user->user_email : '';
-            $redirect = add_query_arg(
-                array(
-                    'login-details' => 'verified',
-                    'email'         => rawurlencode( $email ),
-                ),
-                $referer
-            );
+            $redirect = pspa_ms_get_graduate_profile_edit_url();
+            pspa_ms_log( 'Redirecting verified user to graduate profile: ' . $redirect );
             wp_safe_redirect( $redirect );
             exit;
         }
@@ -1025,7 +1017,12 @@ function pspa_ms_login_by_details_shortcode() {
 
     if ( isset( $_GET['login-details'] ) ) {
         if ( 'failed' === $_GET['login-details'] ) {
-            $output .= '<p>' . esc_html__( 'Δεν βρέθηκε αντίστοιχος χρήστης.', 'pspa-membership-system' ) . '</p>';
+            wp_enqueue_script( 'sweetalert2', 'https://cdn.jsdelivr.net/npm/sweetalert2@11', array(), null, true );
+            $title   = esc_js( __( 'Μη έγκυρα στοιχεία', 'pspa-membership-system' ) );
+            $message = esc_js( __( 'Τα στοιχεία που εισαγάγατε είναι λανθασμένα. Παρακαλούμε δοκιμάστε ξανά την επαλήθευση.', 'pspa-membership-system' ) );
+            $script  = 'document.addEventListener("DOMContentLoaded", function(){Swal.fire({icon:"error",title:"' . $title . '",text:"' . $message . '"});});';
+            wp_add_inline_script( 'sweetalert2', $script );
+            $output .= '<p>' . esc_html__( 'Τα στοιχεία που εισαγάγατε είναι λανθασμένα. Παρακαλούμε δοκιμάστε ξανά την επαλήθευση.', 'pspa-membership-system' ) . '</p>';
         } elseif ( 'verified' === $_GET['login-details'] ) {
             $email      = isset( $_GET['email'] ) ? sanitize_email( wp_unslash( $_GET['email'] ) ) : '';
             $login_url  = wp_login_url();
