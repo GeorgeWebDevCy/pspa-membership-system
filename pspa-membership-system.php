@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.110
+ * Version: 0.0.111
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.110' );
+define( 'PSPA_MS_VERSION', '0.0.111' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -563,6 +563,28 @@ function pspa_ms_hide_public_visibility_toggles( $field ) {
     return $field;
 }
 add_filter( 'acf/prepare_field', 'pspa_ms_hide_public_visibility_toggles', 20 );
+
+/**
+ * Force the profile picture field to use the basic uploader on the front end.
+ *
+ * Front-end users should upload a new image instead of browsing the existing
+ * media library. Switching to the basic uploader removes the media library
+ * interface and presents a simple file picker that defaults to uploads.
+ *
+ * @param array $field Field settings.
+ * @return array
+ */
+function pspa_ms_lock_profile_picture_to_uploads( $field ) {
+    if ( is_admin() ) {
+        return $field;
+    }
+
+    $field['uploader'] = 'basic';
+    $field['library']  = 'uploadedTo';
+
+    return $field;
+}
+add_filter( 'acf/prepare_field/name=gn_profile_picture', 'pspa_ms_lock_profile_picture_to_uploads' );
 
 /**
  * Get the list of graduate profile fields reserved for administrators.
