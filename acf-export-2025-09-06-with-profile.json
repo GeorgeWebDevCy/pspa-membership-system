@@ -1188,6 +1188,26 @@
         "save_other_choice": 0,
         "allow_null": 0,
         "return_format": "value"
+      },
+      {
+        "key": "field_gn_directory_visible",
+        "label": "Εμφάνιση στον κατάλογο αποφοίτων",
+        "name": "gn_directory_visible",
+        "aria-label": "",
+        "type": "true_false",
+        "instructions": "Ενεργοποιήστε για να εμφανίζεται ο απόφοιτος στον κατάλογο.",
+        "required": false,
+        "conditional_logic": false,
+        "wrapper": {
+          "width": "",
+          "class": "",
+          "id": ""
+        },
+        "default_value": 0,
+        "ui": 1,
+        "message": "",
+        "ui_on_text": "",
+        "ui_off_text": ""
       }
     ],
     "location": [

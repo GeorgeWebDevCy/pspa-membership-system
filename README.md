@@ -33,6 +33,8 @@ Dependencies:
 
 System Admins and site administrators can search for graduates and edit any user profile directly from the `Προφίλ Απόφοιτου` endpoint. The search covers all graduate fields and opens an editable form that mirrors the ACF data graduates see. Search results are displayed using the same card layout as the Graduate Directory, and cards include an edit button for administrators. Credential changes should be handled via the WooCommerce account form or the WordPress user editor.
 
+Administrators can also approve graduates for the public directory by toggling the **Εμφάνιση στον κατάλογο αποφοίτων** (`gn_directory_visible`) field. The switch defaults to off so graduates remain hidden until a System Admin reviews their profile.
+
 ## Login by Details
 
 The `[pspa_login_by_details]` shortcode renders a form asking for first name, last name and graduation year. When the details match a graduate record the user is logged in and redirected to the dashboard. The verification date is stored in the read-only `gn_login_verified_date` field only after the user sets an email and password via the profile form; once saved, subsequent login-by-details attempts are blocked.
@@ -113,3 +115,7 @@ The plugin registers a **Graduate Profile** field group in Advanced Custom Field
 - **Εμφάνιση στο δημόσιο προφίλ: Τίτλος** (`gn_show_job_title`, true_false)
 - **Θέση-Εταιρεία** (`gn_position_company`, text)
 - **Εμφάνιση στο δημόσιο προφίλ: Θέση-Εταιρεία** (`gn_show_position_company`, true_false)
+
+### Ρυθμίσεις ορατότητας
+- **Λειτουργία ορατότητας** (`gn_visibility_mode`, radio)
+- **Εμφάνιση στον κατάλογο αποφοίτων** (`gn_directory_visible`, true_false)
