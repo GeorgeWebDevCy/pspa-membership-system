@@ -37,8 +37,9 @@ wp_enqueue_style(
 );
 get_header();
 
-$uid        = $pspa_user->ID;
-$visibility = function_exists( 'get_field' ) ? get_field( 'gn_visibility_mode', 'user_' . $uid ) : get_user_meta( $uid, 'gn_visibility_mode', true );
+$uid       = $pspa_user->ID;
+$user_key  = 'user_' . $uid;
+$visibility = function_exists( 'get_field' ) ? get_field( 'gn_visibility_mode', $user_key ) : get_user_meta( $uid, 'gn_visibility_mode', true );
 
 $fields             = function_exists( 'acf_get_fields' ) ? acf_get_fields( 'group_gn_graduate_profile' ) : array();
 $header_field_names = array( 'gn_profile_picture', 'gn_first_name', 'gn_surname', 'gn_job_title', 'gn_position_company', 'gn_city', 'gn_country' );
@@ -48,21 +49,36 @@ $catalogue_hidden_fields = $hide_catalogue_fields && function_exists( 'pspa_ms_g
     ? pspa_ms_get_professional_catalogue_hidden_fields()
     : array();
 
-foreach ( $header_field_names as $name ) {
+$should_show_field = static function ( $field_name ) use ( $uid, $user_key, $visibility ) {
     if ( 'hide_all' === $visibility ) {
-        break;
+        return false;
     }
-    if ( 'show_all' !== $visibility ) {
-        $show = function_exists( 'get_field' ) ? get_field( 'gn_show_' . $name, 'user_' . $uid ) : get_user_meta( $uid, 'gn_show_' . $name, true );
-        if ( null !== $show && ! $show ) {
-            continue;
-        }
+
+    if ( 'show_all' === $visibility ) {
+        return true;
+    }
+
+    $toggle_suffix = 0 === strpos( $field_name, 'gn_' ) ? substr( $field_name, 3 ) : $field_name;
+    $toggle_name   = 'gn_show_' . $toggle_suffix;
+
+    $show = function_exists( 'get_field' ) ? get_field( $toggle_name, $user_key ) : get_user_meta( $uid, $toggle_name, true );
+
+    if ( null === $show || '' === $show ) {
+        return true;
+    }
+
+    return (bool) $show;
+};
+
+foreach ( $header_field_names as $name ) {
+    if ( ! $should_show_field( $name ) ) {
+        continue;
     }
     if ( $hide_catalogue_fields && in_array( $name, $catalogue_hidden_fields, true ) ) {
         continue;
     }
 
-    $value = function_exists( 'get_field' ) ? get_field( $name, 'user_' . $uid ) : get_user_meta( $uid, $name, true );
+    $value = function_exists( 'get_field' ) ? get_field( $name, $user_key ) : get_user_meta( $uid, $name, true );
 
     switch ( $name ) {
         case 'gn_profile_picture':
@@ -148,18 +164,11 @@ foreach ( $header_field_names as $name ) {
             continue;
         }
 
-        if ( 'hide_all' === $visibility ) {
+        if ( ! $should_show_field( $field['name'] ) ) {
             continue;
         }
 
-        if ( 'show_all' !== $visibility ) {
-            $show = function_exists( 'get_field' ) ? get_field( 'gn_show_' . $field['name'], 'user_' . $uid ) : get_user_meta( $uid, 'gn_show_' . $field['name'], true );
-            if ( null !== $show && ! $show ) {
-                continue;
-            }
-        }
-
-        $value = function_exists( 'get_field' ) ? get_field( $field['name'], 'user_' . $uid ) : get_user_meta( $uid, $field['name'], true );
+        $value = function_exists( 'get_field' ) ? get_field( $field['name'], $user_key ) : get_user_meta( $uid, $field['name'], true );
 
         if ( 'image' === $field['type'] ) {
             $img_id     = is_array( $value ) ? ( $value['ID'] ?? 0 ) : $value;
