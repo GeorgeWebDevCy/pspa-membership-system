@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.96
+ * Version: 0.0.97
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.96' );
+define( 'PSPA_MS_VERSION', '0.0.97' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -1545,8 +1545,24 @@ add_action( 'init', 'pspa_ms_block_admin_access' );
  */
 function pspa_ms_get_unique_user_meta_values( $meta_key ) {
     global $wpdb;
-    $values = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT meta_value FROM {$wpdb->usermeta} WHERE meta_key = %s AND meta_value <> '' ORDER BY meta_value ASC", $meta_key ) );
-    return $values;
+    $can_view_hidden = pspa_ms_current_user_can_manage_directory_visibility();
+
+    if ( $can_view_hidden ) {
+        $sql    = "SELECT DISTINCT meta_value FROM {$wpdb->usermeta} WHERE meta_key = %s AND meta_value <> '' ORDER BY meta_value ASC";
+        $params = array( $meta_key );
+    } else {
+        $sql = "SELECT DISTINCT m.meta_value
+            FROM {$wpdb->usermeta} m
+            INNER JOIN {$wpdb->usermeta} vis ON m.user_id = vis.user_id
+            WHERE m.meta_key = %s
+              AND m.meta_value <> ''
+              AND vis.meta_key = %s
+              AND vis.meta_value = %s
+            ORDER BY m.meta_value ASC";
+        $params = array( $meta_key, 'gn_directory_visible', '1' );
+    }
+
+    return $wpdb->get_col( $wpdb->prepare( $sql, $params ) );
 }
 
 /**
