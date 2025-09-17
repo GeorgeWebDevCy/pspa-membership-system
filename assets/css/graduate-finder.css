@@ -62,12 +62,8 @@
     flex-wrap: wrap;
 }
 
-.pspa-finder-pagination a {
-    padding: 0.45rem 0.85rem;
-    background: var(--ink, #3b2b22);
-    color: #fff;
-    border-radius: 4px;
-    text-decoration: none;
+.pspa-finder-pagination .et_pb_button {
+    margin: 0;
 }
 
 .pspa-finder-pagination .current {

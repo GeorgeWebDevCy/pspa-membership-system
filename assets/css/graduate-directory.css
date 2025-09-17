@@ -41,19 +41,12 @@
     margin-top: 0.5em;
     display: flex;
     gap: 0.5em;
+    flex-wrap: wrap;
 }
 
-.pspa-graduate-actions a,
-.pspa-graduate-more {
-    padding: 0.4em 0.8em;
-    background: var(--ink, #3b2b22);
-    color: #fff;
-    border-radius: 4px;
-    text-decoration: none;
-}
-
-.pspa-graduate-edit {
-    background: #555;
+.pspa-graduate-actions .et_pb_button,
+.pspa-dir-pagination .et_pb_button {
+    margin: 0;
 }
 
 .pspa-dir-pagination {
@@ -62,12 +55,5 @@
     align-items: center;
     gap: 1em;
     margin-top: 1em;
-}
-
-.pspa-dir-pagination a {
-    padding: 0.4em 0.8em;
-    background: var(--ink, #3b2b22);
-    color: #fff;
-    border-radius: 4px;
-    text-decoration: none;
+    flex-wrap: wrap;
 }
