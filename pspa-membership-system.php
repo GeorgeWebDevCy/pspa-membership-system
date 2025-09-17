@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.104
+ * Version: 0.0.105
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.104' );
+define( 'PSPA_MS_VERSION', '0.0.105' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -593,6 +593,23 @@ function pspa_ms_get_professional_catalogue_hidden_fields() {
 }
 
 /**
+ * Determine if the current request targets the graduate profile endpoint.
+ *
+ * @return bool
+ */
+function pspa_ms_is_graduate_profile_endpoint() {
+    if ( ! function_exists( 'is_account_page' ) ) {
+        return false;
+    }
+
+    if ( ! is_account_page() ) {
+        return false;
+    }
+
+    return false !== get_query_var( 'graduate-profile', false );
+}
+
+/**
  * Determine if the current user has the Professional Catalogue role.
  *
  * @return bool
@@ -671,7 +688,7 @@ function pspa_ms_hide_admin_only_fields( $field ) {
     }
 
     $is_catalogue = pspa_ms_current_user_is_professional_catalogue();
-    $is_grad_form = function_exists( 'is_account_page' ) && is_account_page() && false !== get_query_var( 'graduate-profile', false );
+    $is_grad_form = pspa_ms_is_graduate_profile_endpoint();
 
     if ( $is_catalogue || $is_grad_form ) {
         return false;
@@ -1409,6 +1426,10 @@ add_action( 'acf/save_post', 'pspa_ms_sync_user_names', 20 );
  * @return array
  */
 function pspa_ms_lock_initial_db_id_field( $field ) {
+    if ( pspa_ms_current_user_is_professional_catalogue() && pspa_ms_is_graduate_profile_endpoint() ) {
+        return false;
+    }
+
     $field['readonly'] = true;
     $field['disabled'] = true;
     return $field;
@@ -1440,6 +1461,10 @@ add_filter( 'acf/update_value/name=gn_initial_db_id', 'pspa_ms_preserve_initial_
  * @return array
  */
 function pspa_ms_lock_login_verified_date_field( $field ) {
+    if ( pspa_ms_current_user_is_professional_catalogue() && pspa_ms_is_graduate_profile_endpoint() ) {
+        return false;
+    }
+
     $field['readonly'] = true;
     $field['disabled'] = true;
     return $field;
