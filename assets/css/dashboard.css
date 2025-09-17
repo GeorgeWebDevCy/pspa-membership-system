@@ -19,6 +19,13 @@
 .pspa-dashboard .password-strength.strong{background:#c1e1b9;border-color:#83c373}
 .pspa-dashboard .pspa-graduate-profile-note{margin-bottom:30px}
 .pspa-dashboard .acf-tab-group{list-style:none;margin:0 0 20px;padding:0}
+.pspa-dashboard .acf-tab-group>li{margin:0 0 8px;background:var(--card);border:1px solid var(--line);border-radius:10px;transition:border-color .2s ease,background-color .2s ease}
+.pspa-dashboard .acf-tab-group>li:last-child{margin-bottom:0}
+.pspa-dashboard .acf-tab-group .acf-tab-button{display:block;padding:8px 12px;color:var(--ink);text-decoration:none;border-radius:10px;transition:color .2s ease,background-color .2s ease}
+.pspa-dashboard .acf-tab-group .acf-tab-button:hover,.pspa-dashboard .acf-tab-group .acf-tab-button:focus{background:#fff;color:var(--ink)}
+.pspa-dashboard .acf-tab-group>li.active{background:var(--ink);border-color:var(--ink)}
+.pspa-dashboard .acf-tab-group>li.active .acf-tab-button{background:transparent;color:#fff;font-weight:600}
+.pspa-dashboard .acf-tab-group>li.active .acf-tab-button:hover,.pspa-dashboard .acf-tab-group>li.active .acf-tab-button:focus{background:transparent;color:#fff}
 .pspa-dashboard .acf-tab-group>li{margin:0 0 8px;background:var(--card);border:1px solid var(--line);border-radius:10px}
 .pspa-dashboard .acf-tab-group>li:last-child{margin-bottom:0}
 .pspa-dashboard .acf-tab-group .acf-tab-button{display:block;padding:8px 12px;color:var(--ink);text-decoration:none}
