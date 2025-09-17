@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.105
+ * Version: 0.0.106
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.105' );
+define( 'PSPA_MS_VERSION', '0.0.106' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -623,6 +623,30 @@ function pspa_ms_current_user_is_professional_catalogue() {
 
     return in_array( 'professionalcatalogue', (array) $current_user->roles, true );
 }
+
+/**
+ * Hide deceased status controls from Professional Catalogue users on graduate profile forms.
+ *
+ * @param array $field Field settings.
+ * @return array|false
+ */
+function pspa_ms_hide_deceased_fields_for_professional_catalogue( $field ) {
+    if ( ! is_array( $field ) ) {
+        return $field;
+    }
+
+    if ( ! pspa_ms_current_user_is_professional_catalogue() ) {
+        return $field;
+    }
+
+    if ( ! pspa_ms_is_graduate_profile_endpoint() ) {
+        return $field;
+    }
+
+    return false;
+}
+add_filter( 'acf/prepare_field/name=gn_deceased', 'pspa_ms_hide_deceased_fields_for_professional_catalogue', 25 );
+add_filter( 'acf/prepare_field/name=gn_show_deceased', 'pspa_ms_hide_deceased_fields_for_professional_catalogue', 25 );
 
 /**
  * Determine if the current user can manage graduate directory visibility.
