@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.85
+ * Version: 0.0.86
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.85' );
+define( 'PSPA_MS_VERSION', '0.0.86' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -577,9 +577,36 @@ function pspa_ms_graduate_profile_content() {
         return;
     }
 
+    pspa_ms_render_edit_account_section( $current_user );
     pspa_ms_simple_profile_form( $current_user->ID );
 }
 add_action( 'woocommerce_account_graduate-profile_endpoint', 'pspa_ms_graduate_profile_content' );
+
+/**
+ * Display the WooCommerce edit account form ahead of the graduate profile.
+ *
+ * @param WP_User $user Current user.
+ */
+function pspa_ms_render_edit_account_section( $user ) {
+    if ( ! $user instanceof WP_User ) {
+        return;
+    }
+
+    pspa_ms_enqueue_dashboard_styles();
+
+    echo '<div class="pspa-dashboard pspa-account-details">';
+    echo '<h2>' . esc_html__( 'Στοιχεία λογαριασμού', 'pspa-membership-system' ) . '</h2>';
+
+    if ( class_exists( 'WC_Shortcode_My_Account' ) && method_exists( 'WC_Shortcode_My_Account', 'edit_account' ) ) {
+        WC_Shortcode_My_Account::edit_account();
+    } elseif ( function_exists( 'wc_get_template' ) ) {
+        wc_get_template( 'myaccount/form-edit-account.php', array( 'user' => $user ) );
+    } else {
+        do_action( 'woocommerce_account_edit-account_endpoint', 'edit-account' );
+    }
+
+    echo '</div>';
+}
 
 /**
  * Render the simple profile form for graduates.
@@ -588,6 +615,34 @@ add_action( 'woocommerce_account_graduate-profile_endpoint', 'pspa_ms_graduate_p
  */
 function pspa_ms_simple_profile_form( $user_id ) {
     $user = get_user_by( 'id', $user_id );
+
+    if ( ! $user instanceof WP_User ) {
+        return;
+    }
+
+    pspa_ms_enqueue_dashboard_styles();
+
+    $verified       = get_user_meta( $user_id, 'gn_login_verified_date', true );
+    $needs_email    = empty( $user->user_email );
+    $needs_password = empty( $verified );
+
+    if ( $needs_email || $needs_password ) {
+        if ( $needs_email && $needs_password ) {
+            $requirement_text = esc_html__( 'τη διεύθυνση email και έναν κωδικό πρόσβασης', 'pspa-membership-system' );
+        } elseif ( $needs_email ) {
+            $requirement_text = esc_html__( 'τη διεύθυνση email', 'pspa-membership-system' );
+        } else {
+            $requirement_text = esc_html__( 'έναν κωδικό πρόσβασης', 'pspa-membership-system' );
+        }
+
+        $message = sprintf(
+            esc_html__( 'Για να συνεχίσετε, προσθέστε %s χρησιμοποιώντας τη φόρμα «Στοιχεία λογαριασμού» που εμφανίζεται παραπάνω. Αφού αποθηκεύσετε τις αλλαγές, θα μπορείτε να ενημερώσετε το προφίλ σας.', 'pspa-membership-system' ),
+            $requirement_text
+        );
+
+        echo '<div class="pspa-dashboard pspa-profile-requirements"><p>' . $message . '</p></div>';
+        return;
+    }
 
     if (
         'POST' === $_SERVER['REQUEST_METHOD'] &&
@@ -660,7 +715,6 @@ function pspa_ms_simple_profile_form( $user_id ) {
         }
     }
 
-    pspa_ms_enqueue_dashboard_styles();
     ?>
     <form class="woocommerce-EditAccountForm edit-account pspa-dashboard" method="post">
         <?php if ( function_exists( 'acf_form' ) ) : ?>
@@ -689,6 +743,38 @@ function pspa_ms_simple_profile_form( $user_id ) {
     </form>
     <?php
 }
+
+/**
+ * Set the login verification date when the WooCommerce account form updates the password.
+ *
+ * @param int $user_id User ID.
+ */
+function pspa_ms_handle_edit_account_password_update( $user_id ) {
+    if ( empty( $user_id ) ) {
+        return;
+    }
+
+    if ( empty( $_POST['save_account_details'] ) ) {
+        return;
+    }
+
+    $new_password = isset( $_POST['password_1'] ) ? wp_unslash( $_POST['password_1'] ) : '';
+
+    if ( '' === trim( $new_password ) ) {
+        return;
+    }
+
+    $user = get_user_by( 'id', $user_id );
+
+    if ( ! $user || empty( $user->user_email ) ) {
+        pspa_ms_log( 'Edit account password update skipped verification date for user ' . $user_id );
+        return;
+    }
+
+    update_user_meta( $user_id, 'gn_login_verified_date', current_time( 'mysql' ) );
+    pspa_ms_log( 'Verification date updated via edit account form for user ' . $user_id );
+}
+add_action( 'woocommerce_save_account_details', 'pspa_ms_handle_edit_account_password_update', 30, 1 );
 
 /**
  * Render admin interface allowing search and editing of users.
