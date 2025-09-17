@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.89
+ * Version: 0.0.90
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.89' );
+define( 'PSPA_MS_VERSION', '0.0.90' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -139,6 +139,24 @@ function pspa_ms_enqueue_password_strength() {
     );
 }
 add_action( 'wp_enqueue_scripts', 'pspa_ms_enqueue_password_strength' );
+
+/**
+ * Retrieve the URL shown after a login-by-details failure.
+ *
+ * @return string Failure redirect URL.
+ */
+function pspa_ms_get_login_details_failure_redirect_url() {
+    $default_url = home_url( '/αποτυχία-επικαιροποίησης/' );
+
+    /**
+     * Filters the login-by-details failure redirect URL.
+     *
+     * @param string $default_url Default failure page URL.
+     */
+    $redirect_url = apply_filters( 'pspa_ms_login_details_failure_redirect_url', $default_url );
+
+    return (string) $redirect_url;
+}
 
 /**
  * Estimate password strength for logging.
@@ -932,12 +950,53 @@ function pspa_ms_preserve_login_details_query( $redirect_url, $requested_url ) {
     }
 
     if ( ! array_key_exists( 'login-details', $redirect_query ) || $redirect_query['login-details'] !== $login_status ) {
+        $failure_url   = pspa_ms_get_login_details_failure_redirect_url();
+        $failure_parts = $failure_url ? wp_parse_url( $failure_url ) : array();
+        $redirect_path = isset( $redirect_parts['path'] ) ? rawurldecode( untrailingslashit( $redirect_parts['path'] ) ) : '';
+        $failure_path  = isset( $failure_parts['path'] ) ? rawurldecode( untrailingslashit( $failure_parts['path'] ) ) : '';
+
+        if ( $failure_path && $redirect_path === $failure_path ) {
+            return $redirect_url;
+        }
+
         return false;
     }
 
     return $redirect_url;
 }
 add_filter( 'redirect_canonical', 'pspa_ms_preserve_login_details_query', 10, 2 );
+
+/**
+ * Redirect login-by-details failures to a dedicated information page.
+ */
+function pspa_ms_redirect_login_details_failures() {
+    if ( 'GET' !== $_SERVER['REQUEST_METHOD'] ) {
+        return;
+    }
+
+    if ( ! isset( $_GET['login-details'] ) || 'failed' !== $_GET['login-details'] ) {
+        return;
+    }
+
+    $target_url = pspa_ms_get_login_details_failure_redirect_url();
+    if ( empty( $target_url ) ) {
+        return;
+    }
+
+    $request_uri  = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+    $request_path = $request_uri ? wp_parse_url( $request_uri, PHP_URL_PATH ) : '';
+    $request_path = $request_path ? rawurldecode( untrailingslashit( $request_path ) ) : '';
+    $target_path  = wp_parse_url( $target_url, PHP_URL_PATH );
+    $target_path  = $target_path ? rawurldecode( untrailingslashit( $target_path ) ) : '';
+
+    if ( $target_path && $request_path === $target_path ) {
+        return;
+    }
+
+    wp_safe_redirect( $target_url );
+    exit;
+}
+add_action( 'template_redirect', 'pspa_ms_redirect_login_details_failures', 11 );
 
 /**
  * Handle login submissions before output is sent.
@@ -1044,7 +1103,16 @@ function pspa_ms_handle_login_by_details() {
     }
 
     pspa_ms_log( 'Login failed: no matching user' );
+    $failure_url = pspa_ms_get_login_details_failure_redirect_url();
+
+    if ( $failure_url ) {
+        pspa_ms_log( 'Redirecting failed login to: ' . $failure_url );
+        wp_safe_redirect( $failure_url );
+        exit;
+    }
+
     $referer = wp_get_referer() ? wp_get_referer() : home_url();
+    pspa_ms_log( 'Failure page unavailable, redirecting back to referer: ' . $referer );
     wp_safe_redirect( add_query_arg( 'login-details', 'failed', $referer ) );
     exit;
 }
