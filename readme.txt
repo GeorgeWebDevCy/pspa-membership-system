@@ -4,7 +4,7 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.0.94
+Stable tag: 0.0.95
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,10 @@ The plugin registers two custom user roles:
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
+
+= 0.0.95 =
+* Update graduate directory buttons to read "Δείτε Περισσότερα".
+* Bump version to 0.0.95.
 
 = 0.0.94 =
 * Hide the Initial DB ID and login verification date fields from Professional Catalogue users on the front end.
@@ -321,7 +325,7 @@ The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access
 = 0.0.10 =
 * Μεταφράστηκαν όλα τα κουμπιά και οι προεπιλεγμένες επιλογές στα ελληνικά.
 * Εφαρμόστηκε ενιαία εμφάνιση στα shortcodes και οι κάρτες αποφοίτων είναι πλέον κλικαμπλ.
-* Προστέθηκε κουμπί "Δείτε Περισσότερο" στις κάρτες αποφοίτων.
+* Προστέθηκε κουμπί "Δείτε Περισσότερα" στις κάρτες αποφοίτων.
 = 0.0.9 =
 * Fix fatal error during activation caused by duplicate shortcode definitions.
 = 0.0.8 =
