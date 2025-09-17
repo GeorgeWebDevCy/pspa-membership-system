@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.98
+ * Version: 0.0.99
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.98' );
+define( 'PSPA_MS_VERSION', '0.0.99' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -1607,10 +1607,47 @@ function pspa_ms_get_public_profile_url( $user_id ) {
     return home_url( '/graduate/' . $user->user_nicename . '/' );
 }
 
-function pspa_ms_render_graduate_card( $user_id ) {
+/**
+ * Render a graduate profile card.
+ *
+ * @param int   $user_id User ID.
+ * @param array $args    {
+ *     Optional. Additional arguments.
+ *
+ *     @type string|array $extra_classes Extra CSS classes to append to the card wrapper.
+ * }
+ * @return string
+ */
+function pspa_ms_render_graduate_card( $user_id, $args = array() ) {
     if ( ! pspa_ms_current_user_can_manage_directory_visibility() && ! pspa_ms_user_is_visible_in_directory( $user_id ) ) {
         return '';
     }
+
+    $defaults = array(
+        'extra_classes' => array(),
+    );
+
+    $args = wp_parse_args( $args, $defaults );
+
+    if ( is_string( $args['extra_classes'] ) ) {
+        $args['extra_classes'] = preg_split( '/\s+/', $args['extra_classes'] );
+    }
+
+    if ( ! is_array( $args['extra_classes'] ) ) {
+        $args['extra_classes'] = array();
+    }
+
+    $card_classes = array( 'pspa-graduate-card' );
+
+    foreach ( $args['extra_classes'] as $class ) {
+        if ( ! $class ) {
+            continue;
+        }
+
+        $card_classes[] = sanitize_html_class( $class );
+    }
+
+    $card_classes = array_unique( array_filter( $card_classes ) );
 
     $first      = function_exists( 'get_field' ) ? (string) get_field( 'gn_first_name', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_first_name', true );
     $last       = function_exists( 'get_field' ) ? (string) get_field( 'gn_surname', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_surname', true );
@@ -1633,7 +1670,7 @@ function pspa_ms_render_graduate_card( $user_id ) {
 
     ob_start();
     ?>
-    <div class="pspa-graduate-card">
+    <div class="<?php echo esc_attr( implode( ' ', $card_classes ) ); ?>">
         <div class="pspa-graduate-avatar"><?php echo get_avatar( $user_id, 96 ); ?></div>
         <div class="pspa-graduate-details">
             <h3 class="pspa-graduate-name"><?php echo esc_html( $name ); ?></h3>
@@ -1659,29 +1696,18 @@ function pspa_ms_render_graduate_card( $user_id ) {
 }
 
 /**
- * Render a compact graduate card for the graduate finder.
+ * Render a graduate card for the graduate finder.
  *
  * @param int $user_id User ID.
  * @return string
  */
 function pspa_ms_render_graduate_finder_card( $user_id ) {
-    if ( ! pspa_ms_current_user_can_manage_directory_visibility() && ! pspa_ms_user_is_visible_in_directory( $user_id ) ) {
-        return '';
-    }
-
-    $first = function_exists( 'get_field' ) ? (string) get_field( 'gn_first_name', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_first_name', true );
-    $last  = function_exists( 'get_field' ) ? (string) get_field( 'gn_surname', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_surname', true );
-    $year  = function_exists( 'get_field' ) ? (string) get_field( 'gn_graduation_year', 'user_' . $user_id ) : get_user_meta( $user_id, 'gn_graduation_year', true );
-
-    ob_start();
-    ?>
-    <div class="pspa-graduate-finder-card">
-        <p class="pspa-graduate-finder-card__item"><span class="pspa-graduate-finder-card__label"><?php esc_html_e( 'Όνομα', 'pspa-membership-system' ); ?>:</span> <span class="pspa-graduate-finder-card__value"><?php echo '' !== $first ? esc_html( $first ) : '&mdash;'; ?></span></p>
-        <p class="pspa-graduate-finder-card__item"><span class="pspa-graduate-finder-card__label"><?php esc_html_e( 'Επίθετο', 'pspa-membership-system' ); ?>:</span> <span class="pspa-graduate-finder-card__value"><?php echo '' !== $last ? esc_html( $last ) : '&mdash;'; ?></span></p>
-        <p class="pspa-graduate-finder-card__item"><span class="pspa-graduate-finder-card__label"><?php esc_html_e( 'Έτος Αποφοίτησης', 'pspa-membership-system' ); ?>:</span> <span class="pspa-graduate-finder-card__value"><?php echo '' !== $year ? esc_html( $year ) : '&mdash;'; ?></span></p>
-    </div>
-    <?php
-    return ob_get_clean();
+    return pspa_ms_render_graduate_card(
+        $user_id,
+        array(
+            'extra_classes' => 'pspa-graduate-card--finder',
+        )
+    );
 }
 
 /**
@@ -1696,7 +1722,8 @@ function pspa_ms_graduate_finder_shortcode() {
 
     pspa_ms_enqueue_dashboard_styles();
 
-    wp_enqueue_style( 'pspa-ms-graduate-finder', plugin_dir_url( __FILE__ ) . 'assets/css/graduate-finder.css', array(), PSPA_MS_VERSION );
+    wp_enqueue_style( 'pspa-ms-graduate-directory', plugin_dir_url( __FILE__ ) . 'assets/css/graduate-directory.css', array(), PSPA_MS_VERSION );
+    wp_enqueue_style( 'pspa-ms-graduate-finder', plugin_dir_url( __FILE__ ) . 'assets/css/graduate-finder.css', array( 'pspa-ms-graduate-directory' ), PSPA_MS_VERSION );
     wp_enqueue_script( 'pspa-ms-graduate-finder', plugin_dir_url( __FILE__ ) . 'assets/js/graduate-finder.js', array( 'jquery' ), PSPA_MS_VERSION, true );
 
     wp_localize_script(

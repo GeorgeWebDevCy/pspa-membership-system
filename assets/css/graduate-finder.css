@@ -45,30 +45,12 @@
     opacity: 0.6;
 }
 
-.pspa-graduate-finder-card {
-    background: #fff;
-    border: 1px solid #e2e2e2;
-    border-radius: 6px;
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.pspa-graduate-finder-card__item {
+.pspa-graduate-finder__results .pspa-graduate-card {
     margin: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem;
 }
 
-.pspa-graduate-finder-card__label {
-    font-weight: 600;
-    color: #222;
-}
-
-.pspa-graduate-finder-card__value {
-    color: #444;
+.pspa-graduate-card--finder {
+    width: 100%;
 }
 
 .pspa-finder-pagination {
