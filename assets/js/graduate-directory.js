@@ -1,47 +1,94 @@
 jQuery(function($){
-    console.log('graduate-directory ready', arguments);
-    let currentPage = 1;
+    if (typeof pspaMsDir === 'undefined') {
+        return;
+    }
+
+    var $filters = $('#pspa-graduate-filters');
+    var $results = $('#pspa-graduate-results');
+    var $loader = $results.find('.pspa-ajax-loader');
+    var $items = $results.find('.pspa-ajax-results__items');
+    var currentPage = 1;
+    var request = null;
+    var requestToken = 0;
+
+    function setBusy(isBusy){
+        if (isBusy) {
+            $results.attr('aria-busy', 'true');
+            $loader.removeAttr('hidden');
+        } else {
+            $results.removeAttr('aria-busy');
+            $loader.attr('hidden', 'hidden');
+        }
+    }
+
+    function showError(){
+        if (pspaMsDir.errorMessage) {
+            $items.html('<p>' + pspaMsDir.errorMessage + '</p>');
+        }
+    }
 
     function fetchGraduates(){
-        console.log('fetchGraduates', arguments);
+        if (request && request.readyState !== 4) {
+            request.abort();
+        }
+
         var data = {
             action: 'pspa_ms_filter_graduates',
             nonce: pspaMsDir.nonce,
-            profession: $('#pspa-graduate-filters [name="profession"]').val(),
-            job_title: $('#pspa-graduate-filters [name="job_title"]').val(),
-            city: $('#pspa-graduate-filters [name="city"]').val(),
-            country: $('#pspa-graduate-filters [name="country"]').val(),
-            graduation_year: $('#pspa-graduate-filters [name="graduation_year"]').val(),
-            full_name: $('#pspa-graduate-filters [name="full_name"]').val(),
+            profession: $filters.find('[name="profession"]').val(),
+            job_title: $filters.find('[name="job_title"]').val(),
+            city: $filters.find('[name="city"]').val(),
+            country: $filters.find('[name="country"]').val(),
+            graduation_year: $filters.find('[name="graduation_year"]').val(),
+            full_name: $filters.find('[name="full_name"]').val(),
             page: currentPage
         };
-        $.post(pspaMsDir.ajaxUrl, data, function(response){
-            console.log('fetchGraduates response', response);
-            if(response.success){
-                $('#pspa-graduate-results').html(response.data.html);
-            }
-        });
+
+        requestToken += 1;
+        var activeToken = requestToken;
+
+        setBusy(true);
+
+        request = $.post(pspaMsDir.ajaxUrl, data)
+            .done(function(response){
+                if (response && response.success && response.data && typeof response.data.html !== 'undefined') {
+                    $items.html(response.data.html);
+                } else {
+                    showError();
+                }
+            })
+            .fail(function(jqXHR, textStatus){
+                if (textStatus === 'abort') {
+                    return;
+                }
+                showError();
+            })
+            .always(function(){
+                if (activeToken === requestToken) {
+                    setBusy(false);
+                    request = null;
+                }
+            });
     }
 
-    $('#pspa-graduate-filters').on('change', 'select', function(){
-        console.log('filter change', this, arguments);
+    $filters.on('change', 'select', function(){
         currentPage = 1;
         fetchGraduates();
     });
 
-    $('#pspa-graduate-filters [name="full_name"], #pspa-graduate-filters [name="graduation_year"]').on('input', function(){
-        console.log('filter input', this, arguments);
+    $filters.find('[name="full_name"], [name="graduation_year"]').on('input', function(){
         currentPage = 1;
         fetchGraduates();
     });
 
-    $('#pspa-graduate-results').on('click', '.pspa-dir-pagination a', function(e){
-        console.log('pagination click', this, arguments);
-        e.preventDefault();
-        currentPage = $(this).data('page');
-        fetchGraduates();
+    $results.on('click', '.pspa-dir-pagination a', function(event){
+        event.preventDefault();
+        var page = $(this).data('page');
+        if (page) {
+            currentPage = page;
+            fetchGraduates();
+        }
     });
 
-    console.log('initial fetch');
     fetchGraduates();
 });

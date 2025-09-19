@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.134
+ * Version: 0.0.135
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.134' );
+define( 'PSPA_MS_VERSION', '0.0.135' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -2312,6 +2312,25 @@ function pspa_ms_get_graduate_avatar( $user_id, $args = array() ) {
 }
 
 /**
+ * Return the shared AJAX loader markup.
+ *
+ * @param string $text Optional. Text to display alongside the loader.
+ * @return string
+ */
+function pspa_ms_get_ajax_loader_markup( $text = '' ) {
+    if ( '' === $text ) {
+        $text = __( 'Φόρτωση...', 'pspa-membership-system' );
+    }
+
+    $markup = sprintf(
+        '<div class="pspa-ajax-loader" hidden><span class="pspa-ajax-loader__spinner" aria-hidden="true"></span><span class="pspa-ajax-loader__text">%s</span></div>',
+        esc_html( $text )
+    );
+
+    return (string) apply_filters( 'pspa_ms_ajax_loader_markup', $markup, $text );
+}
+
+/**
  * Render a graduate profile card.
  *
  * @param int   $user_id User ID.
@@ -2544,8 +2563,11 @@ function pspa_ms_graduate_finder_shortcode() {
                 <input type="text" id="<?php echo esc_attr( $form_id ); ?>-year" name="graduation_year" placeholder="<?php esc_attr_e( 'Έτος Αποφοίτησης', 'pspa-membership-system' ); ?>" inputmode="numeric" autocomplete="off" />
             </label>
         </form>
-        <div id="<?php echo esc_attr( $results_id ); ?>" class="pspa-graduate-finder__results" role="status" aria-live="polite">
-            <p class="pspa-graduate-finder__status"><?php esc_html_e( 'Φόρτωση...', 'pspa-membership-system' ); ?></p>
+        <div id="<?php echo esc_attr( $results_id ); ?>" class="pspa-graduate-finder__results pspa-ajax-results" role="status" aria-live="polite">
+            <?php echo wp_kses_post( pspa_ms_get_ajax_loader_markup() ); ?>
+            <div class="pspa-ajax-results__items">
+                <p class="pspa-graduate-finder__status"><?php esc_html_e( 'Φόρτωση...', 'pspa-membership-system' ); ?></p>
+            </div>
         </div>
     </div>
     <?php
@@ -2567,8 +2589,9 @@ function pspa_ms_graduate_directory_shortcode() {
     wp_enqueue_style( 'pspa-ms-graduate-directory', plugin_dir_url( __FILE__ ) . 'assets/css/graduate-directory.css', array(), PSPA_MS_VERSION );
     wp_enqueue_script( 'pspa-ms-graduate-directory', plugin_dir_url( __FILE__ ) . 'assets/js/graduate-directory.js', array( 'jquery' ), PSPA_MS_VERSION, true );
     wp_localize_script( 'pspa-ms-graduate-directory', 'pspaMsDir', array(
-        'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-        'nonce'   => wp_create_nonce( 'pspa_ms_dir' ),
+        'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
+        'nonce'        => wp_create_nonce( 'pspa_ms_dir' ),
+        'errorMessage' => esc_html__( 'Παρουσιάστηκε σφάλμα κατά τη φόρτωση των αποφοίτων.', 'pspa-membership-system' ),
     ) );
 
     $professions = pspa_ms_get_unique_user_meta_values( 'gn_profession' );
@@ -2607,7 +2630,12 @@ function pspa_ms_graduate_directory_shortcode() {
                 <?php endforeach; ?>
             </select>
         </form>
-        <div id="pspa-graduate-results"><p><?php esc_html_e( 'Φόρτωση...', 'pspa-membership-system' ); ?></p></div>
+        <div id="pspa-graduate-results" class="pspa-ajax-results" role="status" aria-live="polite">
+            <?php echo wp_kses_post( pspa_ms_get_ajax_loader_markup() ); ?>
+            <div class="pspa-ajax-results__items">
+                <p><?php esc_html_e( 'Φόρτωση...', 'pspa-membership-system' ); ?></p>
+            </div>
+        </div>
     </div>
     <?php
     return ob_get_clean();

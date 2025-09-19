@@ -3,6 +3,38 @@
     margin: 0 auto;
 }
 
+.pspa-ajax-results {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.pspa-ajax-loader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    color: var(--ink, #3b2b22);
+    font-weight: 600;
+}
+
+.pspa-ajax-loader[hidden] {
+    display: none !important;
+}
+
+.pspa-ajax-loader__spinner {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    border: 3px solid rgba(0, 0, 0, 0.2);
+    border-top-color: var(--ink, #3b2b22);
+    animation: pspa-ms-spinner 0.75s linear infinite;
+}
+
+.pspa-ajax-loader__text {
+    font-size: 0.95rem;
+}
+
 #pspa-graduate-filters {
     display: flex;
     flex-wrap: wrap;
@@ -65,4 +97,14 @@
     gap: 1em;
     margin-top: 1em;
     flex-wrap: wrap;
+}
+
+@keyframes pspa-ms-spinner {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
