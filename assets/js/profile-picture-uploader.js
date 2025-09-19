@@ -46,17 +46,21 @@
         previewWrapper.className = 'pspa-profile-picture-preview';
 
         const previewImage = document.createElement('img');
-        previewImage.className = 'pspa-profile-picture-image';
-        previewImage.alt = '';
-        previewImage.setAttribute('hidden', 'hidden');
-
-        const placeholder = document.createElement('span');
-        placeholder.className = 'pspa-profile-picture-placeholder';
-        placeholder.textContent =
+        const fallbackImage =
+            (settings && settings.defaultImage) || '';
+        const placeholderText =
             (settings.strings && settings.strings.placeholder) || '';
 
+        previewImage.className = 'pspa-profile-picture-image';
+        previewImage.alt = placeholderText;
+
+        if (fallbackImage) {
+            previewImage.src = fallbackImage;
+        } else {
+            previewImage.setAttribute('hidden', 'hidden');
+        }
+
         previewWrapper.appendChild(previewImage);
-        previewWrapper.appendChild(placeholder);
 
         const controls = document.createElement('div');
         controls.className = 'pspa-profile-picture-controls';
@@ -111,14 +115,16 @@
         }
 
         const setPreview = (url) => {
-            if (url) {
-                previewImage.src = url;
+            const effectiveUrl = url || fallbackImage;
+
+            if (effectiveUrl) {
+                if (previewImage.getAttribute('src') !== effectiveUrl) {
+                    previewImage.src = effectiveUrl;
+                }
                 previewImage.removeAttribute('hidden');
-                placeholder.setAttribute('hidden', 'hidden');
             } else {
                 previewImage.removeAttribute('src');
                 previewImage.setAttribute('hidden', 'hidden');
-                placeholder.removeAttribute('hidden');
             }
         };
 
@@ -161,6 +167,7 @@
                 acfAltInput.value = altText;
             }
 
+            previewImage.alt = altText || placeholderText;
             setPreview(previewUrl);
             container.classList.toggle('has-image', Boolean(value));
             removeButton.disabled = !value || container.classList.contains('is-uploading');
