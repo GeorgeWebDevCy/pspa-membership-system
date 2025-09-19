@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.123
+ * Version: 0.0.124
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.123' );
+define( 'PSPA_MS_VERSION', '0.0.124' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -2278,12 +2278,101 @@ function pspa_ms_render_graduate_card( $user_id, $args = array() ) {
  * @return string
  */
 function pspa_ms_render_graduate_finder_card( $user_id ) {
-    return pspa_ms_render_graduate_card(
-        $user_id,
-        array(
-            'extra_classes' => 'pspa-graduate-card--finder',
-        )
-    );
+    if ( ! pspa_ms_current_user_can_manage_directory_visibility() && ! pspa_ms_user_is_visible_in_directory( $user_id ) ) {
+        return '';
+    }
+
+    $fetch_field = static function( $key ) use ( $user_id ) {
+        $value = '';
+
+        if ( function_exists( 'get_field' ) ) {
+            $field_value = get_field( $key, 'user_' . $user_id );
+            if ( is_string( $field_value ) || is_numeric( $field_value ) ) {
+                $value = (string) $field_value;
+            }
+        }
+
+        if ( '' === $value ) {
+            $meta_value = get_user_meta( $user_id, $key, true );
+            if ( is_string( $meta_value ) || is_numeric( $meta_value ) ) {
+                $value = (string) $meta_value;
+            }
+        }
+
+        return $value;
+    };
+
+    $first = $fetch_field( 'gn_first_name' );
+    $last  = $fetch_field( 'gn_surname' );
+    $name  = trim( $first . ' ' . $last );
+
+    if ( '' === $name ) {
+        $user = get_userdata( $user_id );
+        if ( $user instanceof WP_User ) {
+            $name = $user->display_name;
+        }
+    }
+
+    $graduation_year = $fetch_field( 'gn_graduation_year' );
+    $mobile          = $fetch_field( 'gn_mobile' );
+
+    $phone_keys = array( 'gn_work_phone', 'gn_home_phone', 'gn_work_phone_2', 'gn_home_phone_2' );
+    $phone      = '';
+
+    foreach ( $phone_keys as $phone_key ) {
+        $value = $fetch_field( $phone_key );
+        if ( '' !== $value ) {
+            $phone = $value;
+            break;
+        }
+    }
+
+    $profile_url  = pspa_ms_get_public_profile_url( $user_id );
+    $current_user = wp_get_current_user();
+    $can_edit     = current_user_can( 'manage_options' ) ||
+        in_array( 'system-admin', (array) $current_user->roles, true ) ||
+        in_array( 'sysadmin', (array) $current_user->roles, true );
+
+    if ( $can_edit ) {
+        $edit_url = add_query_arg( 'edit_user', $user_id, pspa_ms_get_graduate_profile_edit_url() );
+    }
+
+    $card_classes = array( 'pspa-graduate-card', 'pspa-graduate-card--finder' );
+
+    ob_start();
+    ?>
+    <div class="<?php echo esc_attr( implode( ' ', array_unique( $card_classes ) ) ); ?>">
+        <div class="pspa-graduate-avatar"><?php echo get_avatar( $user_id, 96 ); ?></div>
+        <div class="pspa-graduate-details">
+            <h3 class="pspa-graduate-name"><?php echo esc_html( $name ); ?></h3>
+            <?php if ( $graduation_year ) : ?>
+                <p class="pspa-graduate-meta pspa-graduate-meta--year">
+                    <span class="pspa-graduate-meta-label"><?php esc_html_e( 'Έτος Αποφοίτησης:', 'pspa-membership-system' ); ?></span>
+                    <span class="pspa-graduate-meta-value"><?php echo esc_html( $graduation_year ); ?></span>
+                </p>
+            <?php endif; ?>
+            <?php if ( $mobile ) : ?>
+                <p class="pspa-graduate-meta pspa-graduate-meta--mobile">
+                    <span class="pspa-graduate-meta-label"><?php esc_html_e( 'Κινητό:', 'pspa-membership-system' ); ?></span>
+                    <span class="pspa-graduate-meta-value"><?php echo esc_html( $mobile ); ?></span>
+                </p>
+            <?php endif; ?>
+            <?php if ( $phone ) : ?>
+                <p class="pspa-graduate-meta pspa-graduate-meta--phone">
+                    <span class="pspa-graduate-meta-label"><?php esc_html_e( 'Τηλέφωνο:', 'pspa-membership-system' ); ?></span>
+                    <span class="pspa-graduate-meta-value"><?php echo esc_html( $phone ); ?></span>
+                </p>
+            <?php endif; ?>
+            <div class="pspa-graduate-actions">
+                <a class="pspa-graduate-more et_pb_button" href="<?php echo esc_url( $profile_url ); ?>"><?php esc_html_e( 'Δείτε Περισσότερα', 'pspa-membership-system' ); ?></a>
+                <?php if ( $can_edit ) : ?>
+                    <a class="pspa-graduate-edit et_pb_button" href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( 'Επεξεργασία', 'pspa-membership-system' ); ?></a>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+    <?php
+    return ob_get_clean();
 }
 
 /**
