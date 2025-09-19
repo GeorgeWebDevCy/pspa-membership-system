@@ -10,6 +10,12 @@
  */
 
 $pspa_user = get_query_var( 'pspa_graduate_user' );
+$profile_view = get_query_var( 'pspa_profile_view' );
+if ( ! is_string( $profile_view ) ) {
+    $profile_view = '';
+}
+$profile_view   = sanitize_key( $profile_view );
+$is_finder_view = ( 'finder' === $profile_view );
 
 $can_view_hidden = function_exists( 'pspa_ms_current_user_can_manage_directory_visibility' )
     ? pspa_ms_current_user_can_manage_directory_visibility()
@@ -117,8 +123,74 @@ foreach ( $header_field_names as $name ) {
             break;
     }
 }
+
+if ( $is_finder_view ) {
+    $header['headline'] = array();
+    $header['location'] = array();
+}
+
+$can_display_field = static function ( $field_name ) use ( $should_show_field, $admin_hidden_fields, $hide_catalogue_fields, $catalogue_hidden_fields ) {
+    if ( ! $should_show_field( $field_name ) ) {
+        return false;
+    }
+
+    if ( $admin_hidden_fields && in_array( $field_name, $admin_hidden_fields, true ) ) {
+        return false;
+    }
+
+    if ( $hide_catalogue_fields && in_array( $field_name, $catalogue_hidden_fields, true ) ) {
+        return false;
+    }
+
+    return true;
+};
+
+$get_raw_field_value = static function ( $field_name ) use ( $uid, $user_key ) {
+    if ( function_exists( 'get_field' ) ) {
+        return get_field( $field_name, $user_key );
+    }
+
+    return get_user_meta( $uid, $field_name, true );
+};
+
+$get_scalar_field_value = static function ( $field_name ) use ( $can_display_field, $get_raw_field_value ) {
+    if ( ! $can_display_field( $field_name ) ) {
+        return '';
+    }
+
+    $value = $get_raw_field_value( $field_name );
+
+    if ( is_string( $value ) || is_numeric( $value ) ) {
+        return (string) $value;
+    }
+
+    return '';
+};
+
+$finder_graduation_year = '';
+$finder_email           = '';
+$finder_mobile          = '';
+
+if ( $is_finder_view ) {
+    $finder_graduation_year = $get_scalar_field_value( 'gn_graduation_year' );
+    $finder_mobile          = $get_scalar_field_value( 'gn_mobile' );
+
+    if ( $can_display_field( 'gn_email' ) ) {
+        $email_value = $get_raw_field_value( 'gn_email' );
+
+        if ( is_string( $email_value ) || is_numeric( $email_value ) ) {
+            $finder_email = (string) $email_value;
+        }
+
+        if ( '' === $finder_email && $pspa_user instanceof WP_User ) {
+            $finder_email = $pspa_user->user_email;
+        }
+
+        $finder_email = sanitize_email( $finder_email );
+    }
+}
 ?>
-<div class="pspa-graduate-profile pspa-linkedin-profile">
+<div class="pspa-graduate-profile pspa-linkedin-profile<?php echo $is_finder_view ? ' pspa-linkedin-profile--finder' : ''; ?>">
     <div class="profile-header">
         <?php if ( $header['picture'] ) : ?>
             <div class="profile-picture"><?php echo $header['picture']; ?></div>
@@ -127,78 +199,105 @@ foreach ( $header_field_names as $name ) {
             <?php if ( $header['name'] ) : ?>
                 <h1 class="profile-name"><?php echo esc_html( implode( ' ', $header['name'] ) ); ?></h1>
             <?php endif; ?>
-            <?php if ( $header['headline'] ) : ?>
+            <?php if ( $header['headline'] && ! $is_finder_view ) : ?>
                 <p class="profile-headline"><?php echo esc_html( implode( ', ', $header['headline'] ) ); ?></p>
             <?php endif; ?>
-            <?php if ( $header['location'] ) : ?>
+            <?php if ( $header['location'] && ! $is_finder_view ) : ?>
                 <p class="profile-location"><?php echo esc_html( implode( ', ', $header['location'] ) ); ?></p>
             <?php endif; ?>
         </div>
     </div>
-    <?php
-    $current_section_open = false;
-    foreach ( $fields as $field ) {
-        if ( ! is_array( $field ) ) {
-            continue;
-        }
-
-        if ( 'tab' === $field['type'] ) {
-            if ( isset( $field['key'] ) && 'tab_gn_visibility' === $field['key'] ) {
-                if ( $current_section_open ) {
-                    echo '</div></section>';
-                    $current_section_open = false;
-                }
+    <?php if ( $is_finder_view ) : ?>
+        <?php if ( $finder_graduation_year || $finder_email || $finder_mobile ) : ?>
+            <div class="profile-section profile-section--finder">
+                <div class="profile-fields">
+                    <?php if ( $finder_graduation_year ) : ?>
+                        <div class="profile-field profile-field-gn_graduation_year">
+                            <span class="label"><?php esc_html_e( 'Έτος Αποφοίτησης', 'pspa-membership-system' ); ?></span>
+                            <span class="value"><?php echo esc_html( $finder_graduation_year ); ?></span>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ( $finder_email ) : ?>
+                        <div class="profile-field profile-field-gn_email">
+                            <span class="label"><?php esc_html_e( 'E-mail', 'pspa-membership-system' ); ?></span>
+                            <span class="value"><a href="mailto:<?php echo esc_attr( $finder_email ); ?>"><?php echo esc_html( $finder_email ); ?></a></span>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ( $finder_mobile ) : ?>
+                        <div class="profile-field profile-field-gn_mobile">
+                            <span class="label"><?php esc_html_e( 'Κινητό', 'pspa-membership-system' ); ?></span>
+                            <span class="value"><?php echo esc_html( $finder_mobile ); ?></span>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+    <?php else : ?>
+        <?php
+        $current_section_open = false;
+        foreach ( $fields as $field ) {
+            if ( ! is_array( $field ) ) {
                 continue;
             }
-            if ( $current_section_open ) {
-                echo '</div></section>';
+
+            if ( 'tab' === $field['type'] ) {
+                if ( isset( $field['key'] ) && 'tab_gn_visibility' === $field['key'] ) {
+                    if ( $current_section_open ) {
+                        echo '</div></section>';
+                        $current_section_open = false;
+                    }
+                    continue;
+                }
+                if ( $current_section_open ) {
+                    echo '</div></section>';
+                }
+                echo '<section class="profile-section section-' . esc_attr( $field['name'] ) . '"><h2>' . esc_html( $field['label'] ) . '</h2><div class="profile-fields">';
+                $current_section_open = true;
+                continue;
             }
-            echo '<section class="profile-section section-' . esc_attr( $field['name'] ) . '"><h2>' . esc_html( $field['label'] ) . '</h2><div class="profile-fields">';
-            $current_section_open = true;
-            continue;
+
+            if ( empty( $field['name'] ) ) {
+                continue;
+            }
+
+            if ( $admin_hidden_fields && in_array( $field['name'], $admin_hidden_fields, true ) ) {
+                continue;
+            }
+
+            if ( $hide_catalogue_fields && in_array( $field['name'], $catalogue_hidden_fields, true ) ) {
+                continue;
+            }
+
+            if ( 0 === strpos( $field['name'], 'gn_show_' ) || 'gn_visibility_mode' === $field['name'] ) {
+                continue;
+            }
+
+            if ( in_array( $field['name'], $header_field_names, true ) ) {
+                continue;
+            }
+
+            if ( ! $should_show_field( $field['name'] ) ) {
+                continue;
+            }
+
+            $value = function_exists( 'get_field' ) ? get_field( $field['name'], $user_key ) : get_user_meta( $uid, $field['name'], true );
+
+            if ( 'image' === $field['type'] ) {
+                $img_id     = is_array( $value ) ? ( $value['ID'] ?? 0 ) : $value;
+                $value_html = $img_id ? wp_get_attachment_image( $img_id, 'medium' ) : '';
+            } elseif ( 'true_false' === $field['type'] ) {
+                $value_html = $value ? esc_html__( 'Yes', 'pspa-membership-system' ) : '';
+            } else {
+                $value_html = esc_html( (string) $value );
+            }
+
+            echo '<div class="profile-field profile-field-' . esc_attr( $field['name'] ) . '"><span class="label">' . esc_html( $field['label'] ) . '</span><span class="value">' . $value_html . '</span></div>';
         }
-
-        if ( empty( $field['name'] ) ) {
-            continue;
+        if ( $current_section_open ) {
+            echo '</div></section>';
         }
-
-        if ( $admin_hidden_fields && in_array( $field['name'], $admin_hidden_fields, true ) ) {
-            continue;
-        }
-
-        if ( $hide_catalogue_fields && in_array( $field['name'], $catalogue_hidden_fields, true ) ) {
-            continue;
-        }
-
-        if ( 0 === strpos( $field['name'], 'gn_show_' ) || 'gn_visibility_mode' === $field['name'] ) {
-            continue;
-        }
-
-        if ( in_array( $field['name'], $header_field_names, true ) ) {
-            continue;
-        }
-
-        if ( ! $should_show_field( $field['name'] ) ) {
-            continue;
-        }
-
-        $value = function_exists( 'get_field' ) ? get_field( $field['name'], $user_key ) : get_user_meta( $uid, $field['name'], true );
-
-        if ( 'image' === $field['type'] ) {
-            $img_id     = is_array( $value ) ? ( $value['ID'] ?? 0 ) : $value;
-            $value_html = $img_id ? wp_get_attachment_image( $img_id, 'medium' ) : '';
-        } elseif ( 'true_false' === $field['type'] ) {
-            $value_html = $value ? esc_html__( 'Yes', 'pspa-membership-system' ) : '';
-        } else {
-            $value_html = esc_html( (string) $value );
-        }
-
-        echo '<div class="profile-field profile-field-' . esc_attr( $field['name'] ) . '"><span class="label">' . esc_html( $field['label'] ) . '</span><span class="value">' . $value_html . '</span></div>';
-    }
-    if ( $current_section_open ) {
-        echo '</div></section>';
-    }
-    ?>
+        ?>
+    <?php endif; ?>
 </div>
 <?php
 get_footer();
