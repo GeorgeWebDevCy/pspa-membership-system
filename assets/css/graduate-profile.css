@@ -12,7 +12,7 @@
     align-items: center;
     gap: 1.5rem;
     padding: 2rem;
-    background: linear-gradient(135deg, var(--ink, #3b2b22), var(--card, #fffaf5));
+    background: linear-gradient(135deg, var(--card, #fffaf5), var(--ink, #3b2b22));
     color: #fff;
 }
 
