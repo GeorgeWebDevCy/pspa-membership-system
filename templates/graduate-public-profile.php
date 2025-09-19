@@ -170,10 +170,12 @@ $get_scalar_field_value = static function ( $field_name ) use ( $can_display_fie
 $finder_graduation_year = '';
 $finder_email           = '';
 $finder_mobile          = '';
+$finder_home_phone      = '';
 
 if ( $is_finder_view ) {
     $finder_graduation_year = $get_scalar_field_value( 'gn_graduation_year' );
     $finder_mobile          = $get_scalar_field_value( 'gn_mobile' );
+    $finder_home_phone      = $get_scalar_field_value( 'gn_home_phone' );
 
     if ( $can_display_field( 'gn_email' ) ) {
         $email_value = $get_raw_field_value( 'gn_email' );
@@ -208,13 +210,19 @@ if ( $is_finder_view ) {
         </div>
     </div>
     <?php if ( $is_finder_view ) : ?>
-        <?php if ( $finder_graduation_year || $finder_email || $finder_mobile ) : ?>
+        <?php if ( $finder_graduation_year || $finder_email || $finder_mobile || $finder_home_phone ) : ?>
             <div class="profile-section profile-section--finder">
                 <div class="profile-fields">
                     <?php if ( $finder_graduation_year ) : ?>
                         <div class="profile-field profile-field-gn_graduation_year">
                             <span class="label"><?php esc_html_e( 'Έτος Αποφοίτησης', 'pspa-membership-system' ); ?></span>
                             <span class="value"><?php echo esc_html( $finder_graduation_year ); ?></span>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ( $finder_home_phone ) : ?>
+                        <div class="profile-field profile-field-gn_home_phone">
+                            <span class="label"><?php esc_html_e( 'Τηλ. Κατοικίας', 'pspa-membership-system' ); ?></span>
+                            <span class="value"><?php echo esc_html( $finder_home_phone ); ?></span>
                         </div>
                     <?php endif; ?>
                     <?php if ( $finder_email ) : ?>
