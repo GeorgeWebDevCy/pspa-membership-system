@@ -7,15 +7,19 @@ jQuery(function($){
         var $container = $(this);
         var $form = $container.find('.pspa-graduate-finder__filters');
         var $results = $container.find('.pspa-graduate-finder__results');
+        var $loader = $results.find('.pspa-ajax-loader');
+        var $items = $results.find('.pspa-ajax-results__items');
         var currentPage = 1;
         var request = null;
         var requestToken = 0;
 
         function setBusy(isBusy){
             if (isBusy) {
-                $results.addClass('is-loading').attr('aria-busy', 'true');
+                $results.attr('aria-busy', 'true');
+                $loader.removeAttr('hidden');
             } else {
-                $results.removeClass('is-loading').removeAttr('aria-busy');
+                $results.removeAttr('aria-busy');
+                $loader.attr('hidden', 'hidden');
             }
         }
 
@@ -41,9 +45,9 @@ jQuery(function($){
             request = $.post(pspaMsFinder.ajaxUrl, data)
                 .done(function(response){
                     if (response && response.success && response.data && typeof response.data.html !== 'undefined') {
-                        $results.html(response.data.html);
+                        $items.html(response.data.html);
                     } else if (pspaMsFinder.errorMessage) {
-                        $results.html('<p>' + pspaMsFinder.errorMessage + '</p>');
+                        $items.html('<p>' + pspaMsFinder.errorMessage + '</p>');
                     }
                 })
                 .fail(function(jqXHR, textStatus){
@@ -51,7 +55,7 @@ jQuery(function($){
                         return;
                     }
                     if (pspaMsFinder.errorMessage) {
-                        $results.html('<p>' + pspaMsFinder.errorMessage + '</p>');
+                        $items.html('<p>' + pspaMsFinder.errorMessage + '</p>');
                     }
                 })
                 .always(function(){
