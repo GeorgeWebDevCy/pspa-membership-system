@@ -42,7 +42,7 @@ $user_key  = 'user_' . $uid;
 $visibility = function_exists( 'get_field' ) ? get_field( 'gn_visibility_mode', $user_key ) : get_user_meta( $uid, 'gn_visibility_mode', true );
 
 $fields             = function_exists( 'acf_get_fields' ) ? acf_get_fields( 'group_gn_graduate_profile' ) : array();
-$header_field_names = array( 'gn_profile_picture', 'gn_first_name', 'gn_surname', 'gn_job_title', 'gn_position_company', 'gn_city', 'gn_country' );
+$header_field_names = array( 'gn_profile_picture', 'gn_first_name', 'gn_surname', 'gn_job_title', 'gn_position_company', 'gn_graduation_year', 'gn_country' );
 $header             = array( 'picture' => '', 'name' => array(), 'headline' => array(), 'location' => array() );
 $hide_catalogue_fields = function_exists( 'pspa_ms_current_user_is_professional_catalogue' ) && pspa_ms_current_user_is_professional_catalogue();
 $catalogue_hidden_fields = $hide_catalogue_fields && function_exists( 'pspa_ms_get_professional_catalogue_hidden_fields' )
@@ -109,7 +109,7 @@ foreach ( $header_field_names as $name ) {
                 $header['headline'][] = $value;
             }
             break;
-        case 'gn_city':
+        case 'gn_graduation_year':
         case 'gn_country':
             if ( $value ) {
                 $header['location'][] = $value;
