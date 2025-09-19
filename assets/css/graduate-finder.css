@@ -46,16 +46,17 @@
 
 .pspa-graduate-finder__results.is-loading {
     opacity: 0.6;
+    padding-top: 3.75rem;
 }
 
 .pspa-graduate-finder__results::after {
     content: '';
     position: absolute;
-    top: 50%;
+    top: 0.75rem;
     left: 50%;
+    transform: translateX(-50%);
     width: 2.5rem;
     height: 2.5rem;
-    margin: -1.25rem 0 0 -1.25rem;
     border-radius: 50%;
     border: 3px solid rgba(0, 0, 0, 0.2);
     border-top-color: var(--ink, #3b2b22);
