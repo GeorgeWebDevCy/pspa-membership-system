@@ -53,6 +53,21 @@
     width: 100%;
 }
 
+.pspa-graduate-card--finder .pspa-graduate-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin: 0.2em 0;
+}
+
+.pspa-graduate-card--finder .pspa-graduate-meta-label {
+    font-weight: 600;
+}
+
+.pspa-graduate-card--finder .pspa-graduate-meta-value {
+    word-break: break-word;
+}
+
 .pspa-finder-pagination {
     display: flex;
     justify-content: center;

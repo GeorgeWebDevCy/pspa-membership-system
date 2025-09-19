@@ -4,7 +4,7 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.0.123
+Stable tag: 0.0.124
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,11 @@ The plugin registers two custom user roles:
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
+
+= 0.0.124 =
+* Simplify graduate finder cards so they only show the profile photo, name, graduation year and contact numbers while keeping the "Δείτε Περισσότερα" action.
+* Surface mobile and primary phone numbers in graduate finder results using the existing dashboard layout.
+* Bump version to 0.0.124.
 
 = 0.0.123 =
 * Display the graduation year in the public profile header instead of the city.
