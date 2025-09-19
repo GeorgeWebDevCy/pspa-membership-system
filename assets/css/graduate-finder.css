@@ -51,6 +51,24 @@
 
 .pspa-graduate-card--finder {
     width: 100%;
+    align-items: center;
+}
+
+.pspa-graduate-card--finder .pspa-graduate-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    justify-content: center;
+}
+
+.pspa-graduate-card--finder .pspa-graduate-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.pspa-graduate-card--finder .pspa-graduate-link:focus,
+.pspa-graduate-card--finder .pspa-graduate-link:hover {
+    text-decoration: underline;
 }
 
 .pspa-graduate-card--finder .pspa-graduate-meta {

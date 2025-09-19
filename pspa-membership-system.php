@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.125
+ * Version: 0.0.126
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.125' );
+define( 'PSPA_MS_VERSION', '0.0.126' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -2315,30 +2315,10 @@ function pspa_ms_render_graduate_finder_card( $user_id ) {
     }
 
     $graduation_year = $fetch_field( 'gn_graduation_year' );
-    $mobile          = $fetch_field( 'gn_mobile' );
 
-    $phone_keys = array( 'gn_work_phone', 'gn_home_phone', 'gn_work_phone_2', 'gn_home_phone_2' );
-    $phone      = '';
-
-    foreach ( $phone_keys as $phone_key ) {
-        $value = $fetch_field( $phone_key );
-        if ( '' !== $value ) {
-            $phone = $value;
-            break;
-        }
-    }
-
-    $profile_url  = pspa_ms_get_public_profile_url( $user_id );
+    $profile_url = pspa_ms_get_public_profile_url( $user_id );
     if ( $profile_url ) {
         $profile_url = add_query_arg( 'pspa_profile_view', 'finder', $profile_url );
-    }
-    $current_user = wp_get_current_user();
-    $can_edit     = current_user_can( 'manage_options' ) ||
-        in_array( 'system-admin', (array) $current_user->roles, true ) ||
-        in_array( 'sysadmin', (array) $current_user->roles, true );
-
-    if ( $can_edit ) {
-        $edit_url = add_query_arg( 'edit_user', $user_id, pspa_ms_get_graduate_profile_edit_url() );
     }
 
     $card_classes = array( 'pspa-graduate-card', 'pspa-graduate-card--finder' );
@@ -2346,33 +2326,27 @@ function pspa_ms_render_graduate_finder_card( $user_id ) {
     ob_start();
     ?>
     <div class="<?php echo esc_attr( implode( ' ', array_unique( $card_classes ) ) ); ?>">
-        <div class="pspa-graduate-avatar"><?php echo get_avatar( $user_id, 96 ); ?></div>
+        <div class="pspa-graduate-avatar">
+            <?php if ( $profile_url ) : ?>
+                <a class="pspa-graduate-link" href="<?php echo esc_url( $profile_url ); ?>"><?php echo get_avatar( $user_id, 96 ); ?></a>
+            <?php else : ?>
+                <?php echo get_avatar( $user_id, 96 ); ?>
+            <?php endif; ?>
+        </div>
         <div class="pspa-graduate-details">
-            <h3 class="pspa-graduate-name"><?php echo esc_html( $name ); ?></h3>
+            <h3 class="pspa-graduate-name">
+                <?php if ( $profile_url ) : ?>
+                    <a class="pspa-graduate-link" href="<?php echo esc_url( $profile_url ); ?>"><?php echo esc_html( $name ); ?></a>
+                <?php else : ?>
+                    <?php echo esc_html( $name ); ?>
+                <?php endif; ?>
+            </h3>
             <?php if ( $graduation_year ) : ?>
                 <p class="pspa-graduate-meta pspa-graduate-meta--year">
                     <span class="pspa-graduate-meta-label"><?php esc_html_e( 'Έτος Αποφοίτησης:', 'pspa-membership-system' ); ?></span>
                     <span class="pspa-graduate-meta-value"><?php echo esc_html( $graduation_year ); ?></span>
                 </p>
             <?php endif; ?>
-            <?php if ( $mobile ) : ?>
-                <p class="pspa-graduate-meta pspa-graduate-meta--mobile">
-                    <span class="pspa-graduate-meta-label"><?php esc_html_e( 'Κινητό:', 'pspa-membership-system' ); ?></span>
-                    <span class="pspa-graduate-meta-value"><?php echo esc_html( $mobile ); ?></span>
-                </p>
-            <?php endif; ?>
-            <?php if ( $phone ) : ?>
-                <p class="pspa-graduate-meta pspa-graduate-meta--phone">
-                    <span class="pspa-graduate-meta-label"><?php esc_html_e( 'Τηλέφωνο:', 'pspa-membership-system' ); ?></span>
-                    <span class="pspa-graduate-meta-value"><?php echo esc_html( $phone ); ?></span>
-                </p>
-            <?php endif; ?>
-            <div class="pspa-graduate-actions">
-                <a class="pspa-graduate-more et_pb_button" href="<?php echo esc_url( $profile_url ); ?>"><?php esc_html_e( 'Δείτε Περισσότερα', 'pspa-membership-system' ); ?></a>
-                <?php if ( $can_edit ) : ?>
-                    <a class="pspa-graduate-edit et_pb_button" href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( 'Επεξεργασία', 'pspa-membership-system' ); ?></a>
-                <?php endif; ?>
-            </div>
         </div>
     </div>
     <?php
