@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.118
+ * Version: 0.0.119
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.118' );
+define( 'PSPA_MS_VERSION', '0.0.119' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -662,6 +662,281 @@ function pspa_ms_lock_profile_picture_to_uploads( $field ) {
 add_filter( 'acf/prepare_field/name=gn_profile_picture', 'pspa_ms_lock_profile_picture_to_uploads' );
 
 /**
+ * Enqueue assets for the custom profile picture uploader.
+ *
+ * @param int $user_id User ID whose profile image is being edited.
+ */
+function pspa_ms_enqueue_profile_picture_assets( $user_id ) {
+    if ( is_admin() ) {
+        return;
+    }
+
+    static $enqueued = false;
+
+    if ( $enqueued ) {
+        return;
+    }
+
+    $enqueued = true;
+
+    $handle = 'pspa-ms-profile-picture-uploader';
+
+    wp_enqueue_style(
+        $handle,
+        plugin_dir_url( __FILE__ ) . 'assets/css/profile-picture-uploader.css',
+        array(),
+        PSPA_MS_VERSION
+    );
+
+    wp_enqueue_script(
+        $handle,
+        plugin_dir_url( __FILE__ ) . 'assets/js/profile-picture-uploader.js',
+        array(),
+        PSPA_MS_VERSION,
+        true
+    );
+
+    $current_id = 0;
+
+    if ( $user_id > 0 ) {
+        if ( function_exists( 'get_field' ) ) {
+            $current_id = (int) get_field( 'gn_profile_picture', 'user_' . $user_id );
+        } else {
+            $current_id = (int) get_user_meta( $user_id, 'gn_profile_picture', true );
+        }
+    }
+
+    $current_id = $current_id > 0 ? $current_id : 0;
+
+    $preview_url = $current_id ? wp_get_attachment_image_url( $current_id, 'medium' ) : '';
+    $full_url    = $current_id ? wp_get_attachment_url( $current_id ) : '';
+
+    $max_upload_size    = (int) wp_max_upload_size();
+    $max_size_label     = $max_upload_size > 0 ? size_format( $max_upload_size ) : '';
+    $allowed_mime_types = get_allowed_mime_types();
+    $allowed_exts       = array();
+
+    foreach ( $allowed_mime_types as $exts => $mime ) {
+        if ( 0 === strpos( $mime, 'image/' ) ) {
+            $exts_array = explode( '|', $exts );
+
+            foreach ( $exts_array as $ext ) {
+                $allowed_exts[] = strtoupper( $ext );
+            }
+        }
+    }
+
+    $allowed_exts = array_unique( $allowed_exts );
+    sort( $allowed_exts, SORT_NATURAL | SORT_FLAG_CASE );
+
+    $data = array(
+        'fieldKey'            => 'field_gn_profile_picture',
+        'restUrl'             => esc_url_raw( rest_url( 'pspa/v1/profile-picture' ) ),
+        'nonce'               => wp_create_nonce( 'wp_rest' ),
+        'maxFileSize'         => $max_upload_size,
+        'maxFileSizeReadable' => $max_size_label,
+        'allowedExtensions'   => $allowed_exts,
+        'current'             => array(
+            'id'      => $current_id,
+            'url'     => $preview_url ? $preview_url : ( $full_url ? $full_url : '' ),
+            'fullUrl' => $full_url,
+        ),
+        'strings'             => array(
+            'upload'        => __( 'Select image', 'pspa-membership-system' ),
+            'uploading'     => __( 'Uploading…', 'pspa-membership-system' ),
+            'remove'        => __( 'Remove image', 'pspa-membership-system' ),
+            'error'         => __( 'Something went wrong while uploading the image.', 'pspa-membership-system' ),
+            'success'       => __( 'Profile picture updated.', 'pspa-membership-system' ),
+            'removeSuccess' => __( 'Profile picture removed.', 'pspa-membership-system' ),
+            'tooBig'        => $max_size_label
+                ? sprintf(
+                    __( 'Please choose an image smaller than %s.', 'pspa-membership-system' ),
+                    $max_size_label
+                )
+                : __( 'The selected file exceeds the upload limit.', 'pspa-membership-system' ),
+            'invalidType'   => __( 'Please upload a valid image file.', 'pspa-membership-system' ),
+            'placeholder'   => __( 'No image selected', 'pspa-membership-system' ),
+        ),
+    );
+
+    if ( ! empty( $allowed_exts ) ) {
+        $data['strings']['invalidType'] = sprintf(
+            __( 'Please upload a valid image file (%s).', 'pspa-membership-system' ),
+            implode( ', ', $allowed_exts )
+        );
+    }
+
+    wp_localize_script( $handle, 'pspaMSProfilePicture', $data );
+}
+
+/**
+ * Determine if the current user can upload profile pictures via the REST API.
+ *
+ * @return true|WP_Error
+ */
+function pspa_ms_can_upload_profile_picture() {
+    if ( ! is_user_logged_in() ) {
+        return new WP_Error(
+            'pspa_ms_forbidden',
+            __( 'You must be logged in to upload images.', 'pspa-membership-system' ),
+            array( 'status' => rest_authorization_required_code() )
+        );
+    }
+
+    if ( ! current_user_can( 'upload_files' ) ) {
+        return new WP_Error(
+            'pspa_ms_forbidden',
+            __( 'You are not allowed to upload files.', 'pspa-membership-system' ),
+            array( 'status' => rest_authorization_required_code() )
+        );
+    }
+
+    return true;
+}
+
+/**
+ * Handle profile picture uploads via the REST API.
+ *
+ * @param WP_REST_Request $request REST request.
+ * @return WP_REST_Response|WP_Error
+ */
+function pspa_ms_rest_upload_profile_picture( WP_REST_Request $request ) {
+    $files = $request->get_file_params();
+
+    if ( empty( $files['file'] ) || empty( $files['file']['tmp_name'] ) ) {
+        return new WP_Error(
+            'pspa_ms_no_file',
+            __( 'No file received.', 'pspa-membership-system' ),
+            array( 'status' => 400 )
+        );
+    }
+
+    $file = $files['file'];
+
+    $max_upload_size = wp_max_upload_size();
+
+    if ( $max_upload_size && ! empty( $file['size'] ) && (int) $file['size'] > $max_upload_size ) {
+        return new WP_Error(
+            'pspa_ms_file_too_large',
+            sprintf(
+                __( 'The selected file is too large. Maximum size is %s.', 'pspa-membership-system' ),
+                size_format( $max_upload_size )
+            ),
+            array( 'status' => 413 )
+        );
+    }
+
+    if ( ! function_exists( 'wp_check_filetype_and_ext' ) ) {
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+    }
+
+    $checked = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'], isset( $file['type'] ) ? $file['type'] : '' );
+
+    if ( empty( $checked['type'] ) || 0 !== strpos( $checked['type'], 'image/' ) ) {
+        return new WP_Error(
+            'pspa_ms_invalid_type',
+            __( 'Please upload a valid image file.', 'pspa-membership-system' ),
+            array( 'status' => 400 )
+        );
+    }
+
+    if ( ! function_exists( 'media_handle_upload' ) ) {
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/media.php';
+    }
+
+    if ( ! isset( $_FILES['file'] ) && isset( $files['file'] ) ) {
+        $_FILES['file'] = $files['file'];
+    }
+
+    $allowed_mimes = array();
+
+    foreach ( get_allowed_mime_types() as $ext => $mime ) {
+        if ( 0 === strpos( $mime, 'image/' ) ) {
+            $allowed_mimes[ $ext ] = $mime;
+        }
+    }
+
+    $attachment_id = media_handle_upload( 'file', 0, array(), array(
+        'test_form' => false,
+        'mimes'     => $allowed_mimes,
+    ) );
+
+    if ( is_wp_error( $attachment_id ) ) {
+        return new WP_Error(
+            'pspa_ms_upload_failed',
+            $attachment_id->get_error_message(),
+            array( 'status' => 500 )
+        );
+    }
+
+    wp_update_post(
+        array(
+            'ID'          => $attachment_id,
+            'post_author' => get_current_user_id(),
+        )
+    );
+
+    $preview = wp_get_attachment_image_src( $attachment_id, 'medium' );
+    $full    = wp_get_attachment_url( $attachment_id );
+
+    return rest_ensure_response(
+        array(
+            'id'      => $attachment_id,
+            'url'     => $preview ? $preview[0] : $full,
+            'fullUrl' => $full,
+            'alt'     => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
+        )
+    );
+}
+
+/**
+ * Register REST endpoints for the profile picture uploader.
+ */
+function pspa_ms_register_profile_picture_routes() {
+    register_rest_route(
+        'pspa/v1',
+        '/profile-picture',
+        array(
+            'methods'             => WP_REST_Server::CREATABLE,
+            'callback'            => 'pspa_ms_rest_upload_profile_picture',
+            'permission_callback' => 'pspa_ms_can_upload_profile_picture',
+        )
+    );
+}
+add_action( 'rest_api_init', 'pspa_ms_register_profile_picture_routes' );
+
+/**
+ * Override the saved value for the profile picture when using the custom uploader.
+ *
+ * @param mixed  $value   Submitted value.
+ * @param string $post_id Post ID being saved.
+ * @param array  $field   Field settings.
+ * @return int|null
+ */
+function pspa_ms_update_profile_picture_value( $value, $post_id, $field ) {
+    if ( ! isset( $_POST['pspa_profile_picture_attachment'] ) ) {
+        return $value;
+    }
+
+    $attachment_id = absint( wp_unslash( $_POST['pspa_profile_picture_attachment'] ) );
+
+    if ( $attachment_id <= 0 ) {
+        return null;
+    }
+
+    $attachment = get_post( $attachment_id );
+
+    if ( ! $attachment || 'attachment' !== $attachment->post_type ) {
+        return $value;
+    }
+
+    return $attachment_id;
+}
+add_filter( 'acf/update_value/name=gn_profile_picture', 'pspa_ms_update_profile_picture_value', 10, 3 );
+
+/**
  * Get the list of graduate profile fields reserved for administrators.
  *
  * @return string[]
@@ -856,6 +1131,7 @@ function pspa_ms_simple_profile_form( $user_id ) {
     }
 
     pspa_ms_enqueue_dashboard_styles();
+    pspa_ms_enqueue_profile_picture_assets( $user_id );
 
     $verified       = get_user_meta( $user_id, 'gn_login_verified_date', true );
     $needs_email    = empty( $user->user_email );
@@ -1028,6 +1304,7 @@ function pspa_ms_admin_profile_interface() {
  */
 function pspa_ms_admin_edit_user_form( $user_id ) {
     pspa_ms_enqueue_dashboard_styles();
+    pspa_ms_enqueue_profile_picture_assets( $user_id );
 
     $user = get_user_by( 'id', $user_id );
 
@@ -1065,6 +1342,7 @@ function pspa_ms_admin_edit_user_form( $user_id ) {
  */
 function pspa_ms_admin_add_user_form() {
     pspa_ms_enqueue_dashboard_styles();
+    pspa_ms_enqueue_profile_picture_assets( 0 );
 
     if (
         'POST' === $_SERVER['REQUEST_METHOD'] &&
