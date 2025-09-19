@@ -4,7 +4,7 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.0.136
+Stable tag: 0.0.137
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -29,7 +29,15 @@ The plugin registers two custom user roles:
 = What dependencies are required? =
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
+= How do I flush the graduate directory cache? =
+The graduate directory and finder cache AJAX responses and filter options for up to 24 hours. Profile edits, registrations, visibility changes, and ACF user form saves automatically clear the cache. After bulk imports or scripted updates you can manually invalidate cached output by running `pspa_ms_flush_directory_cache()` (for example via `wp eval 'pspa_ms_flush_directory_cache();'` or a temporary mu-plugin snippet).
+
 == Changelog ==
+
+= 0.0.137 =
+* Cache graduate directory listings, finder results, and filter option lists to avoid repeated identical AJAX queries.
+* Invalidate caches automatically when profiles or visibility toggles change and document the manual flush helper for administrators.
+* Bump version to 0.0.137.
 
 = 0.0.136 =
 * Remove the circular border radius from graduate directory avatars so profile photos display with their natural corners.
