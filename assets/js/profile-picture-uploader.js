@@ -65,13 +65,15 @@
         uploadButton.type = 'button';
         uploadButton.className = 'button pspa-profile-picture-upload';
         uploadButton.textContent =
-            (settings.strings && settings.strings.upload) || 'Upload';
+            (settings.strings && settings.strings.upload) ||
+            'Επιλογή εικόνας';
 
         const removeButton = document.createElement('button');
         removeButton.type = 'button';
         removeButton.className = 'button pspa-profile-picture-remove';
         removeButton.textContent =
-            (settings.strings && settings.strings.remove) || 'Remove';
+            (settings.strings && settings.strings.remove) ||
+            'Αφαίρεση εικόνας';
 
         const status = document.createElement('p');
         status.className = 'pspa-profile-picture-status';
@@ -165,7 +167,8 @@
         };
 
         const getDefaultError = () =>
-            (settings.strings && settings.strings.error) || 'Upload failed.';
+            (settings.strings && settings.strings.error) ||
+            'Η μεταφόρτωση απέτυχε.';
 
         const validateFile = (file) => {
             if (!file) {
