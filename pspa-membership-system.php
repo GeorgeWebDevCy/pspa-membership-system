@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.137
+ * Version: 0.0.138
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,14 +14,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.137' );
+define( 'PSPA_MS_VERSION', '0.0.138' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
-}
-
-if ( ! defined( 'PSPA_MS_DIRECTORY_CACHE_TTL' ) ) {
-    define( 'PSPA_MS_DIRECTORY_CACHE_TTL', defined( 'DAY_IN_SECONDS' ) ? DAY_IN_SECONDS : 86400 );
 }
 
 /**
@@ -60,95 +56,6 @@ function pspa_ms_log( $message, $level = 'info', $context = array() ) {
         error_log( strtoupper( $level ) . ': ' . $entry['message'] . ( ! empty( $context ) ? ' ' . wp_json_encode( $context ) : '' ) );
     }
 }
-
-/**
- * Normalize cache key data recursively to ensure consistent hashes.
- *
- * @param mixed $data Data to normalize.
- * @return mixed
- */
-function pspa_ms_normalize_cache_data( $data ) {
-    if ( is_array( $data ) ) {
-        foreach ( $data as $key => $value ) {
-            $data[ $key ] = pspa_ms_normalize_cache_data( $value );
-        }
-
-        ksort( $data );
-    }
-
-    return $data;
-}
-
-/**
- * Retrieve the current directory cache version marker.
- *
- * @return int
- */
-function pspa_ms_get_directory_cache_version() {
-    $version = (int) get_site_option( 'pspa_ms_directory_cache_version', 1 );
-
-    return max( 1, $version );
-}
-
-/**
- * Build a namespaced cache key for graduate directory content.
- *
- * @param string $prefix Key prefix.
- * @param array  $data   Contextual data that should influence the cache key.
- * @return string
- */
-function pspa_ms_generate_directory_cache_key( $prefix, array $data = array() ) {
-    $normalized = pspa_ms_normalize_cache_data( $data );
-
-    return $prefix . ':' . pspa_ms_get_directory_cache_version() . ':' . md5( wp_json_encode( $normalized ) );
-}
-
-/**
- * Flush graduate directory caches by bumping the cache version.
- *
- * This helper can be triggered after bulk imports or profile resets to ensure
- * cached AJAX responses and filter lists are regenerated on the next request.
- *
- * @param mixed ...$args Optional arguments provided by WordPress action hooks.
- */
-function pspa_ms_flush_directory_cache( ...$args ) { // phpcs:ignore VariableAnalysis.UnusedVariable
-    $version = pspa_ms_get_directory_cache_version();
-
-    update_site_option( 'pspa_ms_directory_cache_version', $version + 1 );
-}
-
-/**
- * Flush directory caches when ACF saves a user form.
- *
- * @param string|int $post_id Saved post identifier.
- */
-function pspa_ms_flush_directory_cache_on_acf_save( $post_id ) {
-    if ( is_string( $post_id ) && 0 === strpos( $post_id, 'user_' ) ) {
-        pspa_ms_flush_directory_cache();
-    }
-}
-
-/**
- * Flush directory caches when relevant user meta fields change.
- *
- * @param int    $meta_id    Updated meta ID.
- * @param int    $object_id  Object ID.
- * @param string $meta_key   Meta key.
- * @param mixed  $meta_value Meta value.
- */
-function pspa_ms_flush_directory_cache_on_user_meta_update( $meta_id, $object_id, $meta_key, $meta_value ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
-    if ( is_string( $meta_key ) && 0 === strpos( $meta_key, 'gn_' ) ) {
-        pspa_ms_flush_directory_cache();
-    }
-}
-
-add_action( 'profile_update', 'pspa_ms_flush_directory_cache' );
-add_action( 'user_register', 'pspa_ms_flush_directory_cache' );
-add_action( 'delete_user', 'pspa_ms_flush_directory_cache' );
-add_action( 'acf/save_post', 'pspa_ms_flush_directory_cache_on_acf_save', 20 );
-add_action( 'updated_user_meta', 'pspa_ms_flush_directory_cache_on_user_meta_update', 10, 4 );
-add_action( 'added_user_meta', 'pspa_ms_flush_directory_cache_on_user_meta_update', 10, 4 );
-add_action( 'deleted_user_meta', 'pspa_ms_flush_directory_cache_on_user_meta_update', 10, 4 );
 
 /**
  * Reset all plugin settings stored in the options table.
@@ -2229,19 +2136,6 @@ function pspa_ms_get_unique_user_meta_values( $meta_key ) {
     global $wpdb;
     $can_view_hidden = pspa_ms_current_user_can_manage_directory_visibility();
 
-    $cache_key = pspa_ms_generate_directory_cache_key(
-        'meta_values',
-        array(
-            'meta_key'        => (string) $meta_key,
-            'can_view_hidden' => $can_view_hidden,
-        )
-    );
-
-    $cached_values = wp_cache_get( $cache_key, 'pspa_ms_directory' );
-    if ( false !== $cached_values ) {
-        return $cached_values;
-    }
-
     if ( $can_view_hidden ) {
         $sql    = "SELECT DISTINCT meta_value FROM {$wpdb->usermeta} WHERE meta_key = %s AND meta_value <> '' ORDER BY meta_value ASC";
         $params = array( $meta_key );
@@ -2257,15 +2151,7 @@ function pspa_ms_get_unique_user_meta_values( $meta_key ) {
         $params = array( $meta_key, 'gn_directory_visible', '1' );
     }
 
-    $values = $wpdb->get_col( $wpdb->prepare( $sql, $params ) );
-
-    if ( ! is_array( $values ) ) {
-        $values = array();
-    }
-
-    wp_cache_set( $cache_key, $values, 'pspa_ms_directory', PSPA_MS_DIRECTORY_CACHE_TTL );
-
-    return $values;
+    return $wpdb->get_col( $wpdb->prepare( $sql, $params ) );
 }
 
 /**
@@ -2775,7 +2661,6 @@ function pspa_ms_ajax_filter_graduates() {
 
     $meta_query = array( 'relation' => 'AND' );
     $can_view_hidden = pspa_ms_current_user_can_manage_directory_visibility();
-    $sanitized_filters = array();
 
     if ( ! $can_view_hidden ) {
         $meta_query[] = array(
@@ -2785,21 +2670,17 @@ function pspa_ms_ajax_filter_graduates() {
     }
 
     foreach ( $fields as $request => $key ) {
-        $value                     = isset( $_POST[ $request ] ) ? sanitize_text_field( wp_unslash( $_POST[ $request ] ) ) : '';
-        $sanitized_filters[ $request ] = $value;
-
-        if ( '' !== $value ) {
+        if ( ! empty( $_POST[ $request ] ) ) {
             $meta_query[] = array(
                 'key'   => $key,
-                'value' => $value,
+                'value' => sanitize_text_field( wp_unslash( $_POST[ $request ] ) ),
             );
         }
     }
 
-    $full_name = isset( $_POST['full_name'] ) ? sanitize_text_field( wp_unslash( $_POST['full_name'] ) ) : '';
-
-    if ( '' !== $full_name ) {
-        $parts = preg_split( '/\s+/u', $full_name );
+    if ( ! empty( $_POST['full_name'] ) ) {
+        $full_name = sanitize_text_field( wp_unslash( $_POST['full_name'] ) );
+        $parts     = preg_split( '/\s+/u', $full_name );
 
         $compare = $can_view_hidden ? '=' : 'LIKE';
 
@@ -2832,23 +2713,6 @@ function pspa_ms_ajax_filter_graduates() {
 
     $page     = isset( $_POST['page'] ) ? max( 1, absint( $_POST['page'] ) ) : 1;
     $per_page = 50;
-
-    $cache_key = pspa_ms_generate_directory_cache_key(
-        'graduates_ajax',
-        array(
-            'filters'         => $sanitized_filters,
-            'full_name'       => $full_name,
-            'page'            => $page,
-            'per_page'        => $per_page,
-            'can_view_hidden' => $can_view_hidden,
-        )
-    );
-
-    $cached_html = wp_cache_get( $cache_key, 'pspa_ms_directory' );
-    if ( false !== $cached_html ) {
-        wp_send_json_success( array( 'html' => $cached_html ) );
-    }
-
     $args     = array(
         'number'     => $per_page,
         'offset'     => ( $page - 1 ) * $per_page,
@@ -2881,8 +2745,6 @@ function pspa_ms_ajax_filter_graduates() {
         $html = '<p>' . esc_html__( 'Δεν βρέθηκαν απόφοιτοι.', 'pspa-membership-system' ) . '</p>';
     }
 
-    wp_cache_set( $cache_key, $html, 'pspa_ms_directory', PSPA_MS_DIRECTORY_CACHE_TTL );
-
     wp_send_json_success( array( 'html' => $html ) );
 }
 add_action( 'wp_ajax_pspa_ms_filter_graduates', 'pspa_ms_ajax_filter_graduates' );
@@ -2897,9 +2759,9 @@ function pspa_ms_ajax_filter_graduate_finder() {
         wp_send_json_error();
     }
 
-    $meta_query       = array( 'relation' => 'AND' );
-    $can_view_hidden  = pspa_ms_current_user_can_manage_directory_visibility();
-    $first_name       = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
+    $meta_query = array( 'relation' => 'AND' );
+
+    $first_name = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
     if ( '' !== $first_name ) {
         $meta_query[] = array(
             'key'     => 'gn_first_name',
@@ -2932,23 +2794,6 @@ function pspa_ms_ajax_filter_graduate_finder() {
 
     $page     = isset( $_POST['page'] ) ? max( 1, absint( $_POST['page'] ) ) : 1;
     $per_page = 12;
-
-    $cache_key = pspa_ms_generate_directory_cache_key(
-        'graduate_finder',
-        array(
-            'first_name'      => $first_name,
-            'last_name'       => $last_name,
-            'graduation_year' => $graduation_year,
-            'page'            => $page,
-            'per_page'        => $per_page,
-            'can_view_hidden' => $can_view_hidden,
-        )
-    );
-
-    $cached_html = wp_cache_get( $cache_key, 'pspa_ms_directory' );
-    if ( false !== $cached_html ) {
-        wp_send_json_success( array( 'html' => $cached_html ) );
-    }
 
     $query_args = array(
         'number'      => $per_page,
@@ -2987,8 +2832,6 @@ function pspa_ms_ajax_filter_graduate_finder() {
     } else {
         $html = '<p>' . esc_html__( 'Δεν βρέθηκαν απόφοιτοι.', 'pspa-membership-system' ) . '</p>';
     }
-
-    wp_cache_set( $cache_key, $html, 'pspa_ms_directory', PSPA_MS_DIRECTORY_CACHE_TTL );
 
     wp_send_json_success( array( 'html' => $html ) );
 }
