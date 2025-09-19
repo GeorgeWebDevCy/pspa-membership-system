@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.116
+ * Version: 0.0.117
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.116' );
+define( 'PSPA_MS_VERSION', '0.0.117' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -184,6 +184,36 @@ function pspa_ms_enqueue_password_strength() {
     );
 }
 add_action( 'wp_enqueue_scripts', 'pspa_ms_enqueue_password_strength' );
+
+/**
+ * Allow graduate-facing roles to upload profile photos.
+ *
+ * Front-end ACF forms still require the `upload_files` capability when
+ * handling uploads via the basic uploader. Graduates were blocked from adding
+ * profile photos because the Customer-derived roles they use do not grant this
+ * capability by default. Grant it here so the upload endpoint authorises the
+ * request without restoring wp-admin access.
+ */
+function pspa_ms_allow_graduate_uploads() {
+    if ( ! function_exists( 'get_role' ) ) {
+        return;
+    }
+
+    $roles = array( 'customer', 'professionalcatalogue', 'system-admin', 'sysadmin' );
+
+    foreach ( $roles as $role_key ) {
+        $role = get_role( $role_key );
+
+        if ( ! $role ) {
+            continue;
+        }
+
+        if ( ! $role->has_cap( 'upload_files' ) ) {
+            $role->add_cap( 'upload_files' );
+        }
+    }
+}
+add_action( 'init', 'pspa_ms_allow_graduate_uploads' );
 
 /**
  * Retrieve the URL shown after a login-by-details failure.
