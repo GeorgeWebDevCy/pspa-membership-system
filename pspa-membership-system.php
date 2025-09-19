@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.119
+ * Version: 0.0.120
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.119' );
+define( 'PSPA_MS_VERSION', '0.0.120' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -662,6 +662,89 @@ function pspa_ms_lock_profile_picture_to_uploads( $field ) {
 add_filter( 'acf/prepare_field/name=gn_profile_picture', 'pspa_ms_lock_profile_picture_to_uploads' );
 
 /**
+ * Return the MIME types that the profile picture uploader should accept.
+ *
+ * @return array
+ */
+function pspa_ms_get_profile_picture_mime_types() {
+    $allowed_mime_types = get_allowed_mime_types();
+    $image_mime_types   = array();
+
+    foreach ( $allowed_mime_types as $extensions => $mime_type ) {
+        if ( 0 === strpos( $mime_type, 'image/' ) ) {
+            $image_mime_types[ $extensions ] = $mime_type;
+        }
+    }
+
+    $extra_mime_types = array(
+        'webp'  => 'image/webp',
+        'avif'  => 'image/avif',
+        'heic'  => 'image/heic',
+        'heics' => 'image/heic',
+        'heif'  => 'image/heif',
+        'heifs' => 'image/heif',
+    );
+
+    foreach ( $extra_mime_types as $extension => $mime_type ) {
+        $already_registered = false;
+
+        foreach ( $image_mime_types as $registered_extensions => $registered_mime ) {
+            $registered_list = array_map( 'trim', explode( '|', $registered_extensions ) );
+
+            if ( in_array( $extension, $registered_list, true ) || $registered_mime === $mime_type ) {
+                $already_registered = true;
+                break;
+            }
+        }
+
+        if ( ! $already_registered ) {
+            $image_mime_types[ $extension ] = $mime_type;
+        }
+    }
+
+    /**
+     * Filters the MIME types supported by the profile picture uploader.
+     *
+     * @param array $image_mime_types MIME types keyed by extension list.
+     */
+    return apply_filters( 'pspa_ms_profile_picture_mime_types', $image_mime_types );
+}
+
+/**
+ * Return the list of supported image extensions for the profile picture uploader.
+ *
+ * @param array|null $mime_types MIME types keyed by extension list.
+ * @return array
+ */
+function pspa_ms_get_profile_picture_extensions( $mime_types = null ) {
+    if ( null === $mime_types ) {
+        $mime_types = pspa_ms_get_profile_picture_mime_types();
+    }
+
+    $extensions = array();
+
+    foreach ( array_keys( $mime_types ) as $extension_list ) {
+        foreach ( explode( '|', $extension_list ) as $extension ) {
+            $extension = strtoupper( trim( $extension ) );
+
+            if ( '' !== $extension ) {
+                $extensions[] = $extension;
+            }
+        }
+    }
+
+    $extensions = array_unique( $extensions );
+    sort( $extensions, SORT_NATURAL | SORT_FLAG_CASE );
+
+    /**
+     * Filters the list of extensions presented by the profile picture uploader.
+     *
+     * @param array $extensions Array of uppercase extensions.
+     */
+    return apply_filters( 'pspa_ms_profile_picture_extensions', $extensions );
+}
+
+/**
  * Enqueue assets for the custom profile picture uploader.
  *
  * @param int $user_id User ID whose profile image is being edited.
@@ -713,21 +796,8 @@ function pspa_ms_enqueue_profile_picture_assets( $user_id ) {
 
     $max_upload_size    = (int) wp_max_upload_size();
     $max_size_label     = $max_upload_size > 0 ? size_format( $max_upload_size ) : '';
-    $allowed_mime_types = get_allowed_mime_types();
-    $allowed_exts       = array();
-
-    foreach ( $allowed_mime_types as $exts => $mime ) {
-        if ( 0 === strpos( $mime, 'image/' ) ) {
-            $exts_array = explode( '|', $exts );
-
-            foreach ( $exts_array as $ext ) {
-                $allowed_exts[] = strtoupper( $ext );
-            }
-        }
-    }
-
-    $allowed_exts = array_unique( $allowed_exts );
-    sort( $allowed_exts, SORT_NATURAL | SORT_FLAG_CASE );
+    $allowed_mime_types = pspa_ms_get_profile_picture_mime_types();
+    $allowed_exts       = pspa_ms_get_profile_picture_extensions( $allowed_mime_types );
 
     $data = array(
         'fieldKey'            => 'field_gn_profile_picture',
@@ -742,26 +812,26 @@ function pspa_ms_enqueue_profile_picture_assets( $user_id ) {
             'fullUrl' => $full_url,
         ),
         'strings'             => array(
-            'upload'        => __( 'Select image', 'pspa-membership-system' ),
-            'uploading'     => __( 'Uploading…', 'pspa-membership-system' ),
-            'remove'        => __( 'Remove image', 'pspa-membership-system' ),
-            'error'         => __( 'Something went wrong while uploading the image.', 'pspa-membership-system' ),
-            'success'       => __( 'Profile picture updated.', 'pspa-membership-system' ),
-            'removeSuccess' => __( 'Profile picture removed.', 'pspa-membership-system' ),
+            'upload'        => __( 'Επιλογή εικόνας', 'pspa-membership-system' ),
+            'uploading'     => __( 'Μεταφόρτωση…', 'pspa-membership-system' ),
+            'remove'        => __( 'Αφαίρεση εικόνας', 'pspa-membership-system' ),
+            'error'         => __( 'Παρουσιάστηκε σφάλμα κατά τη μεταφόρτωση της εικόνας.', 'pspa-membership-system' ),
+            'success'       => __( 'Η εικόνα προφίλ ενημερώθηκε.', 'pspa-membership-system' ),
+            'removeSuccess' => __( 'Η εικόνα προφίλ αφαιρέθηκε.', 'pspa-membership-system' ),
             'tooBig'        => $max_size_label
                 ? sprintf(
-                    __( 'Please choose an image smaller than %s.', 'pspa-membership-system' ),
+                    __( 'Παρακαλούμε επιλέξτε εικόνα μικρότερη από %s.', 'pspa-membership-system' ),
                     $max_size_label
                 )
-                : __( 'The selected file exceeds the upload limit.', 'pspa-membership-system' ),
-            'invalidType'   => __( 'Please upload a valid image file.', 'pspa-membership-system' ),
-            'placeholder'   => __( 'No image selected', 'pspa-membership-system' ),
+                : __( 'Το επιλεγμένο αρχείο υπερβαίνει το όριο μεταφόρτωσης.', 'pspa-membership-system' ),
+            'invalidType'   => __( 'Παρακαλούμε ανεβάστε ένα έγκυρο αρχείο εικόνας.', 'pspa-membership-system' ),
+            'placeholder'   => __( 'Δεν έχει επιλεγεί εικόνα', 'pspa-membership-system' ),
         ),
     );
 
     if ( ! empty( $allowed_exts ) ) {
         $data['strings']['invalidType'] = sprintf(
-            __( 'Please upload a valid image file (%s).', 'pspa-membership-system' ),
+            __( 'Παρακαλούμε ανεβάστε ένα έγκυρο αρχείο εικόνας (%s).', 'pspa-membership-system' ),
             implode( ', ', $allowed_exts )
         );
     }
@@ -830,12 +900,77 @@ function pspa_ms_rest_upload_profile_picture( WP_REST_Request $request ) {
         require_once ABSPATH . 'wp-admin/includes/file.php';
     }
 
-    $checked = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'], isset( $file['type'] ) ? $file['type'] : '' );
+    $allowed_mimes = pspa_ms_get_profile_picture_mime_types();
 
-    if ( empty( $checked['type'] ) || 0 !== strpos( $checked['type'], 'image/' ) ) {
+    $checked = wp_check_filetype_and_ext(
+        $file['tmp_name'],
+        $file['name'],
+        $allowed_mimes
+    );
+
+    $is_valid_image = ! empty( $checked['type'] ) && 0 === strpos( $checked['type'], 'image/' );
+
+    if ( ! $is_valid_image ) {
+        $browser_type = isset( $file['type'] ) ? (string) $file['type'] : '';
+
+        if ( $browser_type && 0 === strpos( $browser_type, 'image/' ) ) {
+            $is_valid_image = true;
+
+            if ( empty( $checked['type'] ) ) {
+                $checked['type'] = $browser_type;
+            }
+        }
+    }
+
+    if ( ! $is_valid_image ) {
+        $extension = '';
+
+        if ( ! empty( $file['name'] ) ) {
+            $extension = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
+        }
+
+        if ( $extension ) {
+            foreach ( $allowed_mimes as $ext_list => $mime_type ) {
+                $extension_list = array_map( 'trim', explode( '|', $ext_list ) );
+
+                if ( in_array( $extension, $extension_list, true ) ) {
+                    $is_valid_image = true;
+
+                    if ( empty( $checked['type'] ) ) {
+                        $checked['type'] = $mime_type;
+                    }
+
+                    if ( empty( $checked['ext'] ) ) {
+                        $checked['ext'] = $extension;
+                    }
+
+                    break;
+                }
+            }
+        }
+    }
+
+    if ( ! $is_valid_image && function_exists( 'finfo_open' ) ) {
+        $finfo = finfo_open( FILEINFO_MIME_TYPE );
+
+        if ( $finfo ) {
+            $detected_type = finfo_file( $finfo, $file['tmp_name'] );
+            finfo_close( $finfo );
+
+            if ( $detected_type && 0 === strpos( $detected_type, 'image/' ) ) {
+                $is_valid_image = true;
+
+                if ( empty( $checked['type'] ) ) {
+                    $checked['type'] = $detected_type;
+                }
+            }
+        }
+    }
+
+    if ( ! $is_valid_image ) {
         return new WP_Error(
             'pspa_ms_invalid_type',
-            __( 'Please upload a valid image file.', 'pspa-membership-system' ),
+            __( 'Παρακαλούμε ανεβάστε ένα έγκυρο αρχείο εικόνας.', 'pspa-membership-system' ),
             array( 'status' => 400 )
         );
     }
@@ -848,14 +983,6 @@ function pspa_ms_rest_upload_profile_picture( WP_REST_Request $request ) {
 
     if ( ! isset( $_FILES['file'] ) && isset( $files['file'] ) ) {
         $_FILES['file'] = $files['file'];
-    }
-
-    $allowed_mimes = array();
-
-    foreach ( get_allowed_mime_types() as $ext => $mime ) {
-        if ( 0 === strpos( $mime, 'image/' ) ) {
-            $allowed_mimes[ $ext ] = $mime;
-        }
     }
 
     $attachment_id = media_handle_upload( 'file', 0, array(), array(
