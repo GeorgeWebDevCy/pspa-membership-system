@@ -9,6 +9,15 @@ jQuery(function($){
         var $results = $container.find('.pspa-graduate-finder__results');
         var currentPage = 1;
         var request = null;
+        var requestToken = 0;
+
+        function setBusy(isBusy){
+            if (isBusy) {
+                $results.addClass('is-loading').attr('aria-busy', 'true');
+            } else {
+                $results.removeClass('is-loading').removeAttr('aria-busy');
+            }
+        }
 
         function fetchResults(){
             if (request && request.readyState !== 4) {
@@ -24,7 +33,10 @@ jQuery(function($){
                 graduation_year: $form.find('[name="graduation_year"]').val()
             };
 
-            $results.addClass('is-loading');
+            requestToken += 1;
+            var activeToken = requestToken;
+
+            setBusy(true);
 
             request = $.post(pspaMsFinder.ajaxUrl, data)
                 .done(function(response){
@@ -34,14 +46,19 @@ jQuery(function($){
                         $results.html('<p>' + pspaMsFinder.errorMessage + '</p>');
                     }
                 })
-                .fail(function(){
+                .fail(function(jqXHR, textStatus){
+                    if (textStatus === 'abort') {
+                        return;
+                    }
                     if (pspaMsFinder.errorMessage) {
                         $results.html('<p>' + pspaMsFinder.errorMessage + '</p>');
                     }
                 })
                 .always(function(){
-                    $results.removeClass('is-loading');
-                    request = null;
+                    if (activeToken === requestToken) {
+                        setBusy(false);
+                        request = null;
+                    }
                 });
         }
 

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.131
+ * Version: 0.0.132
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.131' );
+define( 'PSPA_MS_VERSION', '0.0.132' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -2425,7 +2425,7 @@ function pspa_ms_graduate_finder_shortcode() {
                 <input type="text" id="<?php echo esc_attr( $form_id ); ?>-year" name="graduation_year" placeholder="<?php esc_attr_e( 'Έτος Αποφοίτησης', 'pspa-membership-system' ); ?>" inputmode="numeric" autocomplete="off" />
             </label>
         </form>
-        <div id="<?php echo esc_attr( $results_id ); ?>" class="pspa-graduate-finder__results">
+        <div id="<?php echo esc_attr( $results_id ); ?>" class="pspa-graduate-finder__results" role="status" aria-live="polite">
             <p class="pspa-graduate-finder__status"><?php esc_html_e( 'Φόρτωση...', 'pspa-membership-system' ); ?></p>
         </div>
     </div>

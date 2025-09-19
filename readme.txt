@@ -4,7 +4,7 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.0.131
+Stable tag: 0.0.132
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,11 @@ The plugin registers two custom user roles:
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
+
+= 0.0.132 =
+* Prevent Graduate Finder requests from showing the generic error message when earlier searches are aborted while typing.
+* Display a loading spinner while Graduate Finder results refresh.
+* Bump version to 0.0.132.
 
 = 0.0.131 =
 * Allow Professional Catalogue finder views to load hidden graduate profiles instead of returning 404 errors.
