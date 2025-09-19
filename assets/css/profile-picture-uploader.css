@@ -18,7 +18,7 @@
     position: relative;
     width: 128px;
     height: 128px;
-    border-radius: 50%;
+    border-radius: 0;
     overflow: hidden;
     background: #f1f3f6;
     display: flex;
@@ -32,14 +32,6 @@
     object-fit: cover;
 }
 
-.pspa-profile-picture-placeholder {
-    display: block;
-    text-align: center;
-    font-size: 0.875rem;
-    color: #6c757d;
-    padding: 0 0.5rem;
-}
-
 .pspa-profile-picture-controls {
     display: flex;
     flex-direction: column;
@@ -48,7 +40,8 @@
 }
 
 .pspa-profile-picture-controls .button {
-    align-self: flex-start;
+    width: 100%;
+    text-align: center;
 }
 
 .pspa-profile-picture-remove {
