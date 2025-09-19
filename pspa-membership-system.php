@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.126
+ * Version: 0.0.127
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.126' );
+define( 'PSPA_MS_VERSION', '0.0.127' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -2321,6 +2321,15 @@ function pspa_ms_render_graduate_finder_card( $user_id ) {
         $profile_url = add_query_arg( 'pspa_profile_view', 'finder', $profile_url );
     }
 
+    $current_user = wp_get_current_user();
+    $can_edit     = current_user_can( 'manage_options' ) ||
+        in_array( 'system-admin', (array) $current_user->roles, true ) ||
+        in_array( 'sysadmin', (array) $current_user->roles, true );
+
+    if ( $can_edit ) {
+        $edit_url = add_query_arg( 'edit_user', $user_id, pspa_ms_get_graduate_profile_edit_url() );
+    }
+
     $card_classes = array( 'pspa-graduate-card', 'pspa-graduate-card--finder' );
 
     ob_start();
@@ -2346,6 +2355,16 @@ function pspa_ms_render_graduate_finder_card( $user_id ) {
                     <span class="pspa-graduate-meta-label"><?php esc_html_e( 'Έτος Αποφοίτησης:', 'pspa-membership-system' ); ?></span>
                     <span class="pspa-graduate-meta-value"><?php echo esc_html( $graduation_year ); ?></span>
                 </p>
+            <?php endif; ?>
+            <?php if ( $profile_url || $can_edit ) : ?>
+                <div class="pspa-graduate-actions">
+                    <?php if ( $profile_url ) : ?>
+                        <a class="pspa-graduate-more et_pb_button" href="<?php echo esc_url( $profile_url ); ?>"><?php esc_html_e( 'Δείτε Περισσότερα', 'pspa-membership-system' ); ?></a>
+                    <?php endif; ?>
+                    <?php if ( $can_edit ) : ?>
+                        <a class="pspa-graduate-edit et_pb_button" href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( 'Επεξεργασία', 'pspa-membership-system' ); ?></a>
+                    <?php endif; ?>
+                </div>
             <?php endif; ?>
         </div>
     </div>
