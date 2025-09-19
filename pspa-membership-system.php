@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.133
+ * Version: 0.0.134
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.133' );
+define( 'PSPA_MS_VERSION', '0.0.134' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -2196,6 +2196,122 @@ function pspa_ms_get_public_profile_url( $user_id ) {
 }
 
 /**
+ * Retrieve the graduate avatar markup.
+ *
+ * Attempts to load the ACF profile picture field and falls back to the
+ * WordPress avatar when no custom image is available or visibility toggles
+ * disable the profile photo.
+ *
+ * @param int   $user_id User ID.
+ * @param array $args    {
+ *     Optional. Additional arguments.
+ *
+ *     @type string       $image_size    Image size registered with WordPress. Default 'medium'.
+ *     @type int          $fallback_size Fallback avatar size in pixels. Default 96.
+ *     @type array|string $attr          Additional image attributes.
+ * }
+ * @return string
+ */
+function pspa_ms_get_graduate_avatar( $user_id, $args = array() ) {
+    $defaults = array(
+        'image_size'    => 'medium',
+        'fallback_size' => 96,
+        'attr'          => array(),
+    );
+
+    $args    = wp_parse_args( $args, $defaults );
+    $user_id = (int) $user_id;
+
+    if ( $user_id <= 0 ) {
+        return '';
+    }
+
+    $user_key    = 'user_' . $user_id;
+    $should_show = true;
+
+    $show_value = function_exists( 'get_field' )
+        ? get_field( 'gn_show_profile_picture', $user_key )
+        : get_user_meta( $user_id, 'gn_show_profile_picture', true );
+
+    if ( is_scalar( $show_value ) && '' !== $show_value && null !== $show_value ) {
+        $filtered = filter_var( $show_value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE );
+        if ( null !== $filtered ) {
+            $should_show = $filtered;
+        } else {
+            $should_show = (bool) $show_value;
+        }
+    }
+
+    $attachment_id = 0;
+
+    if ( $should_show ) {
+        if ( function_exists( 'get_field' ) ) {
+            $attachment_id = (int) get_field( 'gn_profile_picture', $user_key );
+        }
+
+        if ( ! $attachment_id ) {
+            $attachment_id = (int) get_user_meta( $user_id, 'gn_profile_picture', true );
+        }
+    }
+
+    $attr = array();
+
+    if ( is_array( $args['attr'] ) ) {
+        $attr = $args['attr'];
+    } elseif ( is_string( $args['attr'] ) ) {
+        $attr['class'] = $args['attr'];
+    }
+
+    $classes = array();
+
+    if ( ! empty( $attr['class'] ) ) {
+        $classes = preg_split( '/\s+/', $attr['class'] );
+    }
+
+    $classes[] = 'avatar';
+    $classes[] = 'pspa-graduate-avatar-image';
+
+    $attr['class']    = implode( ' ', array_unique( array_filter( $classes ) ) );
+    $attr['loading']  = isset( $attr['loading'] ) ? $attr['loading'] : 'lazy';
+    $attr['decoding'] = isset( $attr['decoding'] ) ? $attr['decoding'] : 'async';
+
+    $avatar = '';
+
+    if ( $attachment_id ) {
+        $avatar = wp_get_attachment_image( $attachment_id, $args['image_size'], false, $attr );
+    }
+
+    if ( ! $avatar ) {
+        $fallback_size = is_numeric( $args['fallback_size'] ) ? (int) $args['fallback_size'] : 96;
+
+        $avatar = get_avatar(
+            $user_id,
+            $fallback_size,
+            '',
+            '',
+            array(
+                'class'      => $attr['class'],
+                'extra_attr' => sprintf(
+                    'loading="%s" decoding="%s"',
+                    esc_attr( $attr['loading'] ),
+                    esc_attr( $attr['decoding'] )
+                ),
+            )
+        );
+
+        if ( $avatar && false === strpos( $avatar, 'pspa-graduate-avatar-image' ) ) {
+            $avatar = str_replace(
+                array( 'class=\'avatar', 'class="avatar' ),
+                array( 'class=\'avatar pspa-graduate-avatar-image', 'class="avatar pspa-graduate-avatar-image' ),
+                $avatar
+            );
+        }
+    }
+
+    return (string) apply_filters( 'pspa_ms_graduate_avatar_html', $avatar, $user_id, $args );
+}
+
+/**
  * Render a graduate profile card.
  *
  * @param int   $user_id User ID.
@@ -2259,7 +2375,7 @@ function pspa_ms_render_graduate_card( $user_id, $args = array() ) {
     ob_start();
     ?>
     <div class="<?php echo esc_attr( implode( ' ', $card_classes ) ); ?>">
-        <div class="pspa-graduate-avatar"><?php echo get_avatar( $user_id, 96 ); ?></div>
+        <div class="pspa-graduate-avatar"><?php echo pspa_ms_get_graduate_avatar( $user_id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
         <div class="pspa-graduate-details">
             <h3 class="pspa-graduate-name"><?php echo esc_html( $name ); ?></h3>
             <?php if ( $job || $company ) : ?>
@@ -2343,10 +2459,13 @@ function pspa_ms_render_graduate_finder_card( $user_id ) {
     ?>
     <div class="<?php echo esc_attr( implode( ' ', array_unique( $card_classes ) ) ); ?>">
         <div class="pspa-graduate-avatar">
-            <?php if ( $profile_url ) : ?>
-                <a class="pspa-graduate-link" href="<?php echo esc_url( $profile_url ); ?>"><?php echo get_avatar( $user_id, 96 ); ?></a>
+            <?php
+            $avatar_html = pspa_ms_get_graduate_avatar( $user_id );
+            if ( $profile_url ) :
+                ?>
+                <a class="pspa-graduate-link" href="<?php echo esc_url( $profile_url ); ?>"><?php echo $avatar_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>
             <?php else : ?>
-                <?php echo get_avatar( $user_id, 96 ); ?>
+                <?php echo $avatar_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
             <?php endif; ?>
         </div>
         <div class="pspa-graduate-details">

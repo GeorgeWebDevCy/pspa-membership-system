@@ -27,6 +27,15 @@
 
 .pspa-graduate-avatar {
     margin-right: 1em;
+    flex-shrink: 0;
+}
+
+.pspa-graduate-avatar img {
+    display: block;
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
 }
 
 .pspa-graduate-details h3 {
