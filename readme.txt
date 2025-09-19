@@ -4,7 +4,7 @@ Tags: membership, woocommerce, acf, profile
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 0.0.133
+Stable tag: 0.0.134
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,10 @@ The plugin registers two custom user roles:
 The plugin requires Advanced Custom Fields Pro, WooCommerce, and Advanced Access Manager.
 
 == Changelog ==
+
+= 0.0.134 =
+* Display graduate cards and finder results using the uploaded profile photo instead of the Gravatar image while keeping a crisp 96px avatar.
+* Bump version to 0.0.134.
 
 = 0.0.133 =
 * Position the Graduate Finder loading spinner directly under the filters so it stays visible even when long result lists scroll off-screen.
