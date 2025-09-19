@@ -36,13 +36,38 @@
     outline-offset: 1px;
 }
 
+
 .pspa-graduate-finder__results {
     display: grid;
     gap: 1rem;
+    position: relative;
+    min-height: 3.5rem;
 }
 
 .pspa-graduate-finder__results.is-loading {
     opacity: 0.6;
+}
+
+.pspa-graduate-finder__results::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2.5rem;
+    height: 2.5rem;
+    margin: -1.25rem 0 0 -1.25rem;
+    border-radius: 50%;
+    border: 3px solid rgba(0, 0, 0, 0.2);
+    border-top-color: var(--ink, #3b2b22);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 2;
+}
+
+.pspa-graduate-finder__results.is-loading::after {
+    opacity: 1;
+    animation: pspa-ms-spinner 0.75s linear infinite;
 }
 
 .pspa-graduate-finder__results .pspa-graduate-card {
@@ -101,4 +126,14 @@
 
 .pspa-finder-pagination .current {
     font-weight: 600;
+}
+
+@keyframes pspa-ms-spinner {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
