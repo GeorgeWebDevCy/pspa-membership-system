@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.128
+ * Version: 0.0.129
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.128' );
+define( 'PSPA_MS_VERSION', '0.0.129' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -2279,10 +2279,6 @@ function pspa_ms_render_graduate_card( $user_id, $args = array() ) {
  * @return string
  */
 function pspa_ms_render_graduate_finder_card( $user_id ) {
-    if ( ! pspa_ms_current_user_can_manage_directory_visibility() && ! pspa_ms_user_is_visible_in_directory( $user_id ) ) {
-        return '';
-    }
-
     $fetch_field = static function( $key ) use ( $user_id ) {
         $value = '';
 
@@ -2605,15 +2601,7 @@ function pspa_ms_ajax_filter_graduate_finder() {
         wp_send_json_error();
     }
 
-    $meta_query      = array( 'relation' => 'AND' );
-    $can_view_hidden = pspa_ms_current_user_can_manage_directory_visibility();
-
-    if ( ! $can_view_hidden ) {
-        $meta_query[] = array(
-            'key'   => 'gn_directory_visible',
-            'value' => '1',
-        );
-    }
+    $meta_query = array( 'relation' => 'AND' );
 
     $first_name = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
     if ( '' !== $first_name ) {
@@ -2640,6 +2628,10 @@ function pspa_ms_ajax_filter_graduate_finder() {
             'value'   => $graduation_year,
             'compare' => 'LIKE',
         );
+    }
+
+    if ( isset( $meta_query['relation'] ) && 1 === count( $meta_query ) ) {
+        $meta_query = array();
     }
 
     $page     = isset( $_POST['page'] ) ? max( 1, absint( $_POST['page'] ) ) : 1;
