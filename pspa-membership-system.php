@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSPA Membership System
  * Description: Membership system for PSPA.
- * Version: 0.0.117
+ * Version: 0.0.118
  * Author: George Nicolaou
  * Author URI: https://profiles.wordpress.org/orionaselite/
  *
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'PSPA_MS_VERSION', '0.0.117' );
+define( 'PSPA_MS_VERSION', '0.0.118' );
 
 if ( ! defined( 'PSPA_MS_ENABLE_LOGGING' ) ) {
     define( 'PSPA_MS_ENABLE_LOGGING', defined( 'WP_DEBUG' ) && WP_DEBUG );
@@ -1679,16 +1679,31 @@ add_filter( 'login_redirect', 'pspa_ms_login_redirect', 10, 3 );
  * Block backend access for graduates and system admins.
  */
 function pspa_ms_block_admin_access() {
-    if ( is_admin() && ! wp_doing_ajax() && is_user_logged_in() ) {
-        $user = wp_get_current_user();
-        if (
-            in_array( 'system-admin', (array) $user->roles, true ) ||
-            in_array( 'sysadmin', (array) $user->roles, true ) ||
-            in_array( 'professionalcatalogue', (array) $user->roles, true )
-        ) {
-            wp_safe_redirect( add_query_arg( 'edit_user', $user->ID, pspa_ms_get_graduate_profile_edit_url() ) );
-            exit;
-        }
+    if ( ! is_user_logged_in() || ! is_admin() || wp_doing_ajax() ) {
+        return;
+    }
+
+    global $pagenow;
+
+    $current_page = isset( $pagenow ) ? $pagenow : '';
+
+    if ( '' === $current_page && isset( $_SERVER['PHP_SELF'] ) ) {
+        $current_page = basename( sanitize_text_field( wp_unslash( $_SERVER['PHP_SELF'] ) ) );
+    }
+
+    // Allow the core asynchronous upload endpoint so media uploads succeed.
+    if ( 'async-upload.php' === $current_page ) {
+        return;
+    }
+
+    $user = wp_get_current_user();
+    if (
+        in_array( 'system-admin', (array) $user->roles, true ) ||
+        in_array( 'sysadmin', (array) $user->roles, true ) ||
+        in_array( 'professionalcatalogue', (array) $user->roles, true )
+    ) {
+        wp_safe_redirect( add_query_arg( 'edit_user', $user->ID, pspa_ms_get_graduate_profile_edit_url() ) );
+        exit;
     }
 }
 add_action( 'init', 'pspa_ms_block_admin_access' );
